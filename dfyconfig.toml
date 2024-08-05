@@ -1,0 +1,8 @@
+includes = ["*.dfy"]
+excludes = []
+
+
+[options]
+isolate-assertions=true
+verification-time-limit=20
+cores=8 
