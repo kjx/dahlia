@@ -1,5 +1,5 @@
 includes = ["*.dfy"]
-excludes = []
+excludes = ["dahlia-remainder.dfy","main.dfy"]
 
 
 [options]

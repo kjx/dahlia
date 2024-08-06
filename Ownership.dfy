@@ -177,18 +177,3 @@ function ownersBetween(part : Object, whole : Object) : (rv : set<Object>)
  set o <- part.AMFO | inside(o,whole)
 }
 
-
-///this won't translate that nicely to intersections, will it?
-lemma  {:onlyAAKE} ImOutsideSoAreAllMyOwners(a : Object, o : Object, context : set<Object>)   
-  requires AOK(a,context)
-  requires AOK(o,context)
-  requires not(inside(a,o)) 
-  ensures  forall oo <- a.AMFO :: not(inside(oo,o)) 
-  {}
-
-lemma {:onlyXXX} AllMyOwnersWillWitherAway(a : Object, context : set<Object>)
-  requires AllOK(context)
-  requires a in context
-  ensures a.AMFO <= context
-  ensures forall oo <- a.AMFO :: AOK(oo, context)
-{}

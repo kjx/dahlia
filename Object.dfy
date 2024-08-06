@@ -90,123 +90,6 @@ class Object {
   const AMFO : set<Object> //All MY FUCKING Owners
 
 
-  constructor {:verify false} {:vcs_split_on_every_assert} make(ks : map<string,Mode>, oo : Object, context : set<Object>, name : string) 
-    //requires oo.Ready() && oo.Valid() && oo.TRUMP()  
-    requires AOK(oo, context)
-    requires AllOK(context)
-
-    ensures region == Heap(oo)
-    ensures fieldModes == ks
-    ensures fields == map[] //object fields starts uninitialised    //ensures |fields| == 0 //object fields starts uninitialised
-    ensures region.owner == oo
-    ensures AMFO == oo.AMFO + {oo}
-    ensures AMFO == region.owner.AMFO + {region.owner}
-    ensures this !in AMFO
-    ensures nick == name
-    ensures (forall o <- AMFO :: inside(this, o))
-
-    ensures Ready()
-    ensures OwnersValid()
-    ensures Valid()
-    ensures TRUMP()
-
-    ensures (TRUMP()||(Ready() && Valid()))
-
-    ensures unchanged( context )
-    modifies {}
-  { 
-    region := Heap(oo);
-    fieldModes := ks;
-    fields := map[];
-    AMFO := {oo} + oo.AMFO;
-    nick := name;
-    new;   
-
-
-    assert nick == name;
-    assert fieldModes == ks;
-    assert fields == map[];
-    assert unchanged( context );
-
-    assert AOK(oo, context);
-
-    assert oo.Ready() && oo.Valid() && oo.TRUMP();
-
-    AOKWiderContext(oo, context, {this});
-    assert AOK(oo, {this}+context);
-
-
-    var thisContext := {this}+context;   //Smalltalk joke!
-
-//unpacking Ready()
-assert Ready() by {
-  assert (region.World? || region.Heap?);
-  assert (region.World? ==> (AMFO == {}));
-  assert (region.Heap?  ==> (AMFO == region.owner.AMFO + {region.owner}));
-  assert (region.Heap?  ==> (AMFO > region.owner.AMFO));
-  assert (region.Heap?  ==> region.owner.Ready());
-  assert (region.Heap?  ==> (forall owner <- region.owner.AMFO :: AMFO > owner.AMFO));
-  assert (region.Heap?  ==> (forall owner <- region.owner.AMFO :: owner.Ready()));
-  assert (forall owner <- AMFO :: AMFO > owner.AMFO);
-  assert (forall owner <- AMFO :: owner.Ready());
-}
-
-//unpacking Valid()
-assert Valid() by {
-
-  assert
-    (region.World? || region.Heap?)   //turn off other regions  //HMMM
-        &&
-    OwnersValid();
-
-          assert fields == map[];
-          NoFieldsAreGoodFields(context);
-
-    assert AllFieldsAreDeclared()
-        &&
-       AllFieldsContentsConsistentWithTheirDeclaration();
-}
-
-
-    assert ((Ready() && Valid()));
-  
-    
-//unpacking AOK
-    assert AOK(this, {this}+context) by 
-    {
-      assert (this in thisContext);
-
-   assert (this in thisContext);
-   assert (AMFO <= thisContext);
-   assert (forall oo <- AMFO :: oo.Ready());
-   assert (TRUMP()||(Ready() && Valid()));
-   assert (AllOutgoingReferencesAreOwnership(thisContext));
-   assert (AllOutgoingReferencesWithinThisHeap(thisContext));
-   assert (AllOwnersAreWithinThisHeap(thisContext));
-    }
-
-
-    assert nick == name;
-    assert fieldModes == ks;
-    assert fields == map[];
-    assert unchanged( context );
-
-
-    NoFieldsAreGoodFields(thisContext);
-    assert (AllOutgoingReferencesAreOwnership(thisContext));
-    assert (AllOutgoingReferencesWithinThisHeap(thisContext));
-    assert (AllOwnersAreWithinThisHeap(thisContext));
-
-    assert AOK(this,  {this}+context);
-    assert AllOK({this},  {this}+context);
-    assert AOK(oo, {this}+context);
-    assert AllOK({oo}, {this}+context);
-    AllOKWiderFocus({this},{oo}, {this}+context);
-    assert AllOK({this,oo}, {this} + context);
-
-  }
-
-
 
 lemma {:onlyNUKE} triceratops(aa : set<Object>, bb : set<Object>, cc : set<Object>) 
   ensures (aa + bb + cc) == ((aa + bb) + cc) == (aa + (bb + cc))
@@ -226,7 +109,7 @@ lemma {:onlyNUKE} cordelia()
 
 
 //:onlyGRUNTS} 
-  constructor {:onlyONLY} {:vcs_split_on_every_assert} cake(ks : map<string,Mode>, oo : Object, context : set<Object>, name : string) 
+  constructor cake(ks : map<string,Mode>, oo : Object, context : set<Object>, name : string) 
     requires COK(oo, context)
     requires CallOK(context)
     //requires CallOK({oo}+oo.AMFO, context)
@@ -264,155 +147,25 @@ lemma {:onlyNUKE} cordelia()
     CallOKWiderContext({oo}+oo.AMFO,context,{this});
     assert CallOK({oo}+oo.AMFO, {this}+context) by { assert {this}+context == context+{this}; }
 
-    AllOKfromCallOK({oo}+oo.AMFO, context);
-    assert AllOK({oo}+oo.AMFO, context);
-    AllOKfromCallOK({oo}+oo.AMFO, {this}+context);
-    assert AllOK({oo}+oo.AMFO, {this}+context);
 
-    assert AOK(this, {this}+context) by
-    {
-      reveal CallOK(), COK();
-       var a := this;
-       var context := {this}+context; 
-
-//unpacking AOK
-    assert (a in context);
-
-//unpacking a.Ready()
-assert
-  && (region.World? || region.Heap?)
-  && (region.World? ==> (AMFO == {}))
-  && (region.Heap?  ==> (AMFO == region.owner.AMFO + {region.owner}))
-  && (region.Heap?  ==> (AMFO > region.owner.AMFO))
-  && (region.Heap?  ==> region.owner.Ready())
-  && (region.Heap?  ==> (forall owner <- region.owner.AMFO :: AMFO > owner.AMFO))
-  && (region.Heap?  ==> (forall owner <- region.owner.AMFO :: owner.Ready()))
-  ;
-
-
-  assert(region.Heap?  ==> (forall owner <- region.owner.AMFO :: owner.Ready())) by 
-  { 
-    assert CallOK({oo}+oo.AMFO, context);
-    reveal CallOK();
-    assert COK(oo, context);
-    reveal COK();
-    assert forall x <- oo.AMFO :: x.Ready();
-    assert region.owner == oo;
-    assert forall owner <- region.owner.AMFO :: owner.Ready();
-  }
-
-  assert (region.Heap? ==> (forall owner <- region.owner.AMFO :: AMFO > owner.AMFO)) by 
-  {
-    assert CallOK({oo}+oo.AMFO, context);
-    reveal CallOK();
-    assert COK(oo, context);
-    reveal COK();
-    assert oo.Ready();
-    assert (forall x <- oo.AMFO :: AMFO > x.AMFO);
-    assert region.owner == oo;
-    assert region.Heap?;
-    assert (region.Heap?  ==> (forall owner <- region.owner.AMFO :: AMFO > owner.AMFO));
-  }
-
-
-assert AMFOZ: (region.Heap?  ==> (forall owner <- region.owner.AMFO :: AMFO > owner.AMFO));
-
-assert  (forall x <- AMFO :: AMFO > x.AMFO) by {
-    assert CallOK({oo}+oo.AMFO, context);
-    reveal CallOK();
-    assert COK(oo, context);
-    reveal COK();
-    assert oo.Ready();
-    assert AMFOO: (forall x <- {oo}:: AMFO > x.AMFO);
-    assert AMFOX: (forall x <- oo.AMFO :: AMFO > x.AMFO);
-
-    ///what the FUCK oiss this trying to do??
-    assert (forall x <- oo.AMFO+{oo}:: AMFO > x.AMFO) by {
-      forall x <- oo.AMFO+{oo} ensures (AMFO > x.AMFO)
-      {
-        if (x == oo)  
-          { assert AMFO > x.AMFO by { reveal AMFOO; } 
-          } else { 
-            HeyFUCKOFF(x, oo, oo.AMFO);
-
-            assert AMFO > x.AMFO by { 
-              assert x in oo.AMFO;
-              reveal AMFOX; 
-              assert (forall x <- oo.AMFO :: AMFO > x.AMFO);
-              } }
-        assert (AMFO > x.AMFO);
-      }        
-    }
-
-    assert AMFO == oo.AMFO + {oo};
-    assert (forall x <- AMFO :: AMFO > x.AMFO);
-}
-
-assert Ready();
-
-        reveal CallOK(), COK(); 
-        assert CallOK({oo}+oo.AMFO, context); 
-        assert AMFO == {oo}+oo.AMFO;
-        assert AllOK(AMFO, context); 
+    assert COK(this, {this}+context) by 
+        { 
+          reveal COK();
+    
+          assert (this in ({this}+context)) ;
+          assert (this.AMFO <= ({this}+context));
+          assert (forall oo <- this.AMFO :: oo.Ready());
+          assert (this.Ready());
+          assert (this.Valid());
+          assert (this.AllOutgoingReferencesAreOwnership(({this}+context)))  ;
+          assert (this.AllOutgoingReferencesWithinThisHeap(({this}+context)));
+          assert (this.AllOwnersAreWithinThisHeap(({this}+context)));
+         }
 
 
 
 
-  // assert (forall owner <- AMFO :: AMFO > owner.AMFO) 
-  //   by {   
-  //       reveal CallOK(), COK(); 
-  //       assert CallOK({oo}+oo.AMFO, context); 
-  //       assert AMFO == {oo}+oo.AMFO;
-  //       assert AllOK(AMFO, context); 
-  //   }
 
-  assert (forall owner <- AMFO :: owner.Ready());
-
-//iunpacking ownersvalid
-assert
-  && (region.World? || region.Heap?)  
-  && (this !in AMFO)
-  && (region.World? ==> (AMFO == {}))
-  && (region.Heap? ==> (AMFO > {}))
-  && ((region.Heap?) ==> region.owner in AMFO)
-  && ((region.Heap?) ==> assert region.owner in AMFO; AMFO > region.owner.AMFO)
-  && ((region.Heap?) ==> (AMFO == region.owner.AMFO + {region.owner}))
-  && ((region.Heap?) ==> assert region.owner in AMFO; region.owner.Ready())
-//  && (forall own <- AMFO :: (own.AMFO < AMFO) && own.Ready())
-  && (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
-//  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
-;
-
-
-//unpacking a.Valid()
-
-assert
-    (region.World? || region.Heap?)   //turn off other regions  //HMMM
-        &&
-    OwnersValid()
-       &&
-    AllFieldsAreDeclared()
-        &&
-    AllFieldsContentsConsistentWithTheirDeclaration();
-
-
-
-    assert ((a.Ready() && a.Valid()));
- 
-    assert (a.AllOutgoingReferencesAreOwnership(context));
-    assert (a.AllOutgoingReferencesWithinThisHeap(context));
-    assert (a.AllOwnersAreWithinThisHeap(context));
-
-   assert AOK(a, context);
-   assert this == a;
-   assert AOK(this, context);
-   
-//         assert COK(a, context) by { reveal COK(); }
-    }
-
-  assert AOK(this, {this}+context);
-  COKfromAOK(this, {this}+context);
-  assert COK(this, {this}+context);// by { reveal COK(); }
   assert COKOK: COK(this, context+{this}) 
     by { assert  {this}+context == context+{this}; }
 
@@ -460,7 +213,6 @@ assert
     ensures OwnersValid()
     ensures Valid()
     ensures TRUMP()
-    ensures AOK(this, {this})
     ensures nick is string
     ensures MOGO()
     modifies {}
@@ -493,7 +245,6 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
     ensures OwnersValid()
     ensures Valid()
     ensures TRUMP()
-    ensures AOK(this, {this})
     ensures nick is string
     ensures MOGO()
 

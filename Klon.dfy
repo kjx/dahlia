@@ -108,7 +108,7 @@ datatype Map = Map(
         reveal calid(); assert calid();
         var rv := Map(m[k:=v], ks+{k}, vs+{v}, o, oHeap, ns+{v});
 
-        assert COK(v, rv.oHeap+rv.ns) by {
+          assert COK(v, rv.oHeap+rv.ns) by {
             assert COK(v, oHeap+ns+{v});  // from reqs
             assert rv.oHeap      == oHeap;
             assert rv.ns         == ns+{v};
@@ -116,7 +116,7 @@ datatype Map = Map(
             assert COK(v, rv.oHeap+rv.ns);
           }
 
-        assert rv.calidObjects() by {
+          assert rv.calidObjects() by {
             reveal rv.calidObjects();
 
             assert rv.ks == rv.m.Keys;
@@ -127,19 +127,19 @@ datatype Map = Map(
             assert rv.vs <= rv.ns + oHeap;
 
             assert rv.calidObjects(); 
-        }
+          }
 
-        assert v !in vs; // from reqs
-        assert vs == m.Values by { 
+          assert v !in vs; // from reqs
+          assert vs == m.Values by { 
             assert calid();
             reveal calid();
             assert calidObjects();
             reveal calidObjects();
             assert vs == m.Values;
                    }
-        assert v !in m.Values;
+          assert v !in m.Values;
 
-        assert rv.calidOK() by {
+          assert rv.calidOK() by {
             reveal rv.calidOK();
             reveal rv.calidObjects();
             assert COK(rv.o, rv.oHeap);
@@ -169,8 +169,8 @@ datatype Map = Map(
           }
 
 
-        // reveal rv.calidMap();
-        // assert rv.calidMap() by {
+          // reveal rv.calidMap();
+          // assert rv.calidMap() by {
             reveal rv.calidMap();
             assert MapOK(rv.m) by {
                 assert MapOK(m);
@@ -202,7 +202,7 @@ datatype Map = Map(
                 assert (forall x <- rv.m.Keys |  x.region.Heap? :: x.region.owner in rv.m.Keys);
                 assert (forall x <- rv.m.Keys |  x.region.Heap? :: rv.m[x.region.owner] == rv.m[x].region.owner );
             }  //MAapOK
-//?} //calidMap
+
 
             assert (forall x <- rv.m.Keys :: (not(inside(x,rv.o)) ==> (rv.m[x] == x))) by 
             {
@@ -225,41 +225,41 @@ datatype Map = Map(
             assert (forall x <- ks, oo <- x.AMFO :: m[oo] in m[x].AMFO);
             reveal rv.calidMap();
             assert rv.calidMap();
-      
-        reveal rv.calidSheep();
-            reveal rv.calidObjects();
+
+                reveal rv.calidSheep();
+                reveal rv.calidObjects();
+                assert ks == m.Keys;
+                assert rv.ks == rv.m.Keys;
+            assert inside(k, o);
+            reveal calidMap();
+            assert calidMap();
+            reveal calidSheep();
+
+            
+            assert forall x <- ks :: AreWeNotMen(x, this);
+            assert rv.ks == rv.m.Keys == (ks+{k});
+
+            assert forall x <- ks :: x.fieldModes == m[x].fieldModes;
+            assert k.fieldModes == v.fieldModes;
+            assert forall x <- rv.ks :: x.fieldModes == rv.m[x].fieldModes;
+
+            assert calidSheep();
+            reveal rv.calidSheep();
+            //reveal UniqueMapEntry();
+
             assert ks == m.Keys;
-            assert rv.ks == rv.m.Keys;
-        assert inside(k, o);
-        reveal calidMap();
-        assert calidMap();
-        reveal calidSheep();
 
-        
-        assert forall x <- ks :: AreWeNotMen(x, this);
-        assert rv.ks == rv.m.Keys == (ks+{k});
+                reveal AreWeNotMen();  
+                reveal UniqueMapEntry();
+            assert forall x <- ks  :: AreWeNotMen(x, this); 
+            assert forall x <- {k} :: AreWeNotMen(x, rv);
+            assert forall x <- rv.m.Keys :: AreWeNotMen(x, rv);
 
-        assert forall x <- ks :: x.fieldModes == m[x].fieldModes;
-        assert k.fieldModes == v.fieldModes;
-        assert forall x <- rv.ks :: x.fieldModes == rv.m[x].fieldModes;
+            assert rv.calidSheep();
+            reveal rv.calid(); assert rv.calid();
 
-        assert calidSheep();
-        reveal rv.calidSheep();
-        //reveal UniqueMapEntry();
-
-        assert ks == m.Keys;
-
-reveal AreWeNotMen();  
-reveal UniqueMapEntry();
-        assert forall x <- ks  :: AreWeNotMen(x, this); 
-       assert forall x <- {k} :: AreWeNotMen(x, rv);
-        assert forall x <- rv.m.Keys :: AreWeNotMen(x, rv);
-
-        assert rv.calidSheep();
-        reveal rv.calid(); assert rv.calid();
-
-rv
-     }
+            rv
+}
       
 
 
@@ -287,7 +287,7 @@ rv
       reveal calid(); assert calid();
       var rv := Map(m[k:=k], ks+{k}, vs+{k}, o, oHeap, ns);
 
-        assert rv.calidObjects() by {
+          assert rv.calidObjects() by {
             reveal rv.calidObjects();
 
             assert rv.ks == rv.m.Keys;
@@ -298,20 +298,20 @@ rv
             assert rv.vs <= rv.ns + oHeap;
 
             assert rv.calidObjects(); 
-        }
+          }
 
-        assert k !in vs; // from reqs
-        assert vs == m.Values by { 
+          assert k !in vs; // from reqs
+            assert vs == m.Values by { 
             assert calid();
             reveal calid();
             assert calidObjects();
             reveal calidObjects();
             assert vs == m.Values;
                    }
-        assert k !in m.Values;
+          assert k !in m.Values;
 
 
-        assert rv.calidOK() by {
+          assert rv.calidOK() by {
             reveal rv.calidOK();
             assert COK(rv.o, rv.oHeap);
             assert CallOK(rv.oHeap);
@@ -332,9 +332,6 @@ rv
             reveal rv.calidOK(); assert rv.calidOK();
           }
 
-
-//        reveal rv.calidMap();
-//        assert rv.calidMap() by {
             reveal rv.calidMap();
             assert MapOK(rv.m) by {
                 assert MapOK(m);
@@ -367,8 +364,8 @@ rv
                 assert (forall x <- rv.m.Keys |  x.region.Heap? :: rv.m[x.region.owner] == rv.m[x].region.owner );
 
                 assert MapOK(rv.m);
-            }  //MAapOK
-//       }
+            } 
+
             assert (forall x <- rv.m.Keys :: (not(inside(x,rv.o)) ==> (rv.m[x] == x))) by 
             {
                   reveal rv.calidObjects();
@@ -390,40 +387,41 @@ rv
             assert (forall x <- ks, oo <- x.AMFO :: m[oo] in m[x].AMFO);
             reveal rv.calidMap();
             assert rv.calidMap();
-      
-        reveal rv.calidSheep();
-            reveal rv.calidObjects();
-            assert ks == m.Keys;
-            assert rv.ks == rv.m.Keys;
-        assert not(inside(k, o));
-        reveal calidMap();
-        assert calidMap();
-        reveal calidSheep();
-        assert calidSheep();
+          
+            reveal rv.calidSheep();
+                reveal rv.calidObjects();
+                assert ks == m.Keys;
+                assert rv.ks == rv.m.Keys;
+            assert not(inside(k, o));
+            reveal calidMap();
+            assert calidMap();
+            reveal calidSheep();
+            assert calidSheep();
 
-      assert forall x <- ks :: AreWeNotMen(x, this);
+          assert forall x <- ks :: AreWeNotMen(x, this);
 
-assert rv.ks == rv.m.Keys == (ks+{k});
-
-
-        assert calidSheep();
-        reveal rv.calidSheep();
-        //reveal UniqueMapEntry();
-
-        assert ks == m.Keys;
-
-reveal AreWeNotMen();  
-reveal UniqueMapEntry();
-        assert forall x <- ks  :: AreWeNotMen(x, this);
-        assert forall x <- {k} :: AreWeNotMen(x, rv);
-        assert forall x <- rv.m.Keys :: AreWeNotMen(x, rv);
-        
+          assert rv.ks == rv.m.Keys == (ks+{k});
 
 
-        assert rv.calidSheep();
+          assert calidSheep();
+          reveal rv.calidSheep();
+          //reveal UniqueMapEntry();
 
-        reveal rv.calid(); assert rv.calid();
-        rv
+          assert ks == m.Keys;
+
+          reveal AreWeNotMen();  
+          reveal UniqueMapEntry();
+          assert forall x <- ks  :: AreWeNotMen(x, this);
+          assert forall x <- {k} :: AreWeNotMen(x, rv);
+          assert forall x <- rv.m.Keys :: AreWeNotMen(x, rv);
+          
+
+
+          assert rv.calidSheep();
+
+          reveal rv.calid(); assert rv.calid();
+
+          rv
         
    }
 
@@ -747,16 +745,21 @@ lemma COKfromCallOK(a : Object, focus : set<Object>, context : set<Object>  := f
   }
 
 
-lemma {:onlyNUKE} CallOKfromCOK(a : Object, context : set<Object>) 
+lemma CallOKfromCOK(a : Object, context : set<Object>) 
   requires COK(a, context)
   ensures  CallOK({a}, context)
   {
     reveal CallOK();
   }
 
-
-
-
+lemma RVfromCOK(a : Object, context : set<Object>) 
+  requires COK(a, context)
+  ensures a.Ready()
+  ensures a.Valid()
+  ensures a.AMFO <= context
+  {
+    reveal COK();
+  }
 
 
 
@@ -1822,15 +1825,18 @@ print "VARIANT CIH ", |(m'.oHeap - m'.ks)|, " ", |a.AMFO|, " ", |(a.fields.Keys)
             assert m.calidOK();
             reveal m.calidOK();      
             COKfromCallOK(a, m.oHeap);
-            AOKfromCOK(a, m.oHeap);
+            assert COK(a, m.oHeap);
+            reveal COK();
+            assert a.Ready();
+            assert a.region.owner in a.AMFO;            
             assert COK(m.o, m.oHeap);
             assert CallOK(m.oHeap);
-            AllOKfromCallOK(m.oHeap);
-            AOKAMFO(a, m.oHeap);
+            COKAMFO(a, m.oHeap);
+            assert CallOK({a}+a.AMFO, m.oHeap);
             assert a.region.owner in a.AMFO;
-            assert AOK(a.region.owner, m.oHeap);
-            COKfromAOK(a.region.owner, m.oHeap);
+            COKfromCallOK(a.region.owner, m.oHeap);
             assert COK(a.region.owner, m.oHeap);
+
         }
 
 
@@ -2083,7 +2089,6 @@ print "VARIANT CIW ", |(m'.oHeap - m'.ks)|, " ", |a.AMFO|, " ", |(a.fields.Keys)
         print "Clone_Via_Map world:", fmtobj(a),"\n";
 
         assert CallOK(m.oHeap);   
-        AllOKfromCallOK(m.oHeap,m.oHeap);
 
         assert BEFORE: m.calid(); 
     
@@ -2109,6 +2114,7 @@ print "VARIANT CIW ", |(m'.oHeap - m'.ks)|, " ", |a.AMFO|, " ", |(a.fields.Keys)
         assert a !in m.ks by { reveal ANKS; }  //was m.m.Keys...
         assert a !in m.m.Keys by { reveal ANKS;  reveal m.calid(); assert m.calid(); reveal m.calidObjects(); assert m.calidObjects(); }  //was m.m.Keys...
 
+        RVfromCOK(a, m.oHeap);
         var mx := m.putInside(a,b);  
 
         assert (mx.ks == mx.m.Keys && mx.vs == mx.m.Values) 
