@@ -14,7 +14,7 @@ lemma {:onlyONLY} COKAMFO(a : Object, context : set<Object>)
   decreases a.AMFO
   requires  COK(a, context)
   requires  CallOK(context)
-  ensures   CallOK({a}+a.AMFO, context)
+  ensures   CallOK(a.AMFO, context)
 { 
   reveal COK();
   reveal CallOK();
@@ -180,8 +180,19 @@ lemma RVfromCOK(a : Object, context : set<Object>)
   ensures a.Ready()
   ensures a.Valid()
   ensures a.AMFO <= context
+  ensures (forall oo <- a.AMFO :: oo.Ready())
   {
     reveal COK();
+  }
+
+lemma RVfromCallOK(aa : set<Object>, context : set<Object>) 
+  requires CallOK(aa, context)
+  ensures  (forall a <- aa :: a.Ready())
+  ensures  (forall a <- aa :: a.Valid())
+  ensures  (forall a <- aa :: a.AMFO <= context)
+  ensures  (forall a <- aa, oo <- a.AMFO :: oo.Ready())
+  {
+    reveal COK(), CallOK();
   }
 
 

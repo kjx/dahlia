@@ -87,9 +87,9 @@ class Object {
   var   fieldModes : map<string,Mode>//Mode of each field name -  note, static! - would be statically known by any methods
     //probably also has to go to var to get to typestate. GRRR. 
 
-  const AMFO : set<Object> //All MY FUCKING Owners
+  const AMFO : set<Object> //All MY FUCKING Owners  (aka All My Flat Owners:-)
 
-
+  const extra : set<Object> //additional owners e.g. for stack frames inside objects
 
 lemma {:onlyNUKE} triceratops(aa : set<Object>, bb : set<Object>, cc : set<Object>) 
   ensures (aa + bb + cc) == ((aa + bb) + cc) == (aa + (bb + cc))
@@ -109,16 +109,19 @@ lemma {:onlyNUKE} cordelia()
 
 
 //:onlyGRUNTS} 
-  constructor cake(ks : map<string,Mode>, oo : Object, context : set<Object>, name : string) 
+  constructor {:isolate_assertions} cake(ks : map<string,Mode>, oo : Object, context : set<Object>, name : string, xtra : set<Object> := {} ) 
     requires COK(oo, context)
     requires CallOK(context)
+    requires CallOK(xtra, context)
+    requires ExtraIsExtra(xtra, context)
     //requires CallOK({oo}+oo.AMFO, context)
 
     ensures region == Heap(oo)
     ensures fieldModes == ks
     ensures fields == map[] 
-    ensures AMFO == oo.AMFO + {oo}
-    ensures this !in AMFO
+    ensures extra == xtra
+    ensures AMFO == oo.AMFO + {this} + xtra
+    ensures this in AMFO
     ensures nick == name
     ensures (forall o <- AMFO :: inside(this, o))
     
@@ -131,37 +134,53 @@ lemma {:onlyNUKE} cordelia()
     region := Heap(oo);
     fieldModes := ks;
     fields := map[];
-    AMFO := {oo} + oo.AMFO;
+    AMFO := oo.AMFO + xtra + {this};
     nick := name;
+    extra := xtra;
     new;   
 
     assert fieldModes == ks;
     assert fields == map[];
     assert nick == name;
+    assert extra == xtra;
 
     assert COK(oo, context);
     assert CallOK(context);
     COKAMFO(oo, context);
-    assert CallOK({oo}+oo.AMFO, context); 
-    assert ({oo}+oo.AMFO) <= context by { reveal CallOK(), COK(); }
-    CallOKWiderContext({oo}+oo.AMFO,context,{this});
-    assert CallOK({oo}+oo.AMFO, {this}+context) by { assert {this}+context == context+{this}; }
+    assert  (this in context+{this}) by { reveal COK(), CallOK(); } 
+    assert  (xtra <= context) by { reveal COK(), CallOK(); } 
+    assert  (AMFO <= context+{this}) by { reveal COK(), CallOK(); } 
+    assert CallOK(oo.AMFO, context); 
+    assert (oo.AMFO) <= context by { reveal CallOK(), COK(); }
+    CallOKWiderContext(oo.AMFO,context,{this});
+    assert CallOK(oo.AMFO, {this}+context) by { assert {this}+context == context+{this}; }
 
 
     assert COK(this, {this}+context) by 
         { 
           reveal COK();
-    
-          assert (this in ({this}+context)) ;
+  
+          assert (this in ({this}+context));
           assert (this.AMFO <= ({this}+context));
-          assert (forall oo <- this.AMFO :: oo.Ready());
+          RVfromCOK(oo,context);
+          assert (forall a <- oo.AMFO  :: a.Ready()); 
+          assert (forall a <- oo.AMFO  :: AMFO > a.AMFO); 
+
+          RVfromCallOK(extra, context);
+          assert (forall a <- extra    :: a.Ready()); 
+
+          assert AMFO == oo.AMFO + extra + {this};
+          assert this !in oo.AMFO;
+          assert this !in extra;
+
+          assert CallOK(extra,context);
+          assert (forall a <- extra:: AMFO > a.AMFO); 
           assert (this.Ready());
-          assert (this.Valid());
+          assert (this.Valid());    
           assert (this.AllOutgoingReferencesAreOwnership(({this}+context)))  ;
           assert (this.AllOutgoingReferencesWithinThisHeap(({this}+context)));
           assert (this.AllOwnersAreWithinThisHeap(({this}+context)));
          }
-
 
 
 
@@ -173,12 +192,13 @@ lemma {:onlyNUKE} cordelia()
  
   assert CallOK({this}, {this}+context) ;
 
-  CallOKWiderFocus({this}, {oo}+oo.AMFO, {this} + context);
+  CallOKWiderFocus({this}, oo.AMFO, {this} + context);
 
-  assert CallOK({this} + ({oo}+oo.AMFO), {this} + context);
+  assert CallOK({this} + (oo.AMFO), {this} + context);
 
-  assert CallOK(({this}+{oo}) + oo.AMFO, {this} + context)
-    by  {assert {this} + ({oo}+oo.AMFO) == ({this}+{oo}) + oo.AMFO; }
+  assert CallOK(xtra, context);
+
+  assert  CallOK({this} + oo.AMFO, {this} + context);
 
   assert COK(this, context+{this}) by { reveal COKOK; }
 
@@ -207,8 +227,8 @@ lemma {:onlyNUKE} cordelia()
     ensures region == World
     ensures fieldModes == ks
     ensures fields == map[] //object fields starts uninitialised
-    ensures AMFO == {}
-    ensures this !in AMFO
+    ensures AMFO == {this}
+    ensures this in AMFO
     ensures Ready()
     ensures OwnersValid()
     ensures Valid()
@@ -220,7 +240,7 @@ lemma {:onlyNUKE} cordelia()
     region := World;
     fieldModes := ks;
     fields := map[];
-    AMFO := {};
+    AMFO := {this};
     nick := "";
     new;
     assert Ready();
@@ -239,8 +259,8 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
     ensures region == World
     ensures fieldModes == ks
     ensures fields == map[] //object fields starts uninitialised
-    ensures AMFO == {}
-    ensures this !in AMFO
+    ensures AMFO == {this}
+    ensures this in AMFO
     ensures Ready()
     ensures OwnersValid()
     ensures Valid()
@@ -258,7 +278,7 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
     region := World;
     fieldModes := ks;
     fields := map[];
-    AMFO := {};
+    AMFO := {this};
     nick := "";
     new;
     assert Ready();
@@ -296,14 +316,14 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
    decreases AMFO
 {
   && (region.World? || region.Heap?)
-  && (region.World? ==> (AMFO == {}))
-  && (region.Heap?  ==> (AMFO == region.owner.AMFO + {region.owner}))
+  && (region.World? ==> (AMFO == {this}))
+  && (region.Heap?  ==> (AMFO == region.owner.AMFO + extra + {this}))
   && (region.Heap?  ==> (AMFO > region.owner.AMFO))
   && (region.Heap?  ==> region.owner.Ready())
   && (region.Heap?  ==> (forall owner <- region.owner.AMFO :: AMFO > owner.AMFO))
   && (region.Heap?  ==> (forall owner <- region.owner.AMFO :: owner.Ready()))
-  && (forall owner <- AMFO :: AMFO > owner.AMFO)
-  && (forall owner <- AMFO :: owner.Ready())
+  && (forall owner <- (AMFO - {this}) :: AMFO > owner.AMFO)
+  && (forall owner <- (AMFO - {this}) :: owner.Ready())
   }
 
 
@@ -393,6 +413,7 @@ lemma ReadyGetsOwnersValid()
   ensures OwnersValid()
 {
   //////reveal Ready();
+assert OwnersValid(); 
 }
 
 
@@ -403,14 +424,14 @@ predicate {:onlyNUKE} OwnersValid() : (rv : bool) //newe version with Ready {}Mo
   {  
   && (Ready())
   && (region.World? || region.Heap?)  
-  && (this !in AMFO)
-  && (region.World? ==> (AMFO == {}))
+  && (this in AMFO)
+  && (region.World? ==> (AMFO == {this}))
   && (region.Heap? ==> (AMFO > {}))
   && ((region.Heap?) ==> region.owner in AMFO)
   && ((region.Heap?) ==> assert region.owner in AMFO; AMFO > region.owner.AMFO)
-  && ((region.Heap?) ==> (AMFO == region.owner.AMFO + {region.owner}))
+  && ((region.Heap?) ==> (AMFO == region.owner.AMFO + extra + {this}))
   && ((region.Heap?) ==> assert region.owner in AMFO; region.owner.Ready())
-  && (forall own <- AMFO :: (own.AMFO < AMFO) && own.Ready())
+  && (forall own <- (AMFO - {this}) :: (own.AMFO < AMFO) && own.Ready())
   && (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
   && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
   }
@@ -428,7 +449,7 @@ predicate {:onlyNUKE} OwnersValid() : (rv : bool) //newe version with Ready {}Mo
 // //  ensures rv ==>  ((region.Heap?) ==> assert region.owner in AMFO; |AMFO| > |region.owner.AMFO|)
 //   ensures rv ==>  ((region.Heap?) ==> (AMFO == region.owner.AMFO + {region.owner}))
 //   ensures rv ==>  ((region.Heap?) ==> assert region.owner in AMFO; region.owner.Ready())
-//   ensures rv ==>  (forall own <- AMFO :: (own.AMFO < AMFO) && own.Ready())
+//   ensures rv ==>  (forall own <- (AMFO - {this}) :: (own.AMFO < AMFO) && own.Ready())
 //   ensures rv ==>  (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
 //   ensures rv ==>  (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
 //     //  ensures (forall b <- AMFO, c <- b.AMFO :: c in AMFO && recInside(b,c) && recInside(this,c)))
@@ -447,8 +468,9 @@ lemma {:onlyAMFO} AMFOsisAMFOs()
 lemma {:onlyAMFO} AMFOsisAMFOs2() 
    requires Ready()
    requires OwnersValid()
-   ensures forall x <- AMFO + {this}, oo <- x.AMFO :: oo.AMFO <= AMFO
+   ensures forall x <- AMFO, oo <- x.AMFO :: oo.AMFO <= AMFO
 {}
+
 
 lemma  CallMyOwnersWillWitherAway(a : Object, context : set<Object>)
   requires CallOK(context)
@@ -568,6 +590,17 @@ assert true;
 //extended validity
 
 
+
+
+predicate ExtraIsExtra(xtra : set<Object>, context : set<Object>)
+  reads (set x <- xtra, xa <- x.AMFO :: xa)`fields
+  reads (set x <- xtra, xa <- x.AMFO :: xa)`fieldModes
+  reads  xtra`fields, xtra`fieldModes
+{
+  && CallOK(xtra, context)
+  && (forall e <- xtra :: e.AMFO <= context)
+  && (forall e <- xtra :: e.AMFO <= xtra)     //is this want we want..?
+}
 
 
   predicate  {:vcs_split_on_every_assert}{:timeLimit 10} StandaloneObjectsAreValid(os : set<Object>) //do we know if "os" is "closed"?
@@ -787,9 +820,6 @@ function allFieldValuesExcept(os : set<Object>, xo : Object) : set<Object>
 {
 set o <- os, v <- o.fields.Values | o != xo :: v
 }
-
-
-
 
 
 

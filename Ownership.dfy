@@ -120,7 +120,11 @@ lemma ownerNOTInside(a : Object, b : Object, c : Object)
     requires a.Ready() && b.Ready() && c.Ready()
     requires a.Valid() && b.Valid() && c.Valid()
   //requires forall o <- {a, b, c} :: o.region.Heap?
+
   requires a.region.Heap? && a.region.owner == b
+  // requires a.region.Heap? && (b in a.AMFO) //b is an ownwer of a?
+  requires c !in a.extra
+  //requires c !in a.AMFO
   requires not(inside(b,c))
   requires not(inside(c,b))
   ensures  not(inside(a,c))
@@ -141,19 +145,20 @@ lemma insideMyDirectOwner(a : Object)
 //b is a's direct owner
 //b != c
 //b is insidde c
-lemma insideSomeIndirectOwner(a : Object, b : Object, c : Object)
+lemma {:isolate_assertions} insideSomeIndirectOwner(a : Object, b : Object, c : Object)
   requires a.Ready() && a.Valid()  //not the rest?
   requires a.region.Heap? && b.region.Heap?
   requires a != b && a != c && b != c  //not sure we need all of these...
   requires inside(a,c)
   requires b == a.region.owner
+  requires c !in a.AMFO
   ensures  inside(b,c)
 {
   if (not(inside(b,c)))   //proof by contradiction...
      {
       assert not( b.AMFO >= c.AMFO );   //not entirely sure about all this but...
       assert c !in b.AMFO;
-      assert a.AMFO == b.AMFO + {b};
+      assert a.AMFO == b.AMFO + a.extra + {a};
       assert c !in a.AMFO;
       assert not( a.AMFO >= c.AMFO );
       assert not(inside(a,c));
