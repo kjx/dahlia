@@ -160,24 +160,6 @@ datatype Status =
     }
   }
 
-lemma SubsetOfKeysOfExtendedMap(subset : set<Object>, left : Map, right : Map) 
-  requires left.calid()
-  requires right.calid()
-  requires subset <= left.ks
-  requires mapLEQ(left.m, right.m)
-  ensures  subset <= right.ks
-  {
-    reveal Map.calid();
-    reveal Map.calidObjects();
-    assert left.calid();
-    assert right.calid();
-    assert left.calidObjects();
-    assert right.calidObjects();
-    assert mapLEQ(left.m, right.m);
-    assert left.m.Keys <= right.m.Keys;
-    assert subset <= left.ks <= right.ks;
-  }
-
 lemma  SubsetOfMapLEQKeys<K,V>(subset : set<K>, left : map<K,V>, right : map<K,V>)
   requires subset <= left.Keys
   requires mapLEQ(left,right)
