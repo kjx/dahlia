@@ -77,7 +77,7 @@ datatype Map = Map(
       }
 
 
-    opaque function {:onlyClonly} putInside(k : Object, v : Object) : (r : Map)
+    opaque function {:isolate_assertions} putInside(k : Object, v : Object) : (r : Map)
       //put k -> v into map, k inside o
       reads oHeap`fields, oHeap`fieldModes
       reads ns`fields, ns`fieldModes,  v`fields, v`fieldModes     
@@ -1433,7 +1433,7 @@ assert m.calidObjects();
 
 
 
-method {:clonly}  Clone_Outside_Heap(a : Object, m' : Map)
+method {:isolate_assertions}  Clone_Outside_Heap(a : Object, m' : Map)
       returns (b : Object, m : Map)
   decreases (m'.oHeap - m'.ks), a.AMFO, (a.fields.Keys), 15 //Clone_Outside_Heap
 
@@ -1651,7 +1651,7 @@ assert COK(a.region.owner, m.oHeap);
 
 
 
-method {:clonly} Clone_Outside_World(a : Object, m' : Map)
+method {:isolate_assertions} Clone_Outside_World(a : Object, m' : Map)
       returns (b : Object, m : Map)
   decreases (m'.oHeap - m'.ks), a.AMFO, (a.fields.Keys), 15 //Clone_Outside_World
 
@@ -1759,7 +1759,7 @@ print "VARIANT COW ", |(m'.oHeap - m'.ks)|, " ", |a.AMFO|, " ", |(a.fields.Keys)
 
 
 
-method  {:onlyCVM} Clone_Inside_Heap(a : Object, m' : Map)
+method {:isolate_assertions} Clone_Inside_Heap(a : Object, m' : Map)
       returns (b : Object, m : Map)
   decreases (m'.oHeap - m'.ks), a.AMFO, (a.fields.Keys), 15 //Clone_Inside_Heap
 
