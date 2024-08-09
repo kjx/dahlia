@@ -174,7 +174,16 @@ lemma {:onlyNUKE} cordelia()
           assert this !in extra;
 
           assert CallOK(extra,context);
-          assert (forall a <- extra:: AMFO > a.AMFO); 
+          assert AMFO == oo.AMFO + {this} + xtra;
+          assert ExtraIsExtra(extra,context);
+          assert (forall x <- extra :: x in x.AMFO);
+          assert (forall x <- extra, xo <- x.AMFO :: xo in x.AMFO);
+          assert (forall x <- {region.owner}, xo <- x.AMFO :: xo in x.AMFO);
+  
+
+          assert region.owner.Ready();
+          assert (forall owner <- (AMFO - {this}) :: owner.Ready());
+          assert (forall owner <- (AMFO - {this}) :: AMFO > owner.AMFO);
           assert (this.Ready());
           assert (this.Valid());    
           assert (this.AllOutgoingReferencesAreOwnership(({this}+context)))  ;
@@ -328,6 +337,10 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
 
 
 
+function owners() : set<Object>
+ //all o's owners except o itself
+ {  AMFO - {this} }
+
 ///*opaque*/ 
 predicate {:onlyValid} Valid()
   decreases |AMFO|
@@ -393,7 +406,7 @@ lemma NoFieldsAreGoodFields(context : set<Object>)
     requires Ready()  // || TRUMP()
     //requires forall n <- fields :: ownersOK(fields[n],os)
     {
-       AMFO <= os
+       owners() <= os
     }
 
   function outgoing() : set<Object> reads this`fields { fields.Values }
@@ -597,10 +610,40 @@ predicate ExtraIsExtra(xtra : set<Object>, context : set<Object>)
   reads (set x <- xtra, xa <- x.AMFO :: xa)`fieldModes
   reads  xtra`fields, xtra`fieldModes
 {
-  && CallOK(xtra, context)
+//  && CallOK(xtra, context) ///DO I WANT THIS, O JUST "READY"""
+  && (forall e <- xtra :: e in e.AMFO)
+  && (forall e <- xtra :: e.AMFO <= (xtra))
   && (forall e <- xtra :: e.AMFO <= context)
-  && (forall e <- xtra :: e.AMFO <= xtra)     //is this want we want..?
+  //&& (forall e <- xtra :: e.AMFO <= xtra)     //is this want we want..?
 }
+
+
+/*oopaque or not or both */
+function flattenAMFOs(os : set<Object>) : (of : set<Object>)
+   requires forall o <- os :: o in o.AMFO
+   ensures  forall o <- os :: o in of
+   ensures  forall o <- os, oo <- o.AMFO :: oo in of
+   ensures  os <= of
+{
+    os + 
+    (set o <- os, oo <- o.AMFO :: oo)
+}
+
+
+lemma FlatExtras(xtra : set<Object>, context : set<Object>)
+   requires forall o <- xtra :: o in o.AMFO
+   requires forall o <- xtra :: o.AMFO <= context
+   requires CallOK(xtra, context)
+   ensures  CallOK(xtra, context)
+   ensures (forall e <- xtra :: e.AMFO <= context)
+   ensures  xtra <= context 
+  // ensures  ExtraIsExtra(flattenAMFOs(xtra), context)
+   {
+     reveal CallOK(), COK();
+     assert CallOK(xtra, context);// by { reveal fuka;}
+     assert ExtraIsExtra(flattenAMFOs(xtra), context);  
+  
+   }
 
 
   predicate  {:vcs_split_on_every_assert}{:timeLimit 10} StandaloneObjectsAreValid(os : set<Object>) //do we know if "os" is "closed"?

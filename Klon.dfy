@@ -1,7 +1,8 @@
-
+ 
 type Mapping = map<Object,Object>
 
-predicate MapOK(m : Mapping)
+///shoujld thsi be m.KEys or m.ks... 
+predicate OrigMapOK(m : Mapping)
 {
   && (forall x <- m.Keys, oo <- x.AMFO :: oo in m.Keys)
   && (forall x <- m.Keys :: x.region.Heap? == m[x].region.Heap?)
@@ -12,6 +13,21 @@ predicate MapOK(m : Mapping)
 //  && forall x <- m.Keys :: (not(inside(x,o)) ==> (m[x] == x))x
 }
 
+predicate MapOK(m : Mapping)
+{
+  && (forall x <- m.Keys, oo <- x.AMFO :: oo in m.Keys)
+  && (forall x <- m.Keys :: x.region.Heap? == m[x].region.Heap?)
+  && (forall x <- m.Keys |  x.region.Heap? :: x.region.owner in x.AMFO)
+  && (forall x <- m.Keys |  x.region.Heap? :: x.region.owner in m.Keys)
+  && (forall x <- m.Keys |  x.region.Heap? :: m[x.region.owner] == m[x].region.owner )
+  && (forall x <- m.Keys, oo <- x.AMFO :: m[oo] in m[x].AMFO)
+//  && forall x <- m.Keys :: (not(inside(x,o)) ==> (m[x] == x))x
+
+  && (forall x <- m.Keys |  x.region.Heap? :: x.extra <= x.AMFO)
+  && (forall x <- m.Keys |  x.region.Heap? :: x.extra <= m.Keys)
+  && (forall x <- m.Keys, xo <- x.extra :: xo in m.Keys)
+  && (forall x <- m.Keys, xo <- x.extra :: m[xo] in m[x].extra)  
+}
 
 
 
@@ -87,12 +103,19 @@ datatype Map = Map(
       requires COK(k, oHeap)
       requires COK(v, oHeap+ns+{v})
       requires ks <= oHeap
-      requires k.AMFO <= ks  //need to update - all my owners EXCEPT ME!
-      requires v.AMFO <= oHeap+ns //need to hae proceessed all owners first
+      requires k.owners() <= ks  //need to update - all my owners EXCEPT ME!
+      requires k.owners() <= m.Keys 
+      requires v.owners() <= oHeap+ns //need to hae proceessed all owners first
       requires v !in vs
       requires v !in (oHeap + ns)
       requires k.region.Heap? == v.region.Heap?
       requires k.region.Heap? ==> v.region.Heap? && (k.region.owner in m.Keys) && (m[k.region.owner] == v.region.owner)
+      requires k.owners() <= m.Keys
+      requires forall ko <- k.owners() :: ko in m.Keys
+      requires forall ko <- k.owners() :: m[ko] in v.AMFO
+
+      requires forall kx <- k.extra :: kx in m.Keys
+      requires forall kx <- k.extra :: m[kx] in v.extra
 //      requires k.region.Heap? ==> (k.region.owner in m && m[k.region.owner] == v.region.owner)
 //      requires reveal calid(); (calid() && k.region.Heap?) ==> (got(k.region.owner) && (at(k.region.owner) == v.region.owner))
       //requires fresh(v)
@@ -183,15 +206,17 @@ datatype Map = Map(
                 assert rv.calidObjects();
                 reveal calidObjects();
                 assert calidObjects();
+                reveal calidMap();
+                assert calidMap();
 
                 assert rv.m.Keys == rv.ks;
-                assert k.AMFO <= ks;
+                assert k.owners() <= ks;
 
                 assert forall x <- m.Keys :: x.AMFO <= ks by { 
                   assert forall x <- m.Keys, oo <- x.AMFO :: oo in m.Keys;
                 }  
-                assert k.AMFO <= ks;
-                assert forall x <- m.Keys+{k} :: x.AMFO <= ks;
+                assert k.owners() <= ks;
+              //  assert forall x <- m.Keys+{k} :: x.owner() <= ks;
                 assert forall x <- m.Keys+{k} :: x.AMFO <= ks+{k};
                 assert (ks+{k}) == m.Keys+{k} == rv.ks == rv.m.Keys;
                 assert forall x <- rv.m.Keys :: x.AMFO <= rv.m.Keys;
@@ -201,6 +226,34 @@ datatype Map = Map(
                 assert (forall x <- rv.m.Keys |  x.region.Heap? :: x.region.owner in x.AMFO);
                 assert (forall x <- rv.m.Keys |  x.region.Heap? :: x.region.owner in rv.m.Keys);
                 assert (forall x <- rv.m.Keys |  x.region.Heap? :: rv.m[x.region.owner] == rv.m[x].region.owner );
+
+              assert (forall x <- m.Keys, oo <- x.AMFO :: m[oo] in m[x].AMFO);
+              assert (forall x <- m.Keys, oo <- x.AMFO :: rv.m[oo] in rv.m[x].AMFO);
+              assert rv.m[k] == v;
+              assert ks == m.Keys;
+              assert (k.owners() <= ks);
+              assert (k.AMFO - {k}) <= ks;
+              assert (forall oo <- (k.AMFO - {k}):: oo in m.Keys); 
+              assert (forall oo <- (k.AMFO - {k}):: m[oo] in v.AMFO); 
+              assert (forall oo <- (k.AMFO - {k}):: rv.m[oo] in rv.m[k].AMFO); 
+
+              assert (forall x <- m.Keys, xo <- x.extra :: xo in m.Keys);
+              assert (forall x <- m.Keys, xo <- x.extra :: m[xo] in m[x].extra);
+              assert (forall x <- m.Keys, xo <- x.extra :: xo in rv.m.Keys);
+              assert (forall x <- m.Keys, xo <- x.extra :: rv.m[xo] in rv.m[x].extra);
+
+
+
+              assert (forall xo <- k.extra :: xo in rv.m.Keys); 
+              assert (forall xo <- k.extra :: rv.m[xo] in rv.m[k].extra);
+
+                assert rv.m.Keys == m.Keys + {k};
+
+                assert (forall x <- rv.m.Keys, oo <- x.AMFO :: rv.m[oo] in rv.m[x].AMFO);
+                assert (forall x <- rv.m.Keys |  x.region.Heap? :: x.extra <= x.AMFO);
+                assert (forall x <- rv.m.Keys |  x.region.Heap? :: x.extra <= rv.m.Keys);
+                assert (forall x <- rv.m.Keys, xo <- x.extra :: xo in rv.m.Keys);
+                assert (forall x <- rv.m.Keys, xo <- x.extra :: rv.m[xo] in rv.m[x].extra);
             }  //MAapOK
 
 
@@ -273,7 +326,7 @@ datatype Map = Map(
       requires k !in vs
       requires k in oHeap
       requires COK(k, oHeap)
-      requires k.AMFO <= ks   //need to update - all my owners EXCEPT ME!
+      requires k.owners() <= ks   //need to update - all my owners EXCEPT ME!
       requires not(inside(k, o))
 
       ensures r == Map(m[k:=k], ks+{k}, vs+{k}, o, oHeap, ns)
@@ -346,14 +399,13 @@ datatype Map = Map(
                 assert calidObjects();
 
                 assert rv.m.Keys == rv.ks;
-                assert k.AMFO <= ks;
 
                 assert forall x <- m.Keys :: x.AMFO <= ks by { 
                   assert forall x <- m.Keys, oo <- x.AMFO :: oo in m.Keys;
                 }  
-                assert k.AMFO <= ks;
-                assert forall x <- m.Keys+{k} :: x.AMFO <= ks;
-                assert forall x <- m.Keys+{k} :: x.AMFO <= ks+{k};
+                assert k.owners() <= ks;
+                assert forall x <- m.Keys+{k} :: x.owners() <= ks;
+                assert forall x <- m.Keys+{k} :: x.owners() <= ks+{k};
                 assert (ks+{k}) == m.Keys+{k} == rv.ks == rv.m.Keys;
                 assert forall x <- rv.m.Keys :: x.AMFO <= rv.m.Keys;
                 assert forall x <- rv.m.Keys, oo <- x.AMFO :: oo in rv.m.Keys;
@@ -1264,9 +1316,10 @@ assert m.calidObjects();
 
 
 
-method {:isolate_assertions}  Clone_Outside_Heap(a : Object, m' : Map)
+method {:isolate_assertions} {:timeLimit 40} Clone_Outside_Heap(a : Object, m' : Map)
       returns (b : Object, m : Map)
   decreases (m'.oHeap - m'.ks), a.AMFO, (a.fields.Keys), 15 //Clone_Outside_Heap
+
 
 
 //this case
@@ -1357,6 +1410,9 @@ assert COK(a.region.owner, m.oHeap);
 
         var rowner, rm := Clone_Via_Map(a.region.owner, m);
 
+assert MapOK(rm.m) && rowner.AMFO <= rm.ks;
+
+
 ///WHY THE FuCK DO I NEED TO DO THIS?
 ///BEST GUESS TO EnSURE ALL The OWNERS of a are in the map
 ///becuse it's outside it shouldn't actually CLONE ANYTHING
@@ -1406,12 +1462,12 @@ assert COK(a.region.owner, m.oHeap);
 
             return; //should work because Clone_Via_Map meets all the conditiosn, right???
         }
-
+ 
 
         assert a !in rm.ks;
 
 //    //maintaing MapOK
-        assert AMFOOKRM: a.AMFO <= rm.ks by {
+        assert AMFOOKRM: a.owners() <= rm.ks by {
             reveal rm.calid();
             assert rm.calid();
             reveal rm.calidMap();
@@ -1420,7 +1476,7 @@ assert COK(a.region.owner, m.oHeap);
             reveal rm.calidObjects();
             assert rm.calidObjects();             
             assert (forall x <- rm.ks, oo <- x.AMFO :: oo in rm.ks);
-            assert a.AMFO <= rm.ks;
+            assert a.owners() <= rm.ks;
         }     
 
 
@@ -1428,7 +1484,7 @@ assert COK(a.region.owner, m.oHeap);
         assert a in rm.oHeap; 
         assert COK(a, rm.oHeap);
         reveal COK();
-        assert a.AMFO <= rm.ks;
+        assert a.owners() <= rm.ks;
         OutsidersArentMapValues(a,rm);
         assert a !in rm.vs;
         assert a !in rm.ks;
@@ -1471,9 +1527,9 @@ assert COK(a.region.owner, m.oHeap);
         MapOKFromCalid(m);
         assert MapOK(m.m);
         assert mapLEQ(rm.m, m.m);
-        assert a.AMFO <= rm.ks by { reveal AMFOOKRM; }
+        assert a.owners() <= rm.ks by { reveal AMFOOKRM; }
         SubsetOfKeysOfExtendedMap(a.AMFO, rm, m);
-        assert a.AMFO <= m.ks;
+        assert a.owners() <= m.ks;
 
         assert b.fieldModes == a.fieldModes;
 
@@ -1514,7 +1570,7 @@ method {:isolate_assertions} Clone_Outside_World(a : Object, m' : Map)
   ensures  m.ns >= m'.ns
 //  ensures  if (inside(a, m'.o)) then (b in m.ns) else (b == a)
 //  ensures  reveal m.calid(); reveal m.calidMap(); assert m.calid(); assert 
-  ensures MapOK(m.m) && a.AMFO <= m.ks
+  ensures MapOK(m.m) && a.owners() <= m.ks
   
   ensures a.fieldModes == b.fieldModes
  // ensures b.fields.Keys == a.fields.Keys
@@ -1529,7 +1585,7 @@ method {:isolate_assertions} Clone_Outside_World(a : Object, m' : Map)
         assert COK(a,m.oHeap);
         reveal COK();
         assert a.Ready();
-        assert a.AMFO == {};
+        assert a.AMFO == {a};
 
         reveal m.calid();
         assert m.calid(); 
@@ -1568,7 +1624,7 @@ print "VARIANT COW ", |(m'.oHeap - m'.ks)|, " ", |a.AMFO|, " ", |(a.fields.Keys)
         assert MapOK(m.m);
         assert (forall x <- m.m.Keys, oo <- x.AMFO :: oo in m.m.Keys);
         assert m.m.Keys == m.ks;
-        assert (forall x <- m.ks :: x.AMFO <= m.ks); 
+        assert (forall x <- m.ks :: x.owners() <= m.ks); 
 
         assert a !in m.vs;
         m := m.putOutside(a);   ///HOPEY?  CHANGEY?
@@ -1627,7 +1683,7 @@ method {:isolate_assertions} Clone_Inside_Heap(a : Object, m' : Map)
   ensures  m.ns >= m'.ns
 //  ensures  if (inside(a, m'.o)) then (b in m.ns) else (b == a)
 //  ensures  reveal m.calid(); reveal m.calidMap(); assert m.calid(); assert 
-   ensures MapOK(m.m) && a.AMFO <= m.ks
+   ensures MapOK(m.m) && a.owners() <= m.ks
 
 
 
@@ -1663,7 +1719,7 @@ print "VARIANT CIH ", |(m'.oHeap - m'.ks)|, " ", |a.AMFO|, " ", |(a.fields.Keys)
             assert COK(m.o, m.oHeap);
             assert CallOK(m.oHeap);
             COKAMFO(a, m.oHeap);
-            assert CallOK({a}+a.AMFO, m.oHeap);
+            assert CallOK(a.AMFO, m.oHeap);
             assert a.region.owner in a.AMFO;
             COKfromCallOK(a.region.owner, m.oHeap);
             assert COK(a.region.owner, m.oHeap);
@@ -1681,7 +1737,7 @@ print "VARIANT CIH ", |(m'.oHeap - m'.ks)|, " ", |a.AMFO|, " ", |(a.fields.Keys)
             reveal COK();
             assert a.Ready();
             assert a.AMFO > a.region.owner.AMFO;
-            assert a.region.owner.AMFO < a.AMFO;
+            assert a.region.owner.AMFO <=  a.AMFO;
                     }
 
         var rowner, rm := Clone_Via_Map(a.region.owner, m);
@@ -1791,7 +1847,7 @@ assert CallOK(rm.oHeap+rm.ns);
         reveal rm.calidMap();
         assert COK(a,rm.oHeap);
         reveal COK();
-        assert a.AMFO <= rm.oHeap;
+        assert a.owners() <= rm.oHeap;
         assert a !in rm.ks; // by { reveal ANKS; }
         assert b !in rm.vs;
         assert COK(b, rm.oHeap+rm.ns+{b});

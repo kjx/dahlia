@@ -7,7 +7,10 @@
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-function owners(o : Object) : set<Object> { o.AMFO }
+function owners(o : Object) : set<Object>
+ //all o's owners except o itself
+ { o.owners() } //should this be a function on objects? - 'tis now
+
 
 
 ///inside or equal to

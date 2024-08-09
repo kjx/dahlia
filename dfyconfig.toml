@@ -1,7 +1,8 @@
 includes = ["*.dfy"]
-excludes = ["dahlia-remainder.dfy","main.dfy", "Klon.dfy", "Printing.dfy"]
-
+excludes = ["dahlia-remainder.dfy","main.dfy"]
+# excludes = ["dahlia-remainder.dfy","main.dfy", "Klon.dfy", "Printing.dfy"]
 
 [options]
 verification-time-limit=20
 cores=8 
+
