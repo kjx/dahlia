@@ -172,6 +172,18 @@ predicate mapLEQ<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
   (forall k <- left.Keys :: k in right && (left[k] == right[k]))
 }
 
+
+predicate mapGEQ<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
+{
+  (forall k <- right.Keys :: k in left && (left[k] == right[k]))
+}
+
+lemma MapGLEQCCommutative<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
+  ensures  mapLEQ(left, right) ==  mapGEQ(right, left)
+{}
+
+
+
 lemma BiggerIsBigger<T>(aa : set<T>, bb : set<T>)
      requires aa >= bb
      ensures |aa| >= |bb|
