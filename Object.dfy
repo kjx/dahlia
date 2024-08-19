@@ -112,9 +112,12 @@ lemma {:onlyNUKE} cordelia()
   constructor {:isolate_assertions} cake(ks : map<string,Mode>, oo : Object, context : set<Object>, name : string, xtra : set<Object> := {} ) 
     requires COK(oo, context)
     requires CallOK(context)
-    requires CallOK(xtra, context)
+    requires CallOK(xtra, context) 
     requires ExtraIsExtra(xtra, context)
     //requires CallOK({oo}+oo.AMFO, context)
+
+    requires xtra == {} //extra not yet cloned
+
 
     ensures region == Heap(oo)
     ensures fieldModes == ks
@@ -122,6 +125,7 @@ lemma {:onlyNUKE} cordelia()
     ensures extra == xtra
     ensures AMFO == oo.AMFO + {this} + xtra
     ensures this in AMFO
+    ensures this !in extra
     ensures nick == name
     ensures (forall o <- AMFO :: inside(this, o))
     
@@ -205,7 +209,7 @@ lemma {:onlyNUKE} cordelia()
 
   assert CallOK({this} + (oo.AMFO), {this} + context);
 
-  assert CallOK(xtra, context);
+  //assert CallOK(xtra, context);
 
   assert  CallOK({this} + oo.AMFO, {this} + context);
 
@@ -238,12 +242,15 @@ lemma {:onlyNUKE} cordelia()
     ensures fields == map[] //object fields starts uninitialised
     ensures AMFO == {this}
     ensures this in AMFO
+    ensures this !in extra
     ensures Ready()
     ensures OwnersValid()
     ensures Valid()
     ensures TRUMP()
     ensures nick is string
     ensures MOGO()
+    ensures  fresh(this)    
+    ensures extra == {}
     modifies {}
   { //////reveal Ready(); //////reveal TRUMP(); //////reveal MAGA(); //////reveal MOGO();
     region := World;
@@ -251,7 +258,9 @@ lemma {:onlyNUKE} cordelia()
     fields := map[];
     AMFO := {this};
     nick := "";
+    extra := {};
     new;
+    assert extra == {};
     assert Ready();
     assert AMFO <= AMFO;
     assert AllOwnersAreWithinThisHeap(AMFO);
@@ -270,6 +279,7 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
     ensures fields == map[] //object fields starts uninitialised
     ensures AMFO == {this}
     ensures this in AMFO
+    ensures this !in extra
     ensures Ready()
     ensures OwnersValid()
     ensures Valid()
@@ -282,6 +292,7 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
     ensures  CallOK(oHeap)
     ensures  COK(this,oHeap+{this})
     ensures  fresh(this)
+    ensures extra == {}    
     modifies {}
   { //////reveal Ready(); //////reveal TRUMP(); //////reveal MAGA(); //////reveal MOGO();
     region := World;
@@ -289,8 +300,9 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
     fields := map[];
     AMFO := {this};
     nick := "";
+    extra := {};
     new;
-    assert Ready();
+    assert extra == {};    assert Ready();
     assert fields == map[];
     assert OwnersValid();
     assert Valid();
@@ -324,8 +336,10 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
 //it's important: this has *no*  readsclausew
    decreases AMFO
 {
+  && (this !in extra)
   && (region.World? || region.Heap?)
   && (region.World? ==> (AMFO == {this}))
+  && (region.World? ==> (extra == {}))
   && (region.Heap?  ==> (AMFO == region.owner.AMFO + extra + {this}))
   && (region.Heap?  ==> (AMFO > region.owner.AMFO))
   && (region.Heap?  ==> region.owner.Ready())
@@ -333,6 +347,8 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
   && (region.Heap?  ==> (forall owner <- region.owner.AMFO :: owner.Ready()))
   && (forall owner <- (AMFO - {this}) :: AMFO > owner.AMFO)
   && (forall owner <- (AMFO - {this}) :: owner.Ready())
+  && (forall owner <- (extra)         :: AMFO > owner.AMFO)   //subsumed by the above 2 lines, but...
+  && (forall owner <- (extra)         :: owner.Ready())
   }
 
 
@@ -403,8 +419,7 @@ lemma NoFieldsAreGoodFields(context : set<Object>)
 
   predicate AllOwnersAreWithinThisHeap(os : set<Object>)
     // reads this, fields.Values, this, os//semi-evil
-    requires Ready()  // || TRUMP()
-    //requires forall n <- fields :: ownersOK(fields[n],os)
+    requires Ready() //requires forall n <- fields :: ownersOK(fields[n],os)
     {
        owners() <= os
     }
@@ -605,10 +620,11 @@ assert true;
 
 
 
-predicate ExtraIsExtra(xtra : set<Object>, context : set<Object>)
-  reads (set x <- xtra, xa <- x.AMFO :: xa)`fields
-  reads (set x <- xtra, xa <- x.AMFO :: xa)`fieldModes
-  reads  xtra`fields, xtra`fieldModes
+predicate  ExtraIsExtra(xtra : set<Object>, context : set<Object>)
+  // why did I put all thjese READS clases im hjere - when they are unnecessary..?
+  // reads (set x <- xtra, xa <- x.AMFO :: xa)`fields
+  // reads (set x <- xtra, xa <- x.AMFO :: xa)`fieldModes
+  // reads  xtra`fields, xtra`fieldModes
 {
 //  && CallOK(xtra, context) ///DO I WANT THIS, O JUST "READY"""
   && (forall e <- xtra :: e in e.AMFO)

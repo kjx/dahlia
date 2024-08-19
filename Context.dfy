@@ -59,7 +59,6 @@ lemma {:onlyNUKE} CallOKWiderContext(aa: set<Object>, context : set<Object>, ext
   forall a <- aa { COKWiderContext(a,context,extra); }
 }
 
-
 lemma {:onlyNUKE} CallOKWiderFocus(aa: set<Object>, bb : set<Object>, context : set<Object>) 
   requires aa <= context
   requires bb <= context
@@ -79,13 +78,22 @@ lemma {:onlyNUKE} CallOKWiderFocus(aa: set<Object>, bb : set<Object>, context : 
 opaque predicate {:onlyNUKE} COK(a : Object, context : set<Object>) : (r : bool)
 //  reads context`fields, context`fieldModes
   reads a`fields, a`fieldModes
+
+  // reads (set x <- a.extra, xa <- x.AMFO :: xa)`fields
+  // reads (set x <- a.extra, xa <- x.AMFO :: xa)`fieldModes
+  // reads  a.extra`fields, a.extra`fieldModes
+
   // reads (set o1 <- context, o2 <- o1.ValidReadSet() :: o2)`fields
   // reads (set o1 <- context, o2 <- o1.ValidReadSet() :: o2)`fieldModes
   ensures r ==> (a in context)
  {
+   && a.extra == {}  //extra not yet cloned
+
     && (a in context) 
     && (a.AMFO <= context)
+    && (a.extra <= context) // could be subsumed but currently isn't…
     && (forall oo <- a.AMFO :: oo.Ready())
+    && ExtraIsExtra(a.extra, context)
   //  && (a.TRUMP()||(a.Ready() && a.Valid()))
     && (a.Ready())
     && (a.Valid())

@@ -3,6 +3,7 @@ excludes = ["dahlia-remainder.dfy","main.dfy"]
 # excludes = ["dahlia-remainder.dfy","main.dfy", "Klon.dfy", "Printing.dfy"]
 
 [options]
+verify-included-files=true
 verification-time-limit=20
 cores=8 
 

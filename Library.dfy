@@ -178,7 +178,7 @@ predicate mapGEQ<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
   (forall k <- right.Keys :: k in left && (left[k] == right[k]))
 }
 
-lemma MapGLEQCCommutative<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
+lemma MapGLEQCCommutative<K,V>(left : map<K,V>, right : map<K,V>)
   ensures  mapLEQ(left, right) ==  mapGEQ(right, left)
 {}
 
