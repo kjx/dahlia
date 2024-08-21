@@ -6,4 +6,4 @@ excludes = ["dahlia-remainder.dfy","main.dfy"]
 verify-included-files=true
 verification-time-limit=20
 cores=8 
-
+isolate-assertions=true
