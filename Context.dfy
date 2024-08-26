@@ -59,6 +59,17 @@ lemma {:onlyNUKE} CallOKWiderContext(aa: set<Object>, context : set<Object>, ext
   forall a <- aa { COKWiderContext(a,context,extra); }
 }
 
+lemma {:onlyNUKE} CallOKWiderContext2(aa: set<Object>, less : set<Object>, more : set<Object>) 
+  requires aa <= less <= more
+  requires CallOK(aa,less)
+  ensures CallOK(aa,more)
+{ 
+  reveal CallOK();
+  forall a <- aa { COKWiderContext2(a,less,more); }
+}
+
+
+
 lemma {:onlyNUKE} CallOKWiderFocus(aa: set<Object>, bb : set<Object>, context : set<Object>) 
   requires aa <= context
   requires bb <= context
@@ -71,6 +82,20 @@ lemma {:onlyNUKE} CallOKWiderFocus(aa: set<Object>, bb : set<Object>, context : 
   assert forall a <- (  bb) :: COK(a,context);
   assert forall a <- (aa + bb) :: COK(a,context);
 }
+
+
+lemma {:onlyNUKE} CallOKWiderFocus2(less: set<Object>, more : set<Object>, context : set<Object>) 
+  requires less <= more <= context
+  requires CallOK(less,context)
+  requires CallOK((more - less), context)
+  ensures  CallOK(more,context)
+{ 
+  reveal CallOK();
+  assert forall a <- (less)        :: COK(a,context);
+  assert forall a <- (more - less) :: COK(a,context);
+  assert forall a <- (more)        :: COK(a,context);
+}
+
 
 ///IF owners OK were also bounded by a (sub)heap, then 
 ///the reads clauses could just look over that whole subheap...
@@ -87,7 +112,7 @@ opaque predicate {:onlyNUKE} COK(a : Object, context : set<Object>) : (r : bool)
   // reads (set o1 <- context, o2 <- o1.ValidReadSet() :: o2)`fieldModes
   ensures r ==> (a in context)
  {
-   && a.extra == {}  //extra not yet cloned
+//extraOK   && a.extra == {}  //extra not yet cloned
 
     && (a in context) 
     && (a.AMFO <= context)
@@ -100,7 +125,10 @@ opaque predicate {:onlyNUKE} COK(a : Object, context : set<Object>) : (r : bool)
     && (a.AllOutgoingReferencesAreOwnership(context))  
     && (a.AllOutgoingReferencesWithinThisHeap(context))
     && (a.AllOwnersAreWithinThisHeap(context))
+
+    && AllTheseOwnersAreFlatOK(a.AMFO - {a}) 
 }
+
 method {:onlyNUKE} COKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
   requires COK(a,context)
   requires CallOK(context)
@@ -183,7 +211,7 @@ lemma CallOKfromCOK(a : Object, context : set<Object>)
     reveal CallOK();
   }
 
-lemma RVfromCOK(a : Object, context : set<Object>) 
+lemma RVfromCOK(a : Object, context : set<Object>)
   requires COK(a, context)
   ensures a.Ready()
   ensures a.Valid()

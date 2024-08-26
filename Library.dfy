@@ -340,6 +340,8 @@ lemma {:onlyAAKE} MappingPlusKeysValues<K,V>(am : map<K,V>, bm : map<K,V>, sm : 
 
 
 /*opaque*/ function MappingPlusOneKeyValue<K(==),V(==)>(m' : map<K,V>, k' : K, v' : V) : (m : map<K,V>)
+  requires AllMapEntriesAreUnique(m')
+  ensures  AllMapEntriesAreUnique(m)
   requires k' !in m'.Keys 
   requires v' !in m'.Values
   ensures  m == m'[k':=v']
@@ -348,6 +350,8 @@ lemma {:onlyAAKE} MappingPlusKeysValues<K,V>(am : map<K,V>, bm : map<K,V>, sm : 
   ensures  m.Values == m'.Values + {v'}
   ensures  mapLEQ(m',m)
 {      
+   reveal UniqueMapEntry();
+
     m'[k':=v']
 }
 
@@ -421,15 +425,23 @@ function seq2set2<T>(q : seq<T>) : set<T> {
 
 function {:onlyXAM} Extend_A_Map<KV>(m': map<KV,KV>, d : set<KV>) : (m: map<KV,KV>)
 //extend m'  with x:=x forall x in d
+   requires AllMapEntriesAreUnique(m')
+   ensures  AllMapEntriesAreUnique(m)
    requires d !! m'.Keys
+   requires d !! m'.Values
    ensures  m == (map x <- d :: x) +  m'
    ensures  m.Keys == m'.Keys + d
    ensures  m.Values == m'.Values + d
   {
+   reveal UniqueMapEntry();
    (map x <- d :: x) +  m'
   }
 
-
+predicate  {:onlyNUKE} AllMapEntriesAreUnique<K,V(==)>(m : map<K,V>)
+{
+    reveal UniqueMapEntry();
+    forall i <- m.Keys :: UniqueMapEntry(m, i)
+}
 
 
 

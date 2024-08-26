@@ -114,10 +114,12 @@ lemma {:onlyNUKE} cordelia()
     requires CallOK(context)
     requires CallOK(xtra, context) 
     requires ExtraIsExtra(xtra, context)
+    requires flattenAMFOs(xtra) <= oo.AMFO + xtra  ///hmmmm
+
+    
     //requires CallOK({oo}+oo.AMFO, context)
 
-    requires xtra == {} //extra not yet cloned
-
+// extraOK    requires xtra == {} //extra not yet cloned
 
     ensures region == Heap(oo)
     ensures fieldModes == ks
@@ -143,6 +145,7 @@ lemma {:onlyNUKE} cordelia()
     extra := xtra;
     new;   
 
+
     assert fieldModes == ks;
     assert fields == map[];
     assert nick == name;
@@ -167,15 +170,12 @@ lemma {:onlyNUKE} cordelia()
           assert (this in ({this}+context));
           assert (this.AMFO <= ({this}+context));
           RVfromCOK(oo,context);
-          assert (forall a <- oo.AMFO  :: a.Ready()); 
-          assert (forall a <- oo.AMFO  :: AMFO > a.AMFO); 
 
           RVfromCallOK(extra, context);
-          assert (forall a <- extra    :: a.Ready()); 
-
-          assert AMFO == oo.AMFO + extra + {this};
-          assert this !in oo.AMFO;
-          assert this !in extra;
+          assert (forall x <- extra :: x.Ready()); 
+          assert (forall x <- extra :: this !in x.AMFO); 
+          assert (forall x <- extra :: AMFO > x.AMFO);
+          
 
           assert CallOK(extra,context);
           assert AMFO == oo.AMFO + {this} + xtra;
@@ -184,15 +184,26 @@ lemma {:onlyNUKE} cordelia()
           assert (forall x <- extra, xo <- x.AMFO :: xo in x.AMFO);
           assert (forall x <- {region.owner}, xo <- x.AMFO :: xo in x.AMFO);
   
+          assert flattenAMFOs(extra) <= oo.AMFO + extra;  ///hmmmm
+          assert flattenAMFOs({oo} + extra) <= oo.AMFO + extra;
 
-          assert region.owner.Ready();
+          assert AMFO == oo.AMFO + extra + {this};
+          assert this !in oo.AMFO;
+          assert this !in extra;
+          assert (forall a <- oo.AMFO  :: a.Ready()); 
+          assert (forall a <- oo.AMFO  :: AMFO > a.AMFO); 
+//        assert (forall a <- AMFO  :: AMFO > a.AMFO); 
+
+          assert region.owner.Ready();        
           assert (forall owner <- (AMFO - {this}) :: owner.Ready());
           assert (forall owner <- (AMFO - {this}) :: AMFO > owner.AMFO);
           assert (this.Ready());
-          assert (this.Valid());    
+          assert (this.Valid()); 
           assert (this.AllOutgoingReferencesAreOwnership(({this}+context)))  ;
           assert (this.AllOutgoingReferencesWithinThisHeap(({this}+context)));
           assert (this.AllOwnersAreWithinThisHeap(({this}+context)));
+
+          assert COK(this, {this}+context);
          }
 
 
@@ -215,6 +226,7 @@ lemma {:onlyNUKE} cordelia()
 
   assert COK(this, context+{this}) by { reveal COKOK; }
 
+print "Object.cake() just constructed ", fmtobj(this), "\n";
   }
 
 
@@ -349,6 +361,8 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
   && (forall owner <- (AMFO - {this}) :: owner.Ready())
   && (forall owner <- (extra)         :: AMFO > owner.AMFO)   //subsumed by the above 2 lines, but...
   && (forall owner <- (extra)         :: owner.Ready())
+
+  && (flattenAMFOs(AMFO - {this}) <= AMFO)
   }
 
 
@@ -619,7 +633,6 @@ assert true;
 
 
 
-
 predicate  ExtraIsExtra(xtra : set<Object>, context : set<Object>)
   // why did I put all thjese READS clases im hjere - when they are unnecessary..?
   // reads (set x <- xtra, xa <- x.AMFO :: xa)`fields
@@ -627,29 +640,71 @@ predicate  ExtraIsExtra(xtra : set<Object>, context : set<Object>)
   // reads  xtra`fields, xtra`fieldModes
 {
 //  && CallOK(xtra, context) ///DO I WANT THIS, O JUST "READY"""
-  && (forall e <- xtra :: e in e.AMFO)
-  && (forall e <- xtra :: e.AMFO <= (xtra))
+  && (forall e <- xtra :: e in e.AMFO) 
   && (forall e <- xtra :: e.AMFO <= context)
   //&& (forall e <- xtra :: e.AMFO <= xtra)     //is this want we want..?
+   ///NO! it isn't.  kept for now as a reminder
+   //I bet this can be refactored into the COK if it isn't already
 }
 
+predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
+// true iff all os's AMFOS are inside os
+// probalby need to do - {a} if these are for {a} or else it gets circular...?
+{
+//  && (forall o <- os :: o in o.AMFO)
+  && flattenAMFOs(os) <= context
+}   //IT"S NOT CLEAR OWHAT THIS SHOULD DO (or if it matters)
+    //&& flattenAMFOs(a.AMFO - {a}) <= a.AMFO  //should it be this?
+    //&& flattenAMFOs(a.AMFO - {a}) <= (a.AMFO - {a}) //or should it be this instead?
+    //&& flattenAMFOs(a.AMFO + {a}) <= (a.AMFO + {a}) //or even this?
+
+
+lemma MaybeOrMaybeNot(o : Object, os : set<Object>) 
+//does it matter of we care if "this" is in the set of AMFO's we're flattening?
+//I dob't think so, as long as it's OK...?
+//or rather, if os are OKJ, o.AMFO <= os, os+o are OK too...
+  requires o !in flattenAMFOs(os)
+  requires AllTheseOwnersAreFlatOK(os)
+  requires o.AMFO <= (os + {o})
+  ensures  AllTheseOwnersAreFlatOK(os+{o})
+  {}
 
 /*oopaque or not or both */
 function flattenAMFOs(os : set<Object>) : (of : set<Object>)
-   requires forall o <- os :: o in o.AMFO
+   //flattened set of os.AMFO 
+   //earlier version required o in all objects AMFS, that's gone now
+   //could put it back, require os to be Ready, or remove the os+ below
+   //currently going with the version with fewer requirements...
+   //requires forall o <- os :: o in o.AMFO  //not needed adding in os anyway
    ensures  forall o <- os :: o in of
    ensures  forall o <- os, oo <- o.AMFO :: oo in of
    ensures  os <= of
 {
-    os + 
+    os +   ///not needed if we keep "requires forall o <- os :: o in o.AMFO"
     (set o <- os, oo <- o.AMFO :: oo)
 }
+
+//GRRRR
+// lemma EitherWayIsFlat(a : Object, rrm : Map, amx : set<Object>)
+//   //requires rrm.calid()
+//   requires forall o <- a.extra, oo <- o.AMFO :: 
+//           && o in rrm.m.Keys
+//           && oo in rrm.m.Keys
+//           && rrm.m[o]  in amx
+//           && rrm.m[oo] in amx
+//   ensures  AllTheseOwnersAreFlatOK(a.extra, amx)
+// {
+//   assert flattenAMFOs(mapThruMap(a.extra,rrm)) <= amx;
+// }
+
+
 
 
 lemma FlatExtras(xtra : set<Object>, context : set<Object>)
    requires forall o <- xtra :: o in o.AMFO
    requires forall o <- xtra :: o.AMFO <= context
    requires CallOK(xtra, context)
+
    ensures  CallOK(xtra, context)
    ensures (forall e <- xtra :: e.AMFO <= context)
    ensures  xtra <= context 
@@ -660,6 +715,25 @@ lemma FlatExtras(xtra : set<Object>, context : set<Object>)
      assert ExtraIsExtra(flattenAMFOs(xtra), context);  
   
    }
+
+lemma Splurge(o : Object, context : set<Object>) 
+  requires o.region.Heap?
+  requires COK(o, context)
+
+  ensures  forall oo <- (o.AMFO - {o}) :: o.AMFO > oo.AMFO
+  ensures  reveal COK(); flattenAMFOs(o.AMFO - {o}) <= o.AMFO
+  ensures  AllTheseOwnersAreFlatOK(o.owners())
+{
+  reveal COK();
+
+  // assert o in o.AMFO;
+//  assert forall oo <- (o.AMFO - {o}) :: oo in oo.AMFO;
+  // assert forall oo <- (o.AMFO - {o}) :: o !in oo.AMFO;
+  // assert forall oo <- (o.AMFO - {o}) :: o.AMFO > oo.AMFO;
+
+//  assert flattenAMFOs(o.AMFO) <= o.AMFO;
+}
+
 
 
   predicate  {:vcs_split_on_every_assert}{:timeLimit 10} StandaloneObjectsAreValid(os : set<Object>) //do we know if "os" is "closed"?

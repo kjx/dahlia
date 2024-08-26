@@ -185,3 +185,31 @@ function ownersBetween(part : Object, whole : Object) : (rv : set<Object>)
  set o <- part.AMFO | inside(o,whole)
 }
 
+
+
+lemma ownershipIsMonotonic(a : Object, b : Object, c : set<Object>) 
+  requires a != b //oops!`
+  requires a in c
+  requires b in c
+  requires COK(a,c)
+  requires COK(b,c)
+  requires CallOK(c)
+
+//  ensures (a in b.AMFO) ==> (b !in a.AMFO)
+  requires a  in b.AMFO
+  ensures  b !in a.AMFO
+{
+ reveal COK(), CallOK();
+ assert COK(a,c);  
+ assert COK(b,c); 
+ assert CallOK(c);
+
+ assert forall o <- a.AMFO :: (o != a) ==> (a.AMFO > o.AMFO);
+ assert forall o <- b.AMFO :: (o != b) ==> (b.AMFO > o.AMFO);
+
+
+ assert a in b.AMFO;
+ 
+
+ assert b !in a.AMFO;
+}
