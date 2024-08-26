@@ -487,7 +487,7 @@ static lemma fromityH(a : Object, context : set<Object>, prev : Map, next: Map)
 //   )
 // 
 
-    opaque function {:isolate_assertions} {:timeLimit 40} putOutside(k : Object) : (r : Map)
+    opaque function {:isolate_assertions} putOutside(k : Object) : (r : Map)
       //put k -> k into map, k oustide o
       reads oHeap`fields, oHeap`fieldModes
       reads ns`fields, ns`fieldModes
@@ -2016,7 +2016,7 @@ assert m.calidObjects();
 
 
 
-method {:isolate_assertions} {:timeLimit 40} Clone_Outside_Heap(a : Object, m' : Map)
+method {:isolate_assertions} Clone_Outside_Heap(a : Object, m' : Map)
       returns (b : Object, m : Map)
   decreases (m'.oHeap - m'.ks), a.AMFO, (a.fields.Keys), 15 //Clone_Outside_Heap
 
@@ -2364,25 +2364,25 @@ assert a.AMFO > xo.AMFO;
       assert forall k <- m'.m.Keys :: k in xm.m.Keys && (m'.m[k] == xm.m[k]);
                 }
         
-
-                  assert xm.ks >= m'.ks;
-                assert a !in xm.ks;          
-
-          assert ((m'.oHeap - m'.ks)) >= (xm.oHeap - xm.ks);
-
-assert  ((a.AMFO)
-  decreases to
-        (xo.AMFO));
-      
-        assert ((m'.oHeap - m'.ks), 
-               (a.AMFO),
-               (a.fields.Keys), 
-               (15) 
-          decreases to 
-               xm.oHeap - xm.ks, 
-               xo.AMFO, 
-               xo.fields.Keys, 
-               20);
+// 
+//                   assert xm.ks >= m'.ks;
+//                 assert a !in xm.ks;          
+// 
+//           assert ((m'.oHeap - m'.ks)) >= (xm.oHeap - xm.ks);
+// 
+// assert  ((a.AMFO)
+//   decreases to
+//         (xo.AMFO));
+//       
+//         assert ((m'.oHeap - m'.ks), 
+//                (a.AMFO),
+//                (a.fields.Keys), 
+//                (15) 
+//           decreases to 
+//                xm.oHeap - xm.ks, 
+//                xo.AMFO, 
+//                xo.fields.Keys, 
+//                20);
 
       
           rr, rm := Clone_Via_Map(xo, xm);
@@ -2656,16 +2656,10 @@ print "VARIANT COW ", |(m'.oHeap - m'.ks)|, " ", |a.AMFO|, " ", |(a.fields.Keys)
 }
 
 
-
-
-
-
-
-
-
-method {:verify false} Clone_Inside_Heap(a : Object, m' : Map)
-      returns (b : Object, m : Map)
-  decreases (m'.oHeap - m'.ks), a.AMFO, (a.fields.Keys), 15 //Clone_Inside_Heap
+// {:verify false}
+method  Clone_Inside_Heap(a : Object, m' : Map)
+     returns (b : Object, m : Map)
+   decreases (m'.oHeap - m'.ks), a.AMFO, (a.fields.Keys), 15 //Clone_Inside_Heap
 
 //this case
   requires a !in m'.ks
@@ -2721,10 +2715,16 @@ method {:verify false} Clone_Inside_Heap(a : Object, m' : Map)
         assert COK(a, m.oHeap);
         assert aFLAT: AllTheseOwnersAreFlatOK(a.AMFO - {a}) by {
           reveal COK();
+          reveal AllTheseOwnersAreFlatOK();
           assert COK(a, m.oHeap);
           assert AllTheseOwnersAreFlatOK(a.AMFO - {a});
+          assert AllTheseOwnersAreFlatOK(a.region.owner.AMFO);
           assert (a.AMFO - {a}) == a.extra + 
-            (if (a.region.Heap?) then (a.region.owner.AMFO) else {});
+            (if (a.region.Heap?) then (a.region.owner.AMFO) else {});  //yuck
+          assert (a.AMFO - {a}) == (a.extra + a.region.owner.AMFO);
+          assert (AllTheseOwnersAreFlatOK(a.extra, 
+             (if (a.region.Heap?) then (a.region.owner.AMFO) else {}) + a.extra)); // also YUCK
+          assert (AllTheseOwnersAreFlatOK(a.extra, (a.extra + a.region.owner.AMFO)))  ;
         }
         assert m.calid();
         assert inside(a,m.o);
@@ -3023,12 +3023,14 @@ assert (a.AMFO - {a}) == a.owners();
 assert flattenAMFOs(a.AMFO - {a}) == flattenAMFOs(a.owners());
 
 assert a.region.owner.AMFO + a.extra + {a} == a.AMFO;
-assert a.region.owner.AMFO + a.extra == (a.AMFO - {a}) == a.owners();
-
-       assert AllTheseOwnersAreFlatOK(a.AMFO - {a}) by { reveal aFLAT; }
-       assert AllTheseOwnersAreFlatOK(a.region.owner.AMFO + a.extra);
+// assert a.region.owner.AMFO + a.extra == (a.AMFO - {a}) == a.owners();
+// 
+// reveal AllTheseOwnersAreFlatOK();
+// 
+//        assert AllTheseOwnersAreFlatOK(a.AMFO - {a}) by { reveal aFLAT; }
+//        assert AllTheseOwnersAreFlatOK(a.region.owner.AMFO + a.extra);
        var aAMFOs := a.region.owner.AMFO + a.extra;
-       assert AllTheseOwnersAreFlatOK(aAMFOs);
+      //  assert AllTheseOwnersAreFlatOK(aAMFOs);https://www.youtube.com/
        
 
 assert rextra == mapThruMap(a.extra, rrm); 
@@ -3040,24 +3042,21 @@ assert forall ao <- a.region.owner.AMFO :: rrm.m[ao] in (rrm.m[a.region.owner]).
 //assert forall ao <- a.region.owner.AMFO :: imageUnderMap(ao, rrm.m[ao], rrm);
 
 
-
-var mmr := map k <- rrm.ks | k in rrm.m :: rrm.m[k] := k;
-
-
+assert OrigBigfoot(a.region.owner.AMFO);
+assert AllTheseOwnersAreFlatOK(a.region.owner.AMFO);
 
 
 
-
+//reveal AllTheseOwnersAreFlatOK();
 
 //assert rowner.AMFO ==  mapThruMap(a.region.owner.AMFO, rrm);
-       assert AllTheseOwnersAreFlatOK(a.region.owner.AMFO + a.extra);
-
-       assert AllTheseOwnersAreFlatOK(rowner.AMFO);
-
-       assert AllTheseOwnersAreFlatOK(a.extra, a.owners());
+//        assert AllTheseOwnersAreFlatOK(a.region.owner.AMFO + a.extra);
+// 
+//        assert AllTheseOwnersAreFlatOK(rowner.AMFO);
+// 
+//        assert AllTheseOwnersAreFlatOK(a.extra, a.owners());
 
        var amfosToBeMinusThis := rowner.AMFO+rextra; // (rowner.AMFO+{this}+rextra)-{this};
-
 
       assert forall o <- aAMFOs :: 
           && o in aAMFOs
@@ -3078,27 +3077,92 @@ var mmr := map k <- rrm.ks | k in rrm.m :: rrm.m[k] := k;
           && rrm.m[o]  in amfosToBeMinusThis
           && rrm.m[oo] in amfosToBeMinusThis //(rowner.AMFO + rextra)
           ;
-
-      assert (set o <- a.extra ::  rrm.m[o]) == mapThruMap(a.extra, rrm);
-      assert (set o <- a.extra, oo <- o.AMFO ::  rrm.m[oo]) 
-         == mapThruMap((set o <- a.extra, oo <- o.AMFO :: oo), rrm);
-
-assert mapThruMap(aAMFOs, rrm) == amfosToBeMinusThis;
+// 
+//       assert (set o <- a.extra ::  rrm.m[o]) == mapThruMap(a.extra, rrm);
+//       assert (set o <- a.extra, oo <- o.AMFO ::  rrm.m[oo]) 
+//          == mapThruMap((set o <- a.extra, oo <- o.AMFO :: oo), rrm);
+// 
+// assert mapThruMap(aAMFOs, rrm) == amfosToBeMinusThis;
 
     //  assert ((set o <- a.extra, oo <- o.AMFO :: oo) + a.extra)   //tnis should not worj!!!
     //           ==  flattenAMFOs(mapThruMap(a.extra,rrm));
 
-     assert ((set o <- a.extra, oo <- o.AMFO :: oo) + a.extra)
+    reveal AllTheseOwnersAreFlatOK();
+    assert AllTheseOwnersAreFlatOK(rowner.AMFO); ///this one is OK...
+    assert OrigBigfoot(rowner.AMFO);
+
+    assert ((set o <- a.extra, oo <- o.AMFO :: oo) + a.extra)
               ==  flattenAMFOs(a.extra);
 
 
-      assert AllTheseOwnersAreFlatOK(rextra, amfosToBeMinusThis);
-       
+     assert AllTheseOwnersAreFlatOK((a.extra), (a.extra+a.region.owner.AMFO));     
+     assert OrigBigfoot((a.extra),  (a.extra+a.region.owner.AMFO));
 
-//assert AllTheseOwnersAreFlatOK(amfosToBeMinusThis); 
+     assert (forall o <- a.extra, oo <- o.AMFO :: ((oo in a.region.owner.AMFO) || (oo in a.extra)));
+
+      var R := rrm.m;
+      assert AllMapEntriesAreUnique(R);
+      assert rextra == mapThruMap(a.extra, rrm); 
+
+       assert (forall o <- a.extra, oo <- o.AMFO :: 
+            && ((oo in a.region.owner.AMFO) || (oo in a.extra))            
+            && ((R[oo] in R[a.region.owner].AMFO) || (R[oo] in rextra)))
+      ;
+
+       assert (forall o <- a.extra, oo <- o.AMFO :: (oo in a.extra) ==>  (R[oo] in rextra));
+       assert (forall o <- a.extra, oo <- o.AMFO :: (oo in a.region.owner.AMFO) ==>  (R[oo] in R[a.region.owner].AMFO));
+
+assert (set o <- a.extra, oo <- o.AMFO :: R[oo]) == (set o <- a.extra, oo <- R[o].AMFO :: oo);
+
+       assert (forall o <- a.extra, oo <- o.AMFO :: 
+            && ((R[oo] in R[a.region.owner].AMFO) || (R[oo] in rextra)))
+      ;
+
+      assert rrm.at(a.region.owner) == rowner;
+      assert R[a.region.owner] == rowner;
+      assert R[a.region.owner].AMFO == rowner.AMFO;
 
 
-        b := new Object.cake(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rextra);
+//thewe laset two dont work
+       assert (forall o <- a.extra, oo <- R[o].AMFO :: 
+            && ((oo in rowner.AMFO) || (oo in rextra)))            
+      ;
+      
+       assert (forall o <- rextra, oo <- o.AMFO :: 
+            && ((oo in rowner.AMFO) || (oo in rextra)))            
+      ;
+
+
+      //assert flatAMFOs == ((set o <- a.extra, oo <- o.AMFO :: oo) + a.extra);
+
+      assert rextra <= amfosToBeMinusThis;
+      assert rowner.AMFO <= amfosToBeMinusThis;
+      
+      reveal AllTheseOwnersAreFlatOK();
+
+//       var R := rrm.m;
+//       assert AllMapEntriesAreUnique(R);
+//       var M := invert(R);
+//       assert AllMapEntriesAreUnique(M);
+// 
+//       assert forall r <- R.Keys :: M[R[r]] == r;
+
+
+assert (rextra) <= (rowner.AMFO+rextra);
+//assert (forall o <- rextra :: o.AMFO <=  (rowner.AMFO+rextra));
+assert (forall o <- rextra, oo <- o.AMFO :: ((oo in rowner.AMFO) || (oo in rextra)));
+assert (forall o <- rextra :: o.AMFO <=  (rowner.AMFO+rextra));
+
+    assert OrigBigfoot(rowner.AMFO);
+    assert AllTheseOwnersAreFlatOK(rowner.AMFO);
+
+    assert OrigBigfoot((rextra), (rowner.AMFO+rextra));
+    assert AllTheseOwnersAreFlatOK((rextra), (rowner.AMFO+rextra));   
+    
+
+
+
+     b := new Object.cake(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rextra);
 
 
 
@@ -3163,16 +3227,17 @@ print "Clone_Inside_Heap map updated ", fmtobj(a), ":=", fmtobj(b) ,"\n";
         assert a.region.Heap? == b.region.Heap?;
 
 
-        assert (m'.oHeap - m'.ks) >=  (xm.oHeap - xm.ks +{a});
-        assert old((a.fields.Keys)) >= (a.fields.Keys);
+///WHAT THE FUCK FUCKUY FUCK IS GOING ON FUCKY HERE
+        // assert (m'.oHeap - m'.ks) >=  (xm.oHeap - xm.ks +{a});
+        // assert old((a.fields.Keys)) >= (a.fields.Keys);
 
 
 /////   /////    /////    /////   /////    /////    /////   /////    /////    
 /////   /////    /////    /////   /////    /////    /////   /////    /////    
 
-// m := xm;
+m := xm;
 
-        m := Clone_All_Fields(a,b, xm);
+//        m := Clone_All_Fields(a,b, xm);
 
 /////   /////    /////    /////   /////    /////    /////   /////    /////    
 /////   /////    /////    /////   /////    /////    /////   /////    /////    
@@ -3187,6 +3252,14 @@ print "Clone_Inside_Heap map updated ", fmtobj(a), ":=", fmtobj(b) ,"\n";
 
         print "Clone_Inside_Heap of ", fmtobj(a), " retuning ", fmtobj(b) ,"\n";
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -3778,7 +3851,7 @@ predicate imageUnderMap(a : Object, b : Object, m : Map)
 }
 
 
-method  {:verify false}  Clone_Extra_Owners(a : Object,  m' : Map)  returns (m : Map) 
+method Clone_Extra_Owners(a : Object,  m' : Map)  returns (m : Map) 
    
   decreases (m'.oHeap - m'.ks), a.AMFO, (a.fields.Keys), 12
 
@@ -3976,21 +4049,9 @@ method  {:verify false}  Clone_Extra_Owners(a : Object,  m' : Map)  returns (m :
                 assert m.ks == m.m.Keys by { reveal m.calidObjects(); assert m.calidObjects(); }
                 assert a.AMFO <= m.ks;
                 assert a.extra <= m.ks;
-
-
             
-                assert  a == b by {
-                      reveal m.calid();
-                      assert m.calidMap();
-                      reveal m.calidMap();
-                  //    assert (forall x <- m.ks :: (not(inside(x,m.o)) ==> (m.m[x] == x)));
-                      assert not(inside(a,m.o));
-                      assert m.m[a] == a;
-                      assert a == b;
-                 }
+                assert (b.fieldModes == a.fieldModes);
 
-                assert (b.fieldModes == a.fieldModes) by { assert a == b; }
-                      
                 return; 
           }  // if a is in ks after clone -- if it got added magically...
 

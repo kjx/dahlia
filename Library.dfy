@@ -443,7 +443,27 @@ predicate  {:onlyNUKE} AllMapEntriesAreUnique<K,V(==)>(m : map<K,V>)
     forall i <- m.Keys :: UniqueMapEntry(m, i)
 }
 
+function invert<K(==),V(==)>(m : map<K,V>) : (n : map<V,K>)
+    requires AllMapEntriesAreUnique(m)
+    ensures  AllMapEntriesAreUnique(n)
+{
+      reveal UniqueMapEntry();
+      assert forall i <- m.Keys :: UniqueMapEntry(m, i);
 
+      map k <- m.Keys :: m[k] := k
+}
+
+lemma InversionLove<K,V>(m : map<K,V>, n : map<V,K>)
+  requires AllMapEntriesAreUnique(m)
+  requires AllMapEntriesAreUnique(n)
+  requires n == invert(m)
+  requires m == invert(n)
+{
+  assert forall k <- m.Keys :: m[k] in n.Keys;
+  assert forall k <- m.Keys :: n[m[k]] == k;
+  assert forall k <- n.Keys :: n[k] in m.Keys;
+  assert forall k <- n.Keys :: m[n[k]] == k;
+}
 
 opaque predicate {:onlyNUKE} UniqueMapEntry2<K,V(==)>(m : map<K,V>, k : K) 
  requires k in m

@@ -127,14 +127,17 @@ opaque predicate {:onlyNUKE} COK(a : Object, context : set<Object>) : (r : bool)
     && (a.AllOwnersAreWithinThisHeap(context))
 
     && AllTheseOwnersAreFlatOK(a.AMFO - {a}) 
-}
+    && (a.region.Heap? ==> AllTheseOwnersAreFlatOK(a.region.owner.AMFO))
+    && (AllTheseOwnersAreFlatOK(a.extra,
+         (if (a.region.Heap?) then (a.region.owner.AMFO) else {}) + a.extra))
+ }
 
 method {:onlyNUKE} COKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
   requires COK(a,context)
   requires CallOK(context)
   requires n in a.fields
   ensures r == a.fields[n]
-  ensures COK(r,context)
+  ensures COK(r,context)  
   modifies {}
 {
   reveal COK(); reveal CallOK();

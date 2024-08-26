@@ -95,14 +95,26 @@ lemma {:onlyNUKE} triceratops(aa : set<Object>, bb : set<Object>, cc : set<Objec
   ensures (aa + bb + cc) == ((aa + bb) + cc) == (aa + (bb + cc))
 {}
 
-
-
 lemma {:onlyNUKE} cordelia() 
  requires fields == map[]
  ensures  AllFieldsAreDeclared()
  ensures  AllFieldsContentsConsistentWithTheirDeclaration()
 {}
 
+lemma {:onlyNUKE} regan(xx : set<Object>, yy : set<Object>)
+  requires AllTheseOwnersAreFlatOK(xx,xx+yy)
+  ensures  flattenAMFOs(xx) <= yy + xx 
+{
+  reveal AllTheseOwnersAreFlatOK();
+  assert AllTheseOwnersAreFlatOK(xx,xx+yy);
+}
+
+lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
+  ensures AllTheseOwnersAreFlatOK(xx,xx+yy) == ( flattenAMFOs(xx) <= yy + xx )
+{
+  reveal AllTheseOwnersAreFlatOK();
+  assert AllTheseOwnersAreFlatOK(xx,xx+yy) == ( flattenAMFOs(xx) <= yy + xx );
+}
 
 
 
@@ -114,7 +126,9 @@ lemma {:onlyNUKE} cordelia()
     requires CallOK(context)
     requires CallOK(xtra, context) 
     requires ExtraIsExtra(xtra, context)
-    requires flattenAMFOs(xtra) <= oo.AMFO + xtra  ///hmmmm
+    requires AllTheseOwnersAreFlatOK(oo.AMFO)
+    requires AllTheseOwnersAreFlatOK(xtra, oo.AMFO + xtra)
+    //requires flattenAMFOs(xtra) <= oo.AMFO + xtra  ///hmmmmAllTheseOwnersAreFlatOK
 
     
     //requires CallOK({oo}+oo.AMFO, context)
@@ -161,7 +175,7 @@ lemma {:onlyNUKE} cordelia()
     assert (oo.AMFO) <= context by { reveal CallOK(), COK(); }
     CallOKWiderContext(oo.AMFO,context,{this});
     assert CallOK(oo.AMFO, {this}+context) by { assert {this}+context == context+{this}; }
-
+  
 
     assert COK(this, {this}+context) by 
         { 
@@ -174,9 +188,15 @@ lemma {:onlyNUKE} cordelia()
           RVfromCallOK(extra, context);
           assert (forall x <- extra :: x.Ready()); 
           assert (forall x <- extra :: this !in x.AMFO); 
-          assert (forall x <- extra :: AMFO > x.AMFO);
-          
+          assert (forall x <- extra :: AMFO > x.AMFO)  by { 
+                reveal COK();
+                reveal AllTheseOwnersAreFlatOK();
+                assert AllTheseOwnersAreFlatOK(extra, oo.AMFO+extra);
+            }
 
+           
+          
+  
           assert CallOK(extra,context);
           assert AMFO == oo.AMFO + {this} + xtra;
           assert ExtraIsExtra(extra,context);
@@ -202,6 +222,13 @@ lemma {:onlyNUKE} cordelia()
           assert (this.AllOutgoingReferencesAreOwnership(({this}+context)))  ;
           assert (this.AllOutgoingReferencesWithinThisHeap(({this}+context)));
           assert (this.AllOwnersAreWithinThisHeap(({this}+context)));
+
+          reveal AllTheseOwnersAreFlatOK();
+          assert AllTheseOwnersAreFlatOK(extra, oo.AMFO+extra);
+
+          assert AllTheseOwnersAreFlatOK(AMFO - {this});
+          assert AllTheseOwnersAreFlatOK(region.owner.AMFO);
+          assert (AllTheseOwnersAreFlatOK(extra,(region.owner.AMFO+extra)));
 
           assert COK(this, {this}+context);
          }
@@ -329,9 +356,13 @@ constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>)
     assert AllOutgoingReferencesAreOwnership(context);
     assert AllOutgoingReferencesWithinThisHeap(context);
     assert AllOwnersAreWithinThisHeap(context);
+    reveal AllTheseOwnersAreFlatOK();
+    assert AllTheseOwnersAreFlatOK(extra);
+    assert AllTheseOwnersAreFlatOK(AMFO - {this});
+
     reveal COK();
     assert COK(this,context);
-  }
+    }
 
 
 
@@ -647,7 +678,7 @@ predicate  ExtraIsExtra(xtra : set<Object>, context : set<Object>)
    //I bet this can be refactored into the COK if it isn't already
 }
 
-predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
+opaque predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
 // true iff all os's AMFOS are inside os
 // probalby need to do - {a} if these are for {a} or else it gets circular...?
 {
@@ -658,6 +689,24 @@ predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
     //&& flattenAMFOs(a.AMFO - {a}) <= (a.AMFO - {a}) //or should it be this instead?
     //&& flattenAMFOs(a.AMFO + {a}) <= (a.AMFO + {a}) //or even this?
 
+predicate OrigBigfoot(os : set<Object>, context : set<Object> := os) 
+{
+  && (os <= context)
+  && (forall o <- os :: o.AMFO <=  context)
+}
+
+predicate Bigfoot(os : set<Object>, context : set<Object> := os) : ( r : bool )
+    ensures r ==> AllTheseOwnersAreFlatOK(os,context)
+{
+  reveal AllTheseOwnersAreFlatOK();
+  OrigBigfoot(os,context)
+}
+
+lemma SPLATTO(os : set<Object>, context : set<Object> := os)  
+  ensures OrigBigfoot(os,context) == AllTheseOwnersAreFlatOK(os,context)
+{
+  reveal AllTheseOwnersAreFlatOK();
+}
 
 lemma MaybeOrMaybeNot(o : Object, os : set<Object>) 
 //does it matter of we care if "this" is in the set of AMFO's we're flattening?
@@ -667,10 +716,12 @@ lemma MaybeOrMaybeNot(o : Object, os : set<Object>)
   requires AllTheseOwnersAreFlatOK(os)
   requires o.AMFO <= (os + {o})
   ensures  AllTheseOwnersAreFlatOK(os+{o})
-  {}
+  {
+    reveal AllTheseOwnersAreFlatOK();
+  }
 
 /*oopaque or not or both */
-function flattenAMFOs(os : set<Object>) : (of : set<Object>)
+function  flattenAMFOs(os : set<Object>) : (of : set<Object>)
    //flattened set of os.AMFO 
    //earlier version required o in all objects AMFS, that's gone now
    //could put it back, require os to be Ready, or remove the os+ below
