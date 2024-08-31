@@ -100,7 +100,7 @@ lemma {:onlyNUKE} CallOKWiderFocus2(less: set<Object>, more : set<Object>, conte
 ///IF owners OK were also bounded by a (sub)heap, then 
 ///the reads clauses could just look over that whole subheap...
 ///that way lies... seplogic?
-opaque predicate {:onlyNUKE} COK(a : Object, context : set<Object>) : (r : bool)
+opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
 //  reads context`fields, context`fieldModes
   reads a`fields, a`fieldModes
 

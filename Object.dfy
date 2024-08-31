@@ -550,6 +550,8 @@ lemma  CallMyOwnersWillWitherAway(a : Object, context : set<Object>)
   requires (a in context) || (COK(a, context))
   ensures  a.AMFO <= context
   ensures  forall oo <- a.AMFO :: COK(oo, context)
+  //should we add more stuff in here, like::
+  // ensures  forall oo <- a.AMFO :: oo.AMFO <= a.AMFO <= context
   ensures a.region.Heap? ==> COK(a.region.owner,context)
   ensures a.region.Heap? ==> a.region.owner in context
 {
@@ -678,6 +680,7 @@ predicate  ExtraIsExtra(xtra : set<Object>, context : set<Object>)
    //I bet this can be refactored into the COK if it isn't already
 }
 
+//compare the fucking AllOwnersAreWthinThisHeap???
 opaque predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
 // true iff all os's AMFOS are inside os
 // probalby need to do - {a} if these are for {a} or else it gets circular...?
