@@ -2895,15 +2895,10 @@ method Clone_KaTHUMP(a : Object, m' : Map)
 
 //from clone extra owners
   ensures  m.calid() //needed to be able to call some of the below  en
-  ensures a.AMFO <= m.ks  //seems weird but we are populating m, right...  //kathump
-  ensures a.extra <= m.ks //ditto?
+  //ensures  a.AMFO <= m.ks  //seems weird but we are populating m, right...  //kathump
+  ensures  a.extra <= m.ks //ditto?
   ensures  mapThruMap(a.extra, m) <= m.vs
   ensures  m.from(m')
-
-
-
-
-
 
 { //kathump
 
@@ -4259,7 +4254,11 @@ method Clone_Extra_Owners(a : Object,  m' : Map)  returns (m : Map)
   ensures  m.calid()
   //ensures  a !in m.ks //mustn't have cloned a yet...
   ensures  a.extra <= m.ks  //should beecome AMFO? - oh yep
+//  ensures  a.AMFO <= m.ks  //should beecome AMFO? - oh yep
+
   ensures  mapThruMap(a.extra, m) <= m.vs
+//  ensures  mapThruMap(a.AMFO, m) <= m.vs
+
   ensures  m.from(m')
 
   modifies {}
