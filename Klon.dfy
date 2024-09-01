@@ -1048,6 +1048,7 @@ opaque predicate {:onlyNUKE} AreWeNotMen(x : Object,  rv : Map)  //hmmm wgt etc?
       requires x in rv.m.Keys
 {
       && (   (inside(x,rv.o)) ==> rv.m[x] in rv.ns)
+      && (   (inside(x,rv.o)) ==> rv.m[x].clonedFrom == x)
       && (not(inside(x,rv.o)) ==> (rv.m[x] == x)) 
       && (   (inside(x,rv.o)) ==> (UniqueMapEntry(rv.m,x)))
       && (not(inside(x,rv.o)) ==> (UniqueMapEntry(rv.m,x)))
@@ -1399,7 +1400,7 @@ method Clone_Via_Map(a : Object, m' : Map)
   //ensures b.AMFO == set x <- a.AMFO :: m.m[x]
 
 
-  ensures  a !in m'.ks ==> b !in m'.ns  //KJX sure about this?
+  // ensures  a !in m'.ks ==> b !in m'.ns  //KJX sure about this?
   ensures  unchanged(a)
   ensures  unchanged(m'.oHeap)
   ensures  unchanged(m'.ns)
@@ -1551,7 +1552,7 @@ modifies {} // only modifes objecst allocated aftrer this point?
         }
           b, m := Clone_Outside_Heap(a, m);
 
-  assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
+     assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
 
       //END outside  HEAP OBJECT
     } 
@@ -1561,7 +1562,7 @@ modifies {} // only modifes objecst allocated aftrer this point?
 
         b, m := Clone_Outside_World(a, m);
 
-  assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
+     assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
 
       }//end of outside / world 
 
@@ -1584,7 +1585,7 @@ modifies {} // only modifes objecst allocated aftrer this point?
       assert forall kx <- a.extra :: m.m[kx] in m.m[a].extra;
       assert a.extra <= m.ks;
 
-  assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
+     assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
 
   return;  //we may as well just return here.
            //we've done all we need to do.  I think.
@@ -1599,7 +1600,16 @@ modifies {} // only modifes objecst allocated aftrer this point?
         b, m := Clone_Inside_Heap(a, m);
       //  assert b.fields.Keys == {};  //we now do clone fields though!!
 
-  assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
+        assert a !in m'.ks ==> b !in m'.ns by {
+            reveal m.calid();
+            assert m.calid();
+            reveal m.calidObjects();
+            assert m.calidObjects();
+
+            reveal m.calidMap(); assert m.calidMap();
+            reveal m.calidSheep(); assert m.calidSheep();
+
+        }
 
       //END inside HEAP OBJECT 
     } else {
@@ -1608,7 +1618,7 @@ modifies {} // only modifes objecst allocated aftrer this point?
       b, m := Clone_Inside_World(a, m);
     //  assert b.fields.Keys == {};
 
-  assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
+     assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
     }   //end of inside world heap case
  } //end of inside case 
  
@@ -1616,7 +1626,7 @@ modifies {} // only modifes objecst allocated aftrer this point?
 ///////////////////////////////////////////////////////////////
 //tidying up after the cases..
 
-  assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
+     assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
 
   reveal m.calid();
   assert m.calid();
@@ -1635,8 +1645,8 @@ modifies {} // only modifes objecst allocated aftrer this point?
 //  or everyhing in ns is new. or...
   assert b in m.ns;
 
-  assert m.m[a] == b;
-  assert a !in m'.ks;
+     assert m.m[a] == b;
+     assert a !in m'.ks;
   assert b !in m'.oHeap;
   //assert b !in m'.ns;
 
@@ -1650,7 +1660,7 @@ modifies {} // only modifes objecst allocated aftrer this point?
 
   assert  b.fieldModes == a.fieldModes;
 
-  assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
+     assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
 
 //  assert m.from(m') by {
 //      reveal m.from();
@@ -1784,15 +1794,15 @@ print "<<<<<<<<<<<\n";
 
 
 
-//assert fresh(b);
-assert  b.fields.Keys == {}; 
-assert b in m.vs;
+  //assert fresh(b);
+  assert b.fields.Keys == {}; 
+  assert b in m.vs;
 
-//START OF FIELDS…
+  //START OF FIELDS…
 
-print "<<<<<<<<<<<\n";
-printmapping(m.m);
-print "<<<<<<<<<<<\n";
+  print "<<<<<<<<<<<\n";
+  printmapping(m.m);
+  print "<<<<<<<<<<<\n";
 
   assert m.calid();
   assert m'.calid() by { reveal MPRIME; }
@@ -2238,7 +2248,7 @@ method Clone_Outside_Heap(a : Object, m' : Map)
 //  ensures b.fields.Keys == a.fields.Keys
 
 //  modifies (set o : Object | o !in (m'.oHeap+m'.ns))`fields
-  ensures  a !in m'.ks ==> b !in m'.ns  //KJX sure about this?
+     ensures  a !in m'.ks ==> b !in m'.ns  //KJX sure about this?
   modifies {}
   {
         m := m';
@@ -2800,7 +2810,7 @@ method Clone_Outside_World(a : Object, m' : Map)
   ensures a.fieldModes == b.fieldModes
  // ensures b.fields.Keys == a.fields.Keys
   // modifies (set o : Object | o !in (m'.oHeap+m'.ns))`fields
-  ensures  a !in m'.ks ==> b !in m'.ns  //KJX sure about this?
+     ensures  a !in m'.ks ==> b !in m'.ns  //KJX sure about this?
   modifies {}
 {
         m := m';
@@ -2986,8 +2996,7 @@ method Clone_Inside_Heap(a : Object, m' : Map)
 
   ensures  m.calid()
   ensures  a in m.ks
-  ensures  a in m.m.Keys
-  ensures  b in m.vs
+  ensures  a in m.m.Keys  ensures  b in m.vs
   ensures  b in m.m.Values
   ensures  b in m.ns
   ensures  a in m.m.Keys && m.at(a) == b
@@ -3019,7 +3028,8 @@ method Clone_Inside_Heap(a : Object, m' : Map)
 
    //modifies (set o : Object | o !in (m'.oHeap+m'.ns))`fields
    //modifies (set o : Object)`fields
-   ensures  a !in m'.ks ==> b !in m'.ns  //KJX sure about this?   //Cline INsinside heap
+   // ensures  a !in m'.ks ==> b !in m'.ns  //KJX sure about this?   //Cline INsinside heap
+
    modifies {} 
    { //clone inside heap
         m := m';
@@ -3490,13 +3500,8 @@ assert (forall o <- rextra :: o.AMFO <=  (rowner.AMFO+rextra));
 
 
 
-     b := new Object.cake(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rextra);
+     b := new Object.cake(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rextra, from := a);
 
-
-
-        // currently ignoring REXTRA //TODO...   //extra not yet cloned
-        // var rextra := set x <- a.extra :: m.m[x];
-        // b := new Object.cake(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rextra);
 
         assert fresh(b);
         assert b.fieldModes == a.fieldModes;
@@ -3637,7 +3642,7 @@ method Clone_Inside_World(a : Object, m' : Map)
 
   ensures b.fieldModes == a.fieldModes
 //   ensures b.fields.Keys == a.fields.Keys
-  ensures  a !in m'.ks ==> b !in m'.ns  //KJX sure about this?
+     ensures  a !in m'.ks ==> b !in m'.ns  //KJX sure about this?
    modifies {}
   {
         m := m';
@@ -4247,7 +4252,7 @@ method Clone_Extra_Owners(a : Object,  m' : Map)  returns (m : Map)
    
   decreases (m'.oHeap - m'.ks), a.AMFO, (a.fields.Keys), 12
 
-  requires a !in m'.ks //mustn't have cloned a yet...
+     requires a !in m'.ks //mustn't have cloned a yet...
   requires COK(a, m'.oHeap)
   requires m'.calid()
  
@@ -4619,11 +4624,81 @@ predicate {:onlyfans} isIsomorphicMappingOWNED(a : Object, o : Object, m : Mappi
 
 
 
+lemma AhhFuckOff(a : Object, b : Object, m : Map)
+//
+//    requires not(inside(a,m.o))
+//    requires a !in m.m.Keys
+    requires (b.clonedFrom != null) ==> (b.clonedFrom == a)
+    requires (not(inside(b,m.o))) ==>  (b.clonedFrom == null) 
+    requires (not(inside(b,m.o))) ==> (a == b)
+    requires m.calid()
+    requires forall k <- m.m.Keys :: m.AreWeNotMen(k,m)
+    requires a  in m.oHeap
+    requires a !in m.ns
+//  requires m.m[a] == b   //BUT WE CANT!!!
+
+    ensures  b  in m.m.Values ==> a  in m.m.Keys
+    ensures  a !in m.m .Keys  ==> b !in m.m.Values
+{
+    reveal m.calid();
+    assert m.calid();
+    reveal m.calidObjects();
+    assert m.calidObjects();
+    reveal m.calidOK();
+    assert m.calidOK();
+    
+    assert m.ks == m.m.Keys;
+    assert m.calidMap();
+    reveal m.calidMap();
+    assert m.calidSheep();
+    reveal m.calidSheep();
+
+    assert MapOK(m.m);
+
+    reveal m.AreWeNotMen();  
+    reveal UniqueMapEntry();
+    m.WeAreDevo();
+
+//    assert m.AreWeNotMen(a,m);   //argh. - can't call
+
+    if (b in m.m.Values) {
+        if (not(inside(b,m.o))) 
+          { 
+             m.WeAreDevo();
+             assert forall k <- m.m.Keys :: m.AreWeNotMen(k,m);     
+             assert forall k <- m.m.Keys :: ((not(inside(k,m.o))) ==> m.m[k] == k);
+             assert b in m.m.Values;
+             assert (not(inside(b,m.o)));
+             AValueNeedsAKey(b,m.m);
+             assert ((not(inside(b,m.o))) && b in m.m.Values) ==> exists k <- m.m.Keys :: m.m[k] == b;
+             assert (not(inside(b,m.o))) ==> (UniqueMapEntry(m.m,b));
+             reveal UniqueMapEntry();
+             assert ((not(inside(b,m.o))) && b in m.m.Values) ==> (exists k <- m.m.Keys :: m.m[k] == b && (m.m[b] == b));
+             assert ((not(inside(b,m.o))) && b in m.m.Values) ==> m.m[b] == b;  
 
 
 
+             assert m.m[b] == b; //X
+             assert b  in m.m.Values ==> a  in m.m.Keys;
+             assert a !in m.m.Keys   ==> b !in m.m.Values;
+          } else {
+             AValueNeedsAKey(b,m.m);
+             assert inside(b,m.o);  ///technically th eWRONG HING -- or is it?
+             m.WeAreDevo();
+             assert forall k <- m.m.Keys :: m.AreWeNotMen(k,m);
+             assert forall k <- m.m.Keys :: ((inside(k,m.o)) ==> m.m[k].clonedFrom == k);
+             assert forall k <- m.m.Keys :: ((inside(k,m.o)) ==> m.m[k].clonedFrom != null);  
 
+             assert (b.clonedFrom != null) ==> (b.clonedFrom == a);
+             assert b  in m.m.Values ==> a  in m.m.Keys;
+             assert a !in m.m.Keys   ==> b !in m.m.Values;
+          }
+    } else {
+            assert b !in m.m.Values;
+            assert b  in m.m.Values ==> a  in m.m.Keys;
+            assert a !in m.m.Keys   ==> b !in m.m.Values;
 
-
-
-
+    } 
+    assert b  in m.m.Values ==> a  in m.m.Keys;
+    assert a !in m.m.Keys   ==> b !in m.m.Values;
+}

@@ -87,9 +87,11 @@ class Object {
   var   fieldModes : map<string,Mode>//Mode of each field name -  note, static! - would be statically known by any methods
     //probably also has to go to var to get to typestate. GRRR. 
 
-  const AMFO : set<Object> //All MY FUCKING Owners  (aka All My Flat Owners:-)
+  const AMFO       : set<Object> //All MY FUCKING Owners  (aka All My Flat Owners:-)
 
-  const extra : set<Object> //additional owners e.g. for stack frames inside objects
+  const extra      : set<Object> //additional owners e.g. for stack frames inside objects
+
+  const clonedFrom : Object? // what I WOZ cloned from 
 
 lemma {:onlyNUKE} triceratops(aa : set<Object>, bb : set<Object>, cc : set<Object>) 
   ensures (aa + bb + cc) == ((aa + bb) + cc) == (aa + (bb + cc))
@@ -121,7 +123,7 @@ lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
 
 
 //:onlyGRUNTS} 
-  constructor {:isolate_assertions} cake(ks : map<string,Mode>, oo : Object, context : set<Object>, name : string, xtra : set<Object> := {} ) 
+  constructor {:isolate_assertions} cake(ks : map<string,Mode>, oo : Object, context : set<Object>, name : string, xtra : set<Object> := {}, from : Object := null) 
     requires COK(oo, context)
     requires CallOK(context)
     requires CallOK(xtra, context) 
@@ -139,6 +141,7 @@ lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
     ensures fieldModes == ks
     ensures fields == map[] 
     ensures extra == xtra
+    ensures clonedFrom == from
     ensures AMFO == oo.AMFO + {this} + xtra
     ensures this in AMFO
     ensures this !in extra
@@ -157,6 +160,7 @@ lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
     AMFO := oo.AMFO + xtra + {this};
     nick := name;
     extra := xtra;
+    clonedFrom := from;
     new;   
 
 
