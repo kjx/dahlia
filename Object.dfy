@@ -149,6 +149,7 @@ lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
     //ensures CallOK({this} + {oo}+oo.AMFO, {this} + context)
 
     ensures unchanged( context )
+    ensures fresh(this)
     modifies {}
   { 
     region := Heap(oo);
