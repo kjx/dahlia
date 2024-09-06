@@ -126,11 +126,11 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
     && (a.AllOutgoingReferencesWithinThisHeap(context))
     && (a.AllOwnersAreWithinThisHeap(context))
 
-    && AllTheseOwnersAreFlatOK(a.AMFO - {a}) 
+    && AllTheseOwnersAreFlatOK(a.AMFO - {a})   //point here is we don't want a loop
     && (a.region.Heap? ==> AllTheseOwnersAreFlatOK(a.region.owner.AMFO))
     && (AllTheseOwnersAreFlatOK(a.extra,
          (if (a.region.Heap?) then (a.region.owner.AMFO) else {}) + a.extra))
- }
+ }  
 
 method {:onlyNUKE} COKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
   requires COK(a,context)

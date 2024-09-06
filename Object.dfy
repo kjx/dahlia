@@ -706,6 +706,80 @@ predicate Bigfoot(os : set<Object>, context : set<Object> := os) : ( r : bool )
   OrigBigfoot(os,context)
 }
 
+lemma PsychoBigFoot(os : set<Object>, context : set<Object> := os, m : Map)
+   requires m.calid()
+   requires os <= m.ks
+   requires os <= m.m.Keys  
+   requires context <= m.ks
+   requires context <= m.m.Keys  
+   requires os <= context
+   requires OrigBigfoot(os,context)
+
+   ensures  m.calid()
+   ensures  os <= m.ks
+   ensures  os <= m.m.Keys  
+   ensures  context <= m.ks
+   ensures  context <= m.m.Keys  
+   ensures  os <= context
+   ensures  OrigBigfoot(mapThruMap(os,m),mapThruMap(context,m))
+{
+    assert (os <= context);
+    assert (forall o <- os ::  o.AMFO <=  context);
+    assert OrigBigfoot(os,context);
+
+    reveal m.calid(); assert m.calid();
+    reveal m.calidObjects(); assert m.calidObjects();
+    reveal m.calidOK(); assert m.calidOK();
+    reveal m.calidMap(); assert m.calidMap();
+    reveal m.calidSheep(), m.calidSheep2();
+    assert m.calidSheep(); 
+    assert MapOK(m.m);
+
+assert  (forall x <- m.m.Keys ::
+  (set oo <- x.AMFO :: m.m[oo]) == m.m[x].AMFO); //NEW BIT
+
+
+   assert os <= m.ks;
+   assert os <= m.m.Keys  ;
+   assert context <= m.ks;
+   assert context <= m.m.Keys  ;
+   assert os <= context;
+   assert OrigBigfoot(os,context);
+
+
+assert (forall o <- os :: o.AMFO <=  context);
+
+   assert mapThruMap(os, m) <=  mapThruMap(context, m);
+   assert m.calid();
+
+
+BothSidesNow(m.m);
+MapThruMapPreservesSubsets(os, context, m);
+MapThruMapPreservesAMFO(os, context, m);
+
+forall o <- os ensures (
+      mapThruMap(o.AMFO, m) <= mapThruMap(context, m))
+    {
+      assert o.AMFO <= context;
+      MapThruMapPreservesSubsets(o.AMFO, context, m);
+      assert mapThruMap(o.AMFO, m) == m.m[o].AMFO;
+    }
+
+
+forall r <- mapThruMap(os, m) ensures (
+      r.AMFO <= mapThruMap(context, m)) {
+         MapThruMapPreservesSubsets(os, context, m);
+         MapThruMapPreservesAMFO(os, context, m);
+         assert r.AMFO <= mapThruMap(context, m);
+      }
+
+   assert (forall o <- mapThruMap(os, m)  ::  o.AMFO <=   mapThruMap(context, m)); 
+
+
+assert  OrigBigfoot(mapThruMap(os,m),mapThruMap(context,m));
+
+}
+
 lemma SPLATTO(os : set<Object>, context : set<Object> := os)  
   ensures OrigBigfoot(os,context) == AllTheseOwnersAreFlatOK(os,context)
 {

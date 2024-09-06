@@ -507,3 +507,35 @@ lemma  AValueNeedsAKey<K,V>(v : V, m : map<K,V>)
    ensures  exists k : K :: k in m.Keys && m[k] == v
   {}
 
+lemma BothSidesNow<K,V>(m : map<K,V>)
+  requires AllMapEntriesAreUnique(m)
+  ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] != m[k]) ==> (i != k)
+  ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] == m[k]) ==> (i == k) 
+  ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] != m[k]) <== (i != k)
+  ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] == m[k]) <== (i == k) 
+
+{
+    reveal UniqueMapEntry();
+}
+
+
+  ghost predicate {:opaque} Injective<X, Y>(m: map<X, Y>)
+  {
+    forall x, x' {:trigger m[x], m[x']} :: x != x' && x in m && x' in m ==> m[x] != m[x']
+  }
+
+lemma InjectiveIsUnique<K,V>(m : map<K,V>)
+  requires Injective(m)
+  ensures  AllMapEntriesAreUnique(m)
+{  
+    reveal Injective();
+    reveal UniqueMapEntry();
+}
+
+lemma UniqueIsInjective<K,V>(m : map<K,V>)
+  requires AllMapEntriesAreUnique(m)
+  ensures  Injective(m)
+{
+    reveal Injective();
+    reveal UniqueMapEntry();
+}
