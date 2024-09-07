@@ -65,9 +65,9 @@ datatype Status =
     if a != b {
       assert {a} < x;
       LemmaSubsetSize({a}, x);
-      assert |{a}| < |x|;
-      assert |x| > 1;
-      assert false;
+      assert {:contradiction} |{a}| < |x|;
+      assert {:contradiction} |x| > 1;
+      assert {:contradiction} false;
     }
   }
 
@@ -232,7 +232,7 @@ lemma IAmTheContradictoryOne<T>( t : T,  ts : set<T>)
 {  
   if (ts != {t}) 
   {
-    if (ts == {}) { assert |ts| == 0; assert false; return; }
+    if (ts == {}) { assert {:contradiction} |ts| == 0; assert {:contradiction} false; return; }
 
     var u : T :| u in ts && u != t;
 
@@ -242,15 +242,15 @@ lemma IAmTheContradictoryOne<T>( t : T,  ts : set<T>)
         assert u != t;
         assert ts >= {t,u};
         BiggerIsBigger(ts,{t,u});
-        assert (|ts| >= 2);
-        assert false; return;
+        assert {:contradiction} (|ts| >= 2);
+        assert {:contradiction} false; return;
       }
      else 
       {
-        assert t !in ts;
-        assert false; return;
+        assert {:contradiction} t !in ts;
+        assert {:contradiction} false; return;
       }  
-      assert false; //not reached
+      assert {:contradiction} false; //not reached
     } 
     assert ts == {t};
     }
@@ -518,7 +518,7 @@ lemma BothSidesNow<K,V>(m : map<K,V>)
     reveal UniqueMapEntry();
 }
 
-
+//copied from library?
   ghost predicate {:opaque} Injective<X, Y>(m: map<X, Y>)
   {
     forall x, x' {:trigger m[x], m[x']} :: x != x' && x in m && x' in m ==> m[x] != m[x']
@@ -534,8 +534,73 @@ lemma InjectiveIsUnique<K,V>(m : map<K,V>)
 
 lemma UniqueIsInjective<K,V>(m : map<K,V>)
   requires AllMapEntriesAreUnique(m)
-  ensures  Injective(m)
+  ensures  Injective(m) 
 {
     reveal Injective();
     reveal UniqueMapEntry();
 }
+
+
+/////     /////     /////     /////     /////     /////     /////
+    /////     /////     /////     /////     /////     /////     /////
+/////     /////     /////     /////     /////     /////     /////
+    /////     /////     /////     /////     /////     /////     /////
+
+    
+type iso<K,V> = u : map<K,V> | AllMapEntriesAreUnique(u) 
+
+// method shouldFail() returns (m : iso<int,int>)
+//   //and it does fail
+// {
+//   m := map[1:=11,2:=11];
+// }
+
+function isoKV<K(==),V(==)>(m' : iso<K,V>, k : K, v : V) : (m : iso<K,V>)
+//extends m'  with x:=x forall x in d
+  //  requires (k !in m'.Keys) && (v !in m'.Values)
+  //  requires (forall k' <- m'.Keys :: (k != k') && (v != m'[k']))
+   requires canIsoKV(m', k, v)
+   ensures  m == m'[k:=v]
+   ensures  m.Keys == m'.Keys + {k}
+   ensures  m.Values == m'.Values + {v}
+  {
+      reveal UniqueMapEntry();
+      m'[k:=v]
+  }
+
+predicate canIsoKV<K(==),V(==)>(m' : iso<K,V>, k : K, v : V)
+  {
+     (k !in m'.Keys) && (v !in m'.Values) 
+ //  (forall k' <- m'.Keys :: (k != k') && (v != m'[k']))
+  }
+
+lemma IsoKVcanIsoKV<K,V>(m' : iso<K,V>, k : K, v : V)
+    requires canIsoKV(m', k, v)
+    ensures  isoKV(m', k, v) == m'[k:=v]
+   {}
+
+function mapThruIso<K,V>(ks : set<K>, m : iso<K,V>) : set<V>
+    requires ks <= m.Keys
+  {
+      (set k <- ks :: m[k]) 
+  }
+
+
+function mapThruIsoKV<K,V>(ks : set<K>, m' : iso<K,V>, k : K, v : V) : (m : set<V>)
+    requires ks <= m'.Keys+{k}
+    requires canIsoKV(m', k, v)    
+  {
+      (set x <- ks :: m'[k:=v][x]) 
+  }
+
+  lemma MapThruIsoKVisOK<K,V>(ks : set<K>, m' : iso<K,V>, k : K, v : V)
+    requires ks <= m'.Keys+{k}
+    requires canIsoKV(m', k, v)  
+    ensures  mapThruIsoKV(ks, m', k, v) == mapThruIso(ks, isoKV(m', k, v))
+      {
+         assert mapThruIsoKV(ks, m', k, v) == (set x <- ks :: m'[k:=v][x]);
+         assert mapThruIsoKV(ks, m', k, v) == (set x <- ks :: (isoKV(m', k, v)[x]));
+         assert mapThruIsoKV(ks, m', k, v) == mapThruIso(ks, (isoKV(m', k, v)) );
+      }
+
+      
