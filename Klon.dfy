@@ -13,7 +13,7 @@ predicate OrigMapOK(m : Mapping)
   && (forall x <- m.Keys, oo <- x.AMFO :: m[oo] in m[x].AMFO)
      //  && forall x <- m.Keys :: (not(inside(x,o)) ==> (m[x] == x))x
 }
-predicate MapOK(m : Mapping)
+predicate ExpandedMapOK(m : Mapping)
 {
   && (forall x <- m.Keys, oo <- x.AMFO :: oo in m.Keys)
   && (forall x <- m.Keys :: x.region.Heap? == m[x].region.Heap?)
@@ -33,6 +33,35 @@ predicate MapOK(m : Mapping)
   && (forall x <- m.Keys, xo <- x.extra :: m[xo] in m[x].extra)
   && (forall x <- m.Keys :: (set xo <- x.extra :: m[xo]) == m[x].extra)
 }
+
+//streamlined MapOK - notably pulled out AMDO & extra to one line each
+// 
+predicate MapOK(m : Mapping)
+{
+  && (forall k <- m.Keys :: k.AMFO <= m.Keys)
+  && (forall k <- m.Keys :: (set oo <- k.AMFO :: m[oo]) == m[k].AMFO)
+  && (forall x <- m.Keys :: x.region.Heap? == m[x].region.Heap?)
+  && (forall x <- m.Keys |  x.region.Heap? :: x.region.owner in x.AMFO)
+  && (forall x <- m.Keys |  x.region.Heap? :: x.region.owner in m.Keys)
+  && (forall x <- m.Keys |  x.region.Heap? :: m[x.region.owner] == m[x].region.owner )
+
+
+  //&& (forall x <- m.Keys :: (set oo <- x.AMFO :: m[oo]) == m[x].AMFO) //NEW BIT
+     //also needs the first line abofeE= -- x.AMFO in m.Keys
+
+  //  && forall x <- m.Keys :: (not(inside(x,o)) ==> (m[x] == x))
+
+/////////  && (forall x <- m.Keys, oo <- x.AMFO :: m[oo] in m[x].AMFO)
+
+  && (forall x <- m.Keys |  x.region.Heap? :: x.extra <= x.AMFO)
+  && (forall x <- m.Keys |  x.region.Heap? :: x.extra <= m.Keys)
+  && (forall x <- m.Keys, xo <- x.extra :: xo in m.Keys)
+  && (forall x <- m.Keys, xo <- x.extra :: m[xo] in m[x].extra)
+  && (forall k <- m.Keys :: (set oo <- k.extra :: m[oo])  == m[k].extra)
+
+}
+
+
 
 function MapKV(m : Mapping,   x : Object,  v : Object) : (r : Mapping)
   reads x`fields, x`fieldModes
@@ -4440,7 +4469,7 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Map)
   assert CallOK(m.ns-{b}, m.oHeap+m.ns);
 
 
-  assert m.m[ofv] == rfv;
+  assert m.m[ofv] == rfv; 
   assert rfv in m.vs;
   assert rfv in m.oHeap+m.ns;
 
@@ -4611,6 +4640,21 @@ function  mapThruMappingKV(os : set<Object>, m : Mapping, k : Object, v : Object
 }
 
 
+lemma mapThruMappingKVIsNICE(os : set<Object>, m : Mapping, k : Object, v : Object)
+  requires os <= m.Keys + {k}
+  requires k !in m.Keys //technically unnecessary but nice to have?
+  requires v !in m.Values //technically unnecessary but nice to have?
+
+  ensures  (set o <- os :: if (o == k) then (v) else (m[o]))  ==  (set o <- os :: m[k:=v][o])
+  ensures  m[k:=v].Keys == m.Keys+{k}
+//  ensures  m[k:=v].Values == m.Values+{k}
+  ensures  k in m[k:=v].Keys
+  ensures  v in m[k:=v].Values
+  ensures  forall x <- m.Keys :: x in m[k:=v].Keys
+{
+}
+
+
 
 function  mapThruMapKV(os : set<Object>, m : Map, k : Object, v : Object) : (r : set<Object>)
   reads m.oHeap`fields, m.oHeap`fieldModes
@@ -4679,6 +4723,59 @@ lemma MapThruMapPreservesSubsets(less: set<Object>, more : set<Object>, m : Map)
 }
 
 
+
+lemma MapThruMapPreservesSets(less: set<Object>, more : set<Object>, m : Map)
+  requires m.calid()
+  requires less <= m.ks
+  requires less <= m.m.Keys
+  requires more <= m.ks
+  requires more <= m.m.Keys
+  requires less == more
+  ensures  mapThruMap(less,m) <= mapThruMap(more,m)
+{
+  reveal m.calid(), m.calidObjects(), m.calidOK(), m.calidMap(), m.calidSheep();
+  BothSidesNow(m.m);
+
+  MapThruMapPreservesSubsets(less, more, m);
+  MapThruMapPreservesSubsets(more, less, m);
+
+  assert mapThruMap(less,m) == mapThruMap(more,m);
+}
+
+
+
+lemma MapThruMapIsInvertible(less: set<Object>, other: set<Object>,  m : Map)
+//I hate the term "injective" must be a better one. invertible?
+  requires m.calid()
+  requires less <= m.ks
+  requires less <= m.m.Keys
+  requires other == mapThruMap(less, m)
+{
+  reveal m.calid(), m.calidObjects(), m.calidOK(), m.calidMap(), m.calidSheep();
+  BothSidesNow(m.m);
+  reveal UniqueMapEntry();
+
+  //var other :=  (set x <- less :: m.m[x]);
+  //var other := mapThruMap(less, m);
+
+  var inverse := invert(m.m);
+
+  var one := (set x <- other :: inverse[x]);
+
+  assert forall l <- less  :: m.m[l] in other;
+  assert forall o <- other :: inverse[o] in m.m;
+
+//   assert |less| == |other| == |one|;
+// 
+//   assert m.m.Keys == inverse.Values;
+//   assert m.m.Values == inverse.Keys;
+
+  assert one == less;
+}
+
+
+
+
 lemma MapThruMapSingleton(l : Object, m : Map)
   requires m.calid()
   requires {l} <= m.ks
@@ -4688,15 +4785,271 @@ lemma MapThruMapSingleton(l : Object, m : Map)
   assert (set o <- {l} :: m.m[o]) == {m.m[l]};
 }
 
-lemma MapThruMapPreservesAMFO(less: set<Object>, more : set<Object>, m : Map)
+//WUY THE FUCK CAN"T I USE SOME OF THESE!!!
+
+
+
+lemma MapThruMapPreservesAMFO(less: set<Object>, other : set<Object>, m : Map)
   requires m.calid()
   requires less <= m.ks
   requires less <= m.m.Keys
-  requires more <= m.ks
-  requires more <= m.m.Keys
-  requires less <= more
-  requires forall l <- less :: l.AMFO < 234q5w6eratdsy9f= more
+  requires other == mapThruMap(less, m)
+  //ensures  forall l <- less :: mapThruMap(l.AMFO,m) == m.m[l].AMFO
+  ensures  forall l <- less :: l.AMFO <= m.ks
+  ensures  forall l <- less :: (set oo <- l.AMFO :: m.m[oo]) == m.m[l].AMFO
+  {
+  reveal m.calid();
+  assert m.calid();
+  reveal m.calidOK();
+  assert m.calidOK();
+  reveal m.calidObjects();
+  assert m.calidObjects();
+  reveal m.calidMap();
+  assert m.calidMap();
+  reveal m.calidSheep();
+  assert m.calidSheep();
+  assert MapOK(m.m);
 
+  reveal UniqueMapEntry();
+  }
+
+
+lemma MapThruMapKVExtendsAMFO(m : Map, k : Object, v : Object)
+  requires m.calid()
+  requires k !in m.ks
+  requires v !in m.vs
+  requires k.AMFO <= m.ks+{k}
+  requires v.AMFO <= m.vs+{v}  
+  requires k in  m.oHeap
+  requires v in  m.oHeap+m.ns
+  requires mapThruMappingKV(k.AMFO, m.m, k, v) == v.AMFO
+
+  requires
+    && (k.AMFO <= m.ks+{k})
+    && (k.region.Heap? == v.region.Heap?)
+    && (k.region.Heap? ==> (k.region.owner in k.AMFO))
+    && (k.region.Heap? ==> (k.region.owner in m.ks))
+    && (k.region.Heap? ==> (m.m[k.region.owner] == v.region.owner))
+    && (k.region.Heap? ==> (k.extra <= m.ks+{k}))
+    && (k.region.Heap? ==> (k.extra <= k.AMFO))
+    && (k.extra <= m.ks+{k})
+    && (v.extra <= m.vs+{v})
+    && (k.extra == v.extra)
+    && (mapThruMappingKV(k.extra, m.m, k, v) == v.extra)
+
+
+  ensures (
+    var bb := m.m[k:=v];    
+    && (forall x <- bb.Keys :: x.AMFO <= bb.Keys) 
+    && (forall x <- bb.Keys :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO)
+  )
+   ///what it SHOULD BE
+  // ensures  MapOK(m.m[k:=v])
+{
+  reveal m.calid();
+  assert m.calid();
+  reveal m.calidOK();
+  assert m.calidOK();
+  reveal m.calidObjects();
+  assert m.calidObjects();
+  reveal m.calidMap();
+  assert m.calidMap();
+  reveal m.calidSheep();
+  assert m.calidSheep();
+  assert MapOK(m.m);
+
+  reveal UniqueMapEntry();
+
+assert && (forall k <- m.m.Keys :: (set oo <- k.extra :: m.m[oo])  == m.m[k].extra);
+
+  var aa := m.m;
+
+assert && (forall k <- aa.Keys  :: (set oo <- k.extra :: aa[oo])   == aa[k].extra);
+
+assert mapThruMappingKV(k.extra, m.m, k, v) == v.extra;
+assert mapThruMappingKV(k.extra,  aa, k, v) == v.extra;
+
+      assert //expanded body of MapOK!
+        && (forall x <- aa.Keys :: x.AMFO <= aa.Keys)
+        && (forall x <- aa.Keys :: (set oo <- x.AMFO :: aa[oo]) == aa[x].AMFO)
+        && (forall x <- aa.Keys :: x.region.Heap? == aa[x].region.Heap?)
+        && (forall x <- aa.Keys |  x.region.Heap? :: x.region.owner in x.AMFO)
+        && (forall x <- aa.Keys |  x.region.Heap? :: x.region.owner in aa.Keys)
+        && (forall x <- aa.Keys |  x.region.Heap? :: aa[x.region.owner] == aa[x].region.owner )
+
+        && (forall x <- aa.Keys |  x.region.Heap? :: x.extra <= x.AMFO)
+        && (forall x <- aa.Keys |  x.region.Heap? :: x.extra <= aa.Keys)
+        && (forall x <- aa.Keys, xo <- x.extra :: xo in aa.Keys)
+        && (forall x <- aa.Keys, xo <- x.extra :: aa[xo] in aa[x].extra)
+        && (forall x <- aa.Keys :: (set oo <- x.extra :: aa[oo])  == aa[x].extra)
+      ;  
+
+assert k.AMFO <= m.ks+{k};
+
+assert v.AMFO == mapThruMappingKV(k.AMFO, aa, k, v);
+assert v.AMFO == (set oo <- k.AMFO :: if (oo == k) then (v) else (aa[oo]));
+
+var bb := aa[k:=v];
+
+assert k.AMFO <= bb.Keys; 
+assert bb[k] == v;
+
+assert  forall x <- aa.Keys     :: bb[x] == aa[x];
+assert  forall x <- {k}         :: bb[x] == v;
+assert  forall x <- aa.Keys+{k} :: bb[x] == (if (x == k) then (v) else (aa[x]));
+assert  forall x <- bb.Keys     :: bb[x] == (if (x == k) then (v) else (aa[x]));
+
+assert v.AMFO == (set oo <- k.AMFO :: if (oo == k) then (v) else (aa[oo]));
+
+assert (forall oo <- k.AMFO      :: bb[oo] == (if (oo == k) then (v) else (aa[oo])));
+assert (forall oo <- aa.Keys     :: bb[oo] == (if (oo == k) then (v) else (aa[oo])));
+assert (forall oo <- aa.Keys+{k} :: bb[oo] == (if (oo == k) then (v) else (aa[oo])));
+assert aa.Keys+{k} == bb.Keys;
+assert (forall oo <- bb.Keys     :: bb[oo] == (if (oo == k) then (v) else (aa[oo])));
+
+assert (forall oo <- aa.Keys  :: bb[oo] == aa[oo]);
+assert bb[k] == v;
+
+assert  (set oo <- k.AMFO :: bb[oo]) == v.AMFO by {
+  assert bb[k] == v;
+  assert forall b <- bb.Keys | b != k :: bb[b] == aa[b];
+  assert forall oo <- bb.Keys :: bb[oo] == (if (oo == k) then (v) else (aa[oo]));
+
+  assert mapThruMappingKV(k.AMFO, aa, k, v) == v.AMFO;
+  assert (set o <- k.AMFO :: if (o == k) then (v) else (aa[o])) == v.AMFO; 
+  assert forall oo <- bb.Keys :: bb[oo] == (if (oo == k) then (v) else (aa[oo]));
+  assert (set oo <- k.AMFO :: bb[oo]) == v.AMFO; 
+}
+
+assert  (forall x <- {k} :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO);
+
+
+
+assert  (set oo <- k.extra :: bb[oo]) == v.extra by {
+  assert bb[k] == v;
+  assert forall b <- bb.Keys | b != k :: bb[b] == aa[b];
+  assert forall oo <- bb.Keys :: bb[oo] == (if (oo == k) then (v) else (aa[oo]));
+
+  assert mapThruMappingKV(k.extra, aa, k, v) == v.extra;
+  assert (set o <- k.extra :: if (o == k) then (v) else (aa[o])) == v.extra; 
+  assert (set oo <- k.extra :: bb[oo]) == v.extra; 
+}
+
+
+
+
+
+    assert //expanded body of MapOK!
+        && (k.extra <= m.ks+{k}) 
+        && ((set oo <- k.extra :: bb[oo]) == v.extra)
+        && (k.region.Heap? ==> (k.extra <= k.extra))
+        && (k.region.Heap? ==> (k.extra <= bb.Keys))
+        && (k.extra <= bb.Keys)
+        && (k.extra == v.extra)
+        && ((set oo <- k.extra :: bb[oo])  == v.extra)
+      ;  
+
+
+      assert //expanded body of MapOK!
+        && (forall x <- {k} :: x.AMFO <= bb.Keys)
+        && (forall x <- {k} :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO)
+        && (forall x <- {k} :: x.region.Heap? == bb[x].region.Heap?)
+        && (forall x <- {k} |  x.region.Heap? :: x.region.owner in x.AMFO)
+        && (forall x <- {k} |  x.region.Heap? :: x.region.owner in bb.Keys)
+        && (forall x <- {k} |  x.region.Heap? :: bb[x.region.owner] == bb[x].region.owner )
+        && (forall x <- {k} |  x.region.Heap? :: x.extra <= x.AMFO)
+        && (forall x <- {k} |  x.region.Heap? :: x.extra <= bb.Keys)
+        && (forall x <- {k}, xo <- x.extra :: xo in bb.Keys)
+        && (forall x <- {k}, xo <- x.extra :: bb[xo] in bb[x].extra)
+        && (forall x <- {k} :: (set oo <- x.extra :: bb[oo])  == bb[x].extra)
+      ;  
+
+      assert (forall x <- (aa.Keys) :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO) by {
+          assert (forall x <- (aa.Keys) :: (set oo <- x.AMFO :: aa[oo]) == aa[x].AMFO);
+          assert (forall x <- (aa.Keys) :: bb[x] == aa[x]);
+          assert (forall x <- (aa.Keys) :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO);
+      }
+
+      assert (forall x <- {k} :: x.AMFO <= bb.Keys);
+      assert (forall x <- {k} :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO);
+
+      assert (forall x <- aa.Keys :: x.AMFO <= aa.Keys);
+      assert (forall x <- aa.Keys :: x.AMFO <= bb.Keys);
+
+      assert (forall x <- aa.Keys+{k}       :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO) by {
+          assert (forall x <- {k} :: x.AMFO <= bb.Keys);
+
+          assert (forall x <- aa.Keys       :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO);
+          assert (forall x <- {k}           :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO);
+          assert aa.Keys + {k} == (aa.Keys+{k});
+          assert aa.Keys <= (aa.Keys+{k});
+          assert k in (aa.Keys+{k});
+          assert (aa.Keys+{k}) <= bb.Keys;
+          assert forall x <- aa.Keys       :: x in bb.Keys;
+          assert forall x <- {k}           :: x in bb.Keys;
+          assert forall x <- (aa.Keys+{k}) :: x in bb.Keys;
+          assert (forall x <- (aa.Keys+{k}) :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO);
+      }
+  
+//       assert //expanded body of MapOK!
+// 
+//         && (forall x <- (aa.Keys) :: (set oo <- x.AMFO :: aa[oo]) == aa[x].AMFO)
+//         && (forall x <- (aa.Keys) :: bb[x] == aa[x])
+//         && (forall x <- (aa.Keys) :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO)
+//         && (forall x <- (aa.Keys) :: x.AMFO <= bb.Keys)
+// 
+//         && (forall x <- (aa.Keys) :: x.region.Heap? == bb[x].region.Heap?)
+//         && (forall x <- (aa.Keys) |  x.region.Heap? :: x.region.owner in x.AMFO)
+//         && (forall x <- (aa.Keys) |  x.region.Heap? :: x.region.owner in bb.Keys)
+//         && (forall x <- (aa.Keys) |  x.region.Heap? :: aa[x.region.owner] == bb[x].region.owner )
+//         && (forall x <- (aa.Keys) |  x.region.Heap? :: x.extra <= x.AMFO)
+//         && (forall x <- (aa.Keys) |  x.region.Heap? :: x.extra <= bb.Keys)
+//         && (forall x <- (aa.Keys), xo <- x.extra :: xo in bb.Keys)
+//         && (forall x <- (aa.Keys), xo <- x.extra :: aa[xo] in bb[x].extra)
+//         && (forall x <- (aa.Keys) :: (set oo <- x.extra :: aa[oo])  == bb[x].extra)
+//       ;  
+
+
+      // assert //expanded body of MapOK!
+      //   && (forall x <- (aa.Keys+{k}) :: x.AMFO <= bb.Keys)
+      //   && (forall x <- (aa.Keys+{k}) :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO)
+      //   && (forall x <- (aa.Keys+{k}) :: x.region.Heap? == bb[x].region.Heap?)
+      //   && (forall x <- (aa.Keys+{k}) |  x.region.Heap? :: x.region.owner in x.AMFO)
+      //   && (forall x <- (aa.Keys+{k}) |  x.region.Heap? :: x.region.owner in bb.Keys)
+      //   && (forall x <- (aa.Keys+{k}) |  x.region.Heap? :: aa[x.region.owner] == bb[x].region.owner )
+      //   && (forall x <- (aa.Keys+{k}) |  x.region.Heap? :: x.extra <= x.AMFO)
+      //   && (forall x <- (aa.Keys+{k}) |  x.region.Heap? :: x.extra <= bb.Keys)
+      //   && (forall x <- (aa.Keys+{k}), xo <- x.extra :: xo in bb.Keys)
+      //   && (forall x <- (aa.Keys+{k}), xo <- x.extra :: aa[xo] in bb[x].extra)
+      //   && (forall x <- (aa.Keys+{k}) :: (set oo <- x.extra :: aa[oo])  == bb[x].extra)
+      // ;  
+
+
+//       assert //expanded body of MapOK!
+//         && (forall x <- bb.Keys :: x.AMFO <= bb.Keys)
+//         && (forall x <- bb.Keys :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO)
+//         && (forall x <- bb.Keys :: x.region.Heap? == bb[x].region.Heap?)
+//         && (forall x <- bb.Keys |  x.region.Heap? :: x.region.owner in x.AMFO)
+//         && (forall x <- bb.Keys |  x.region.Heap? :: x.region.owner in bb.Keys)
+//         && (forall x <- bb.Keys |  x.region.Heap? :: bb[x.region.owner] == bb[x].region.owner )
+// 
+//         && (forall x <- bb.Keys |  x.region.Heap? :: x.extra <= x.AMFO)
+//         && (forall x <- bb.Keys |  x.region.Heap? :: x.extra <= bb.Keys)
+//         && (forall x <- bb.Keys, xo <- x.extra :: xo in bb.Keys)
+//         && (forall x <- bb.Keys, xo <- x.extra :: bb[xo] in bb[x].extra)
+//         && (forall x <- bb.Keys :: (set oo <- x.extra :: bb[oo])  == bb[x].extra)
+//       ;  
+
+
+// assert v.AMFO == (set oo <- k.AMFO :: bb[oo]);
+  
+//    assert MapOK(m.m[k:=v]);
+// 
+//    assert MapOK(bb);
+}
+
+
+lemma {:verify false} SHITTYMapThruMapPreservesAMFO(less: set<Object>, more : set<Object>, m : Map)
   ensures  forall l <- less, la <- l.AMFO :: la in more
   ensures  forall l <- less, la <- mapThruMap(l.AMFO,m) :: la in mapThruMap(more,m)
   ensures  forall l <- less :: mapThruMap(l.AMFO,m) <= mapThruMap(more,m)
