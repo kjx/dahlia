@@ -5646,3 +5646,106 @@ predicate {:onlyfans} isIsomorphicMappingOWNED(a : Object, o : Object, m : Mappi
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////     /////     /////     /////     /////     /////     /////
+    /////     /////     /////     /////     /////     /////     /////
+/////     /////     /////     /////     /////     /////     /////
+    /////     /////     /////     /////     /////     /////     /////
+
+
+
+datatype Klon = Klon
+(
+  m : iso<Object,Object>,  //m : Mapping
+  ks : set<Object>, //ks - set, keys of the mapping   (must be m.Keys, subset of oHeap)
+  vs : set<Object>, //vs - set, values or the mapping (must be m.Values, subset of oHeap + ns)
+  o : Object,  //o - Owner within which the clone is being performaed, in oHeap
+  //    p : Object,  // Owner of the new (target) clone.  needs to be inside the source object's movement
+  oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts
+  ns : set<Object> //ns - new objects  (must be !! oHeap,   vs <= oHeap + ns
+  )
+{
+}
+
+function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
+  requires klonIsoOK(c'.m)
+  requires canKlonKV(c', k, v)
+  ensures  klonIsoOK(c.m)
+{
+
+   c'.(m:= isoKV(c'.m,k,v))
+}
+
+
+predicate canKlonKV(c' : Klon, k : Object, v : Object)
+{
+  && canIsoKV(c'.m, k, v)
+  && (k.AMFO <= c'.m.Keys+{k}) 
+  && (mapThruIsoKV(k.AMFO, c'.m, k, v) == v.AMFO)
+}
+
+predicate klonIsoOK(m : iso<Object,Object>)
+{
+//AMFO  
+  && (forall k <- m.Keys :: k.AMFO <= m.Keys)
+  && (forall k <- m.Keys :: (set oo <- k.AMFO :: m[oo]) == m[k].AMFO)
+
+//region & owners?
+  // && (forall x <- m.Keys :: x.region.Heap? == m[x].region.Heap?)
+  // && (forall x <- m.Keys |  x.region.Heap? :: x.region.owner in x.AMFO)
+  // && (forall x <- m.Keys |  x.region.Heap? :: x.region.owner in m.Keys)
+  // && (forall x <- m.Keys |  x.region.Heap? :: m[x.region.owner] == m[x].region.owner )
+
+//extra>
+//   && (forall x <- m.Keys |  x.region.Heap? :: x.extra <= x.AMFO)
+//   && (forall x <- m.Keys |  x.region.Heap? :: x.extra <= m.Keys)
+//   && (forall x <- m.Keys, xo <- x.extra :: xo in m.Keys)
+//   && (forall x <- m.Keys, xo <- x.extra :: m[xo] in m[x].extra)
+//   && (forall k <- m.Keys :: (set oo <- k.extra :: m[oo])  == m[k].extra)
+}
+
