@@ -1,5 +1,7 @@
 
-const protoTypes : map<string, Mode> := map["jat":= Evil]["dat":=Evil]
+const protoTypes : map<string, Mode> := 
+      map["jat":= Evil]
+         ["dat":= Evil]
          ["cat":= Evil]
          ["rat":= Evil]
          ["nxt":= Evil]
@@ -11,7 +13,7 @@ const protoTypes : map<string, Mode> := map["jat":= Evil]["dat":=Evil]
 
 
 
-method {:verify false} Main() {
+method {:verify false} Main1() {
 
   print "Main Test for loopback\n";
   
@@ -160,5 +162,226 @@ print "\nDone\n";
 // end
 
 
+
+
+
+
+
+
+
+
+method {:verify false} Main() {
+
+print "main showing RefOK etc\n";
+  
+var t := new Object.frozen(protoTypes);
+t.nick := "t";
+
+//   t
+//   a       b       c
+//   d  e            f 
+//  ij kl            g 
+//                   h
+
+var a := new Object.cake(protoTypes, t, {t},         "a");
+var b := new Object.cake(protoTypes, t, {t},         "b");
+var c := new Object.cake(protoTypes, t, {t},         "c");
+var d := new Object.cake(protoTypes, a, {a,t},       "d");
+var e := new Object.cake(protoTypes, a, {a,t},       "e");
+var f := new Object.cake(protoTypes, c, {t,a,c},     "f");
+var g := new Object.cake(protoTypes, f, {t,a,c,f},   "g");
+var h := new Object.cake(protoTypes, g, {t,a,c,f,g}, "h");
+var i := new Object.cake(protoTypes, c, {t,a,d},     "i");
+var j := new Object.cake(protoTypes, c, {t,a,d},     "j");
+var k := new Object.cake(protoTypes, c, {t,a,e},     "k");
+var l := new Object.cake(protoTypes, c, {t,a,e},     "l");
+
+
+var os : set<Object> := {t,   a, b, c, d, e, f, g, h, i, j, k, l };
+var oq : seq<Object> := [t,   a, b, c, d, e, f, g, h, i, j, k, l ];
+
+assert forall o <- oq :: o.Ready();
+
+//   for i := 0 to |oq|
+//     {
+//       var o : Object := oq[i];
+// 
+//       assert o.Ready();
+// 
+//       print "\n=============================================================\n";
+//       print "=============================================================\n";
+// 
+//       printobject(o);
+//     }
+//    print "\n\n";
+
+
+print "\n\nOwnership - Inside =========================\n";
+print "Ownership - Inside =========================\n\n";
+
+//       for i := 0 to |oq|
+//        {
+//          printobj(oq[i]);
+//          print "  ";
+// 
+//          for j := 0 to |oq|
+// {
+//          print (if (inside(oq[i],oq[j])) then "i" else " ");
+//          print " ";
+// }
+//          print "\n";
+// 
+//        } 
+//   print "\n\n";
+
+      for i := 0 to |oq|
+       {
+         printobj(oq[i]);
+         print "  ";
+
+         for j := 0 to |oq|
+{
+         print (if (inside(oq[i],oq[j])) then (oq[i].nick+"<="+oq[j].nick) else "    ");
+         print " ";
+}
+         print "\n";
+
+       } 
+  print "\n\n";
+  print "\n[\n";
+
+      for i := 0 to |oq|
+       {
+         print "\"";
+
+         for j := 0 to |oq|
+{
+         print (if (inside(oq[i],oq[j])) then ("x") else " ");
+}
+         if (i < (|oq|-1))  { print "\",\n";} else { print "\"\n";}
+
+       }
+print "]\n";
+
+
+
+
+
+var matrix : seq<string>:= [
+"x            ",
+"xx           ",
+"x x          ",
+"x  x         ",
+"xx  x        ",
+"xx   x       ",
+"x  x  x      ",
+"x  x  xx     ",
+"x  x  xxx    ",
+"x  x     x   ",
+"x  x      x  ",
+"x  x       x ",
+"x  x        x"
+];
+
+  print "\n\n";
+
+      for i := 0 to |matrix|
+       {
+         for j := 0 to |matrix[0]|
+          {
+         print match (inside(oq[i],oq[j]), (matrix[i][j]) )
+           case (true,  'x') => "o"
+           case (true,  ' ') => "m"  //missing
+           case (false, ' ') => " "
+           case (false, 'x') => "F"; //false posiutive, ie FUCKED
+          }
+         print "\n";
+       }
+print "\n";
+
+
+
+
+print "\n\nREFERENCE OK refOK =========================\n";
+print "REFERENCE OK refOK =========================\n\n";
+
+      for i := 0 to |oq|
+       {
+         printobj(oq[i]);
+         print "  ";
+
+         for j := 0 to |oq|
+{
+         print (if (refOK(oq[i],oq[j])) then (oq[i].nick+"->"+oq[j].nick) else "    ");
+         print " ";
+}
+print "\n";
+}
+
+
+
+
+  print "\n[\n";
+
+      for i := 0 to |oq|
+       {
+         print "\"";
+
+         for j := 0 to |oq|
+{
+         print (if (refOK(oq[i],oq[j])) then ("x") else " ");
+}
+         if (i < (|oq|-1))  { print "\",\n";} else { print "\"\n";}
+
+       }
+print "]\n";
+
+
+var keanu := 
+[
+"xxxx         ",
+"xxxxxx       ",
+"xxxx         ",
+"xxxx  x  xxxx",
+"xxxxxx       ",
+"xxxxxx       ",
+"xxxx  xx xxxx",
+"xxxx  xxxxxxx",
+"xxxx  xxxxxxx",
+"xxxx  x  xxxx",
+"xxxx  x  xxxx",
+"xxxx  x  xxxx",
+"xxxx  x  xxxx"
+];
+
+
+  print "\n\n";
+
+      for i := 0 to |keanu|
+       {
+         for j := 0 to |keanu[0]|
+          {
+         print match (refOK(oq[i],oq[j]), (keanu[i][j]) )
+           case (true,  'x') => "o"
+           case (true,  ' ') => "m"  //missing
+           case (false, ' ') => " "
+           case (false, 'x') => "F"; //false posiutive, ie FUCKED
+          }
+         print "\n";
+       }
+print "\n";
+
+
+print "\nDone\n\n";
+
+
+
+
+
+}
+
+
+
+// end main
 
 
