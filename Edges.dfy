@@ -230,13 +230,21 @@ RefCountDistributesOverDisjointEdges(os, fewer, extra);
 }
 
 
+//KJX shit wiull we hace to worry avout outside & iunside or Regions as well as Objecs???
 
 
-  function externalEdges(o: Region, edges : set<Edge>) : (rs : set<Edge>)
+  function externalEdges(o: Object, edges : set<Edge>) : (rs : set<Edge>)
+  // all edges comin into O from objects outside. 
+  //KJX is this right?  will it do what we want? 
     ensures rs <= edges
     reads e2o(edges)
   {
-    set e <- edges | e.t.region == o && e.f.region != o 
+    set e <- edges | outside(e.f, o) && inside(e.t, o)
+
+//KJX or  set e <- edges | e.f.outside(o) && e.t.inside(o)
+//  part.inside(whole), or 
+//  whole.owns(part) ...       --- but what's that mean with multiple owners?
+//  whole.contains(part) ...   --- but what's that mean with multiple owners?
   }
 
 
@@ -244,47 +252,45 @@ RefCountDistributesOverDisjointEdges(os, fewer, extra);
 
 
 
+// currently unused (mostlty) AND not clear how to genrealise to multiple owners
+// maybe this isn't waht we want" waht we want is just a coHeap? 
+//
+// //abbrev for heapExternalEdgesPartitionedByOwners - which I don't need right now
+//   function HxR(edges : set<Edge>) : map<Owners,set<Edge>>
+//      reads e2o(edges)
+//   {
+//     heapExternalEdgesPartitionedByOwners(edges)
+//   }
 
-//abbrev for heapExternalEdgesPartitionedByRegion - which I don't need right now
-  function HxR(edges : set<Edge>) : map<Region,set<Edge>>
-     reads e2o(edges)
-  {
-    heapExternalEdgesPartitionedByRegion(edges)
-  }
-
-  function heapExternalEdgesPartitionedByRegion(edges : set<Edge>) : map<Region,set<Edge>>
-   reads e2o(edges)
-  {
-    var heapExternalEdges := justHeapExternalEdges(edges);
-    var allRelevantHeapRegions := set he <- heapExternalEdges :: he.t.region;
-    map r <- allRelevantHeapRegions :: externalEdges(r, heapExternalEdges)
-  }
+//   function heapExternalEdgesPartitionedByOwners(edges : set<Edge>) : map<Owners,set<Edge>>
+//    reads e2o(edges)
+//   {
+//     var heapExternalEdges := justHeapExternalEdges(edges);
+//     var allRelevantHeapOwnerss := set he : Edge <- heapExternalEdges :: he.t.owners();
+//     map r : Owners <- allRelevantHeapOwnerss :: externalEdges(r, heapExternalEdges)
+//   }
 
 
 //or should this be "allExternalEdges"
 //went with "just" with the idea "justX(a):r" means to filter ---- ensures r <= a
-//meanwhile allX(a):r can do move - e.g. map all objects to all owning "regions"
+//meanwhile allX(a):r can do move - e.g. map all objects to all owning "ownerss"
 ///*opaque*/
+//
+//KJX Sept 2024- what the HELL is is trying'' to do?
+//KJS is this right?
 function justHeapExternalEdges(edges : set<Edge>) : (rs : set<Edge>)
     ensures rs <= edges
-    ensures (set e <- rs :: e.t.region) <=  (set e <- edges :: e.t.region) 
-    ensures (forall e <- rs :: e.f.region != e.t.region)
-    ensures (forall e <- rs :: e.t.region.Heap?)
-
-    ensures (forall e <- edges :: (((e.f.region != e.t.region) && (e.t.region.Heap?))
-                    ==> (e in rs)))
-    ensures (forall e <- rs :: e in edges)
-
-
-    ensures (forall e <- edges :: (((e.f.region != e.t.region) && (e.t.region.Heap?))))
-                    ==> (edges == rs)
-
-    ensures  (forall e <- edges :: (e.f.region == e.t.region))
-                    ==> (rs == {})
+//redundant    ensures (set e <- rs :: e.t.owner) <=  (set e <- edges :: e.t.owner) 
+    ensures (forall e <- rs :: e.f.owner != e.t.owner)
+    ensures (forall e <- edges :: (((e.f.owner != e.t.owner)) ==> (e in rs)))
+//redundant        ensures (forall e <- rs :: e in edges)
+    ensures (forall e <- edges :: (e.f.owner != e.t.owner )) ==> (edges == rs)
+    ensures (forall e <- edges :: (e.f.owner == e.t.owner))  ==> (rs == {})
               
-   // reads e2o(edges)`region
+   // reads e2o(edges)`owners
   {
-    set e <- edges | e.f.region != e.t.region && e.t.region.Heap?
+    set e <- edges | e.f.owner != e.t.owner
+//  set e <- edges | e.f.allExternalOwners() != e.t.allExternalOwners()
   }
 
 predicate e2oRV(edges : set<Edge>)
@@ -298,7 +304,6 @@ predicate e2oRV(edges : set<Edge>)
 }
 
 function e2o(edges : set<Edge>) : (rx : set<Object>) 
-
 {
 (set e <- edges :: e.f) + (set e <- edges :: e.t)
 }

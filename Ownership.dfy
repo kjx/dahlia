@@ -8,19 +8,16 @@
 //////////////////////////////////////////////////////////////////////////////
 
 function owners(o : Object) : set<Object>
+// deprecated
  //all o's owners except o itself
- { o.owners() } //should this be a function on objects? - 'tis now
-
-
+ { o.allExternalOwners() } //should this be a function on objects? - 'tis now
 
 ///inside or equal to
 predicate inside(part : Object, whole : Object) : (rv : bool)
  // reads part, whole 
  {
-// || whole.region.World?
-  || part == whole
-  || whole in part.AMFO
-}
+   whole.AMFO <= part.AMFO
+ }
 
 predicate outside(part : Object, whole : Object) : (rv : bool)
   { not(inside(part,whole)) }
@@ -31,36 +28,42 @@ predicate strictlyInside(part : Object, whole : Object) : (rv : bool)
  {
 // || whole.region.World?
   && part != whole
-  && whole in part.AMFO
-}
+  && whole.AMFO <= part.AMFO
+ }
+
+predicate directlyInside(part : Object, whole : Object) : (rv : bool)
+ {
+   whole.AMFO == part.allExternalOwners()  //?
+ }
+
+ predicate insideOwner(part : Object, whole : Object) : (rv : bool)
+ // is part inside whole's *Owners*, i.e. a peer or inside a peer?
+ // reads part, whole 
+ {
+   whole.allExternalOwners() <= part.AMFO
+ }
+
+
+ 
 
 
 
-lemma InsideIsHeap(part : Object, whole : Object) 
-   requires part.Ready()
-   requires inside(part, whole)
-   requires part != whole 
-   ensures  part.region.Heap?
-{
-  //////reveal part.Ready();
-
-}
-
-
-
-
-///kjx 1.16 am Mon 27 May
+///kjx 1.16 am Mon 27 May 2024
 ///this also says: make world and owner, yesm bvut have ONLY ONE suchobject
 ///put WORLD in every object's ownershiplist (AMFO alongwith itself)
 ///this this is simply t.owner in f.AMFO
 
 ///WORLD could be an object 
-lemma {:NOTonly} PointingLemma(f : Object, t : Object) 
-  requires || t.region.World? 
-           || (&& t.region.Heap? 
-               && t.region.owner in (f.AMFO + {f}))
+lemma PointingLemma(f : Object, t : Object) 
+//  requires t.owner <= (f.AMFO)
+  requires insideOwner(f, t)
   ensures refOK(f,t)            
-{}
+{
+  //KJX is this right?
+
+  assert t.allExternalOwners() <= f.AMFO;
+  assert refOK(f,t);
+}
 
 
 ///OUTGOING requires something like 
@@ -78,20 +81,20 @@ predicate refOK(f : Object, t : Object) : (rv : bool)
   // requires ownersOK(t,os)
   // reads f, t//, t`region
   // reads if (t.region.Heap?) then {t.region.owner} else {}
-{  t.region.World? || (t.region.Heap? && inside(f,t.region.owner))
-}
+{  insideOwner(f,t) }
 
 
 lemma WorldCanFuckItself(f : Object, t : Object)
-  requires f.region.World?
+//we don't really have "world" any more but if we did...
+  requires f.AMFO == {f}
   requires refOK(f,t)
 { 
-  if (t.region.World?) { assert refOK(f,t); return;}
-  if (t.region.Heap? && t.region.owner == f)  { assert refOK(f,t); return;}
+  if (t.AMFO == {}) { assert refOK(f,t); return;}
+  if (t.allExternalOwners() == {f})  { assert refOK(f,t); return;}
 }
 
-//pretty nice version...
-lemma {:Mon18Dec} {:timeLimit 30}  {:vcs_split_on_every_assert} transitiveInside(a : Object, b : Object, c : Object)
+//pretty nice version... {:Mon18Dec} 
+lemma transitiveInside(a : Object, b : Object, c : Object)
   // requires a != b
   // requires b != c
   // requires c != a
@@ -124,9 +127,9 @@ lemma ownerNOTInside(a : Object, b : Object, c : Object)
     requires a.Valid() && b.Valid() && c.Valid()
   //requires forall o <- {a, b, c} :: o.region.Heap?
 
-  requires a.region.Heap? && a.region.owner == b
+//  requires a.region.Heap? && a.region.owner == b
+  requires directlyInside(a,b)
   // requires a.region.Heap? && (b in a.AMFO) //b is an ownwer of a?
-  requires c !in a.extra
   //requires c !in a.AMFO
   requires not(inside(b,c))
   requires not(inside(c,b))
@@ -135,8 +138,7 @@ lemma ownerNOTInside(a : Object, b : Object, c : Object)
 
 lemma insideMyDirectOwner(a : Object)
   requires a.Ready() && a.Valid()
-  requires a.region.Heap? 
-  ensures  inside(a,a.region.owner)
+  ensures  forall oo <- a.AMFO :: inside(a, oo)
 {}
 
 
@@ -148,12 +150,11 @@ lemma insideMyDirectOwner(a : Object)
 //b is a's direct owner
 //b != c
 //b is insidde c
-lemma {:isolate_assertions} insideSomeIndirectOwner(a : Object, b : Object, c : Object)
+lemma insideSomeIndirectOwner(a : Object, b : Object, c : Object)
   requires a.Ready() && a.Valid()  //not the rest?
-  requires a.region.Heap? && b.region.Heap?
   requires a != b && a != c && b != c  //not sure we need all of these...
   requires inside(a,c)
-  requires b == a.region.owner
+  requires inside(b,a)
   requires c !in a.AMFO
   ensures  inside(b,c)
 {
@@ -161,7 +162,7 @@ lemma {:isolate_assertions} insideSomeIndirectOwner(a : Object, b : Object, c : 
      {
       assert not( b.AMFO >= c.AMFO );   //not entirely sure about all this but...
       assert c !in b.AMFO;
-      assert a.AMFO == b.AMFO + a.extra + {a};
+      assert a.AMFO == b.AMFO + {a};
       assert c !in a.AMFO;
       assert not( a.AMFO >= c.AMFO );
       assert not(inside(a,c));

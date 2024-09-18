@@ -10,15 +10,28 @@
 ///COK / CallOK  (not yet in the right order)
 ///Probablu should go off to another file?
 
-lemma {:onlyONLY} COKAMFO(a : Object, context : set<Object>) 
+lemma COKAMFO(a : Object, context : set<Object>) 
   decreases a.AMFO
-  requires  COK(a, context)
-  requires  CallOK(context)
-  ensures   CallOK(a.AMFO, context)
+  requires COK(a, context)
+  requires CallOK(context)
+  ensures  CallOK(a.AMFO, context)
 { 
   reveal COK();
   reveal CallOK();
 } 
+
+
+
+lemma CallOKAMFO(aa : Owner, context : set<Object>) 
+  requires CallOK(aa, context)
+  requires CallOK(context)
+  ensures  forall a <- aa :: CallOK(a.AMFO, context)
+  ensures  forall a <- aa :: a.AMFO <= context
+{ 
+  reveal COK();
+  reveal CallOK();
+} 
+
 
 lemma COKgetsDeclaredFields(a : Object, context : set<Object>) 
   requires COK(a, context)
@@ -78,8 +91,8 @@ lemma {:onlyNUKE} CallOKWiderFocus(aa: set<Object>, bb : set<Object>, context : 
   ensures  CallOK(aa+bb,context)
 { 
   reveal CallOK();
-  assert forall a <- (aa) :: COK(a,context);
-  assert forall a <- (  bb) :: COK(a,context);
+  assert forall a <- (aa     ) :: COK(a,context);
+  assert forall a <- (     bb) :: COK(a,context);
   assert forall a <- (aa + bb) :: COK(a,context);
 }
 
@@ -116,9 +129,7 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
 
     && (a in context) 
     && (a.AMFO <= context)
-    && (a.extra <= context) // could be subsumed but currently isn't…
     && (forall oo <- a.AMFO :: oo.Ready())
-    && ExtraIsExtra(a.extra, context)
   //  && (a.TRUMP()||(a.Ready() && a.Valid()))
     && (a.Ready())
     && (a.Valid())
@@ -126,10 +137,8 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
     && (a.AllOutgoingReferencesWithinThisHeap(context))
     && (a.AllOwnersAreWithinThisHeap(context))
 
-    && AllTheseOwnersAreFlatOK(a.AMFO - {a})   //point here is we don't want a loop
-    && (a.region.Heap? ==> AllTheseOwnersAreFlatOK(a.region.owner.AMFO))
-    && (AllTheseOwnersAreFlatOK(a.extra,
-         (if (a.region.Heap?) then (a.region.owner.AMFO) else {}) + a.extra))
+    && AllTheseOwnersAreFlatOK(a.AMFO - {a})   //point here is we don't want a loop  in the definitoin of the COK predicate I think()
+
  }  
 
 method {:onlyNUKE} COKat(a : Object, n : string, context : set<Object>) returns ( r : Object )

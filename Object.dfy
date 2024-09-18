@@ -1,7 +1,8 @@
 
-datatype Region = World                         // region of immutable objects
-                  | Heap(owner : Object)         // objects allocated in heap region
+// datatype Region = World                         // region of immutable objects
+//                   | Heap(owner : Object)         // objects allocated in heap region
 
+type Owner = set<Object>   //still trying to devie if this sould be called Owner or Owners or Region or what!
 
 
 datatype Mode =   
@@ -10,7 +11,7 @@ datatype Mode =
 //For all the Owner & Read "Modes" sholdn't the owner always be "self" i.e; the object containing the reernce.
     | Owned(perm : Perm) //unrestricted, Rust-style owning reference - with no borrows!
     | Loaned(perm : Perm) //owning reference, but currently there are "borrowed" references to it
-    | Borrow(perm: Perm, owner: Region, from : Object, name : string) //borrowed reference, borrowe from that object!
+    | Borrow(perm: Perm, owner: Owner, from : Object, name : string) //borrowed reference, borrowe from that object!
                                       //when one does a "stack-pop-return" into the obejct that this was borrowed from
                                       //then the Mode of the owning refernece goes from Loaned -> Owned 
     | Evil //type dyanmic.  So I don't hace to do the full checks right now --- kjx 7 May 2024
@@ -20,23 +21,23 @@ datatype Perm = Read | Write | Local   ///or should these be object kinds???>  A
 
 
     /// an earlier deprecated design!
-    // | Own(perm : Region) //unrestricted, Rust-style owning reference?
-    // | Read(owner : Region) //Rust stule ownering Readonly reference? 
+    // | Own(perm : Owner) //unrestricted, Rust-style owning reference?
+    // | Read(owner : Owner) //Rust stule ownering Readonly reference? 
     //                        //IF we have move semantics, could move here from Own?
-    // | ReadOwn(owner : Region)  // I am the owner, but my contents are read-borrowed.
-    // | MutOwn(owner : Region)  // I am the owner, but my contents are mut-borrowed.
-    // | LocOwn(owner : Region)  // I am the owner, but my contents are loc-borrowed.
-    // | ReadRef(owner : Region) //       
+    // | ReadOwn(owner : Owner)  // I am the owner, but my contents are read-borrowed.
+    // | MutOwn(owner : Owner)  // I am the owner, but my contents are mut-borrowed.
+    // | LocOwn(owner : Owner)  // I am the owner, but my contents are loc-borrowed.
+    // | ReadRef(owner : Owner) //       
 
 predicate AssignmentCompatible(o : Object, t : Mode, v : Object) 
 //can object v be assigned to a field of Mode t within object o?
 {
   match t  
     case Evil => true
-    case Rep | Owned(_) | Loaned(_) => v.region.Heap? && v.region.owner == o
-    case Peer => v.region == o.region
-//  case Borrow(p,b,n,f) => v.region == b
-    case Borrow(p,b,n,f) => refOK(o,v)
+    case Rep | Owned(_) | Loaned(_) => inside(v,o) //KJX is this right  hmm?
+    case Peer => v.owner == o.owner
+//  case Borrow(p,b,n,f) => v.Owner == b
+    case Borrow(p,b,n,f) => refOK(o,v)  //KJX not yet done
 }
 
 
@@ -74,35 +75,31 @@ lemma EVILisCompatibleWithAnything(o : Object, v : Object)
 //////////////////////////////////////////////////////////////////////////////
 //  OBJECTS
 //
-//I know it's perverse, but titlecase "Object" and "Class" aren't reserved in dafny
+//I know it's perverse, but titlecase "Object" (and "Class") aren't reserved in dafny
 //
-//note that null / undefined fields can be declared in objects
-//but may not necessarily be in the Object's fields.
-
 class Object { 
   var nick : string //nickname
-  const region : Region//actual "dynamic" region owner of this object
+  const owner : Owner//actual "dynamic" Owner owner of this object
      //it's changed to a var now so lots of comoplaints.
      //fuck should I change it back?  or not? - no point in bheing VAR while AMFO is CONST!
   var   fields     : map<string,Object>//field values. uninit fields have no entries
   var   fieldModes : map<string,Mode>//Mode of each field name -  note, static! - would be statically known by any methods
     //probably also has to go to var to get to typestate. GRRR. 
 
-  const AMFO : set<Object> //All MY FUCKING Owners  (aka All My Flat Owners:-)
+  const AMFO : Owner //All MY FUCKING Owner  (aka All My Flat Owner:-)
 
-  const extra : set<Object> //additional owners e.g. for stack frames inside objects
-
-lemma {:onlyNUKE} triceratops(aa : set<Object>, bb : set<Object>, cc : set<Object>) 
+ 
+lemma triceratops(aa : set<Object>, bb : set<Object>, cc : set<Object>) 
   ensures (aa + bb + cc) == ((aa + bb) + cc) == (aa + (bb + cc))
 {}
 
-lemma {:onlyNUKE} cordelia() 
+lemma noFieldsAreAlwaysGoodFields() 
  requires fields == map[]
  ensures  AllFieldsAreDeclared()
  ensures  AllFieldsContentsConsistentWithTheirDeclaration()
 {}
 
-lemma {:onlyNUKE} regan(xx : set<Object>, yy : set<Object>)
+lemma flatOwnersConvariantOK1(xx : set<Object>, yy : set<Object>)
   requires AllTheseOwnersAreFlatOK(xx,xx+yy)
   ensures  flattenAMFOs(xx) <= yy + xx 
 {
@@ -110,7 +107,7 @@ lemma {:onlyNUKE} regan(xx : set<Object>, yy : set<Object>)
   assert AllTheseOwnersAreFlatOK(xx,xx+yy);
 }
 
-lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
+lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
   ensures AllTheseOwnersAreFlatOK(xx,xx+yy) == ( flattenAMFOs(xx) <= yy + xx )
 {
   reveal AllTheseOwnersAreFlatOK();
@@ -120,63 +117,62 @@ lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
 
 
 
+//:onlyGRUNTS} w
+  constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string) 
+    requires forall o <- oo :: o.Ready()
+    requires CallOK(oo, context)
+    requires CallOK(context) //KJX is this redundant Or wouidl it be redundat the other way around???
+    requires AllTheseOwnersAreFlatOK(oo)  //hmm?
 
-//:onlyGRUNTS} 
-  constructor {:isolate_assertions} cake(ks : map<string,Mode>, oo : Object, context : set<Object>, name : string, xtra : set<Object> := {} ) 
-    requires COK(oo, context)
-    requires CallOK(context)
-    requires CallOK(xtra, context) 
-    requires ExtraIsExtra(xtra, context)
-    requires AllTheseOwnersAreFlatOK(oo.AMFO)
-    requires AllTheseOwnersAreFlatOK(xtra, oo.AMFO + xtra)
-    //requires flattenAMFOs(xtra) <= oo.AMFO + xtra  ///hmmmmAllTheseOwnersAreFlatOK
-
-    
     //requires CallOK({oo}+oo.AMFO, context)
 
-// extraOK    requires xtra == {} //extra not yet cloned
+    requires CallOK(flattenAMFOs(oo), context) //KJX is this right?
 
-    ensures region == Heap(oo)
+    ensures owner == oo 
     ensures fieldModes == ks
     ensures fields == map[] 
-    ensures extra == xtra
-    ensures AMFO == oo.AMFO + {this} + xtra
-    ensures this in AMFO
-    ensures this !in extra
-    ensures nick == name
+    ensures AMFO == flattenAMFOs(oo + {this}) 
+    ensures this  in AMFO
+
+    ensures (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO)
     ensures (forall o <- AMFO :: inside(this, o))
-    
-    ensures COK(this, context+{this})
+
+
+    ensures OwnersValid()
+    ensures Ready()
+                                                                                   
+    ensures COK(this, context+{this})                  
+    ensures nick == name
+  
     //ensures CallOK({this} + {oo}+oo.AMFO, {this} + context)
 
     ensures unchanged( context )
     ensures fresh(this)
-    modifies {}
+
   { 
-    region := Heap(oo);
+    owner := oo;
     fieldModes := ks;
     fields := map[];
-    AMFO := oo.AMFO + xtra + {this};
+    AMFO := flattenAMFOs(oo) + {this};
     nick := name;
-    extra := xtra;
     new;   
 
 
     assert fieldModes == ks;
     assert fields == map[];
     assert nick == name;
-    assert extra == xtra;
 
-    assert COK(oo, context);
+    assert CallOK(oo, context);
     assert CallOK(context);
-    COKAMFO(oo, context);
+    CallOKAMFO(oo, context);
     assert  (this in context+{this}) by { reveal COK(), CallOK(); } 
-    assert  (xtra <= context) by { reveal COK(), CallOK(); } 
     assert  (AMFO <= context+{this}) by { reveal COK(), CallOK(); } 
-    assert CallOK(oo.AMFO, context); 
-    assert (oo.AMFO) <= context by { reveal CallOK(), COK(); }
-    CallOKWiderContext(oo.AMFO,context,{this});
-    assert CallOK(oo.AMFO, {this}+context) by { assert {this}+context == context+{this}; }
+
+    assert CallOK(oo, context);
+    CallOKWiderContext(oo, context,{this});
+    assert CallOK(oo, context+{this});
+
+  // assert CallOK(oo.AMFO, {this}+context) by { assert {this}+context == context+{this}; }
   
 
     assert COK(this, {this}+context) by 
@@ -185,40 +181,24 @@ lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
   
           assert (this in ({this}+context));
           assert (this.AMFO <= ({this}+context));
-          RVfromCOK(oo,context);
-
-          RVfromCallOK(extra, context);
-          assert (forall x <- extra :: x.Ready()); 
-          assert (forall x <- extra :: this !in x.AMFO); 
-          assert (forall x <- extra :: AMFO > x.AMFO)  by { 
-                reveal COK();
-                reveal AllTheseOwnersAreFlatOK();
-                assert AllTheseOwnersAreFlatOK(extra, oo.AMFO+extra);
-            }
+          RVfromCallOK(oo,context);
 
            
           
   
-          assert CallOK(extra,context);
-          assert AMFO == oo.AMFO + {this} + xtra;
-          assert ExtraIsExtra(extra,context);
-          assert (forall x <- extra :: x in x.AMFO);
-          assert (forall x <- extra, xo <- x.AMFO :: xo in x.AMFO);
-          assert (forall x <- {region.owner}, xo <- x.AMFO :: xo in x.AMFO);
+
+          assert (forall x <- owner, xo <- x.AMFO :: xo in x.AMFO);
   
-          assert flattenAMFOs(extra) <= oo.AMFO + extra;  ///hmmmm
-          assert flattenAMFOs({oo} + extra) <= oo.AMFO + extra;
 
-          assert AMFO == oo.AMFO + extra + {this};
-          assert this !in oo.AMFO;
-          assert this !in extra;
-          assert (forall a <- oo.AMFO  :: a.Ready()); 
-          assert (forall a <- oo.AMFO  :: AMFO > a.AMFO); 
-//        assert (forall a <- AMFO  :: AMFO > a.AMFO); 
+          assert AMFO == flattenAMFOs(oo) + {this}; 
+          assert this !in flattenAMFOs(oo);
+          assert (forall a <- oo  :: a.Ready());     //why are these here?
+          assert (forall a <- oo  :: AMFO > a.AMFO); 
+  
+          // assert (forall oo  <- AMFO  :: AMFO > oo.AMFO); 
 
-          assert region.owner.Ready();        
-          assert (forall owner <- (AMFO - {this}) :: owner.Ready());
-          assert (forall owner <- (AMFO - {this}) :: AMFO > owner.AMFO);
+          assert (forall o <- (allExternalOwners()) :: o.Ready());
+          assert (forall o <- (allExternalOwners()) :: AMFO > o.AMFO);
           assert (this.Ready());
           assert (this.Valid()); 
           assert (this.AllOutgoingReferencesAreOwnership(({this}+context)))  ;
@@ -226,11 +206,8 @@ lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
           assert (this.AllOwnersAreWithinThisHeap(({this}+context)));
 
           reveal AllTheseOwnersAreFlatOK();
-          assert AllTheseOwnersAreFlatOK(extra, oo.AMFO+extra);
 
-          assert AllTheseOwnersAreFlatOK(AMFO - {this});
-          assert AllTheseOwnersAreFlatOK(region.owner.AMFO);
-          assert (AllTheseOwnersAreFlatOK(extra,(region.owner.AMFO+extra)));
+          assert AllTheseOwnersAreFlatOK(allExternalOwners());
 
           assert COK(this, {this}+context);
          }
@@ -243,15 +220,23 @@ lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
 
   CallOKfromCOK(this, {this}+context);
  
-  assert CallOK({this}, {this}+context) ;
+  assert CallOK({this}, {this}+context);
 
-  CallOKWiderFocus({this}, oo.AMFO, {this} + context);
+assert CallOK(flattenAMFOs(oo), context);
+CallOKWiderContext(flattenAMFOs(oo), context, {this});
+assert context + {this}  == {this} + context;
+assert CallOK(flattenAMFOs(oo),  {this} + context);
 
-  assert CallOK({this} + (oo.AMFO), {this} + context);
+  CallOKWiderFocus({this}, flattenAMFOs(oo), {this} + context);
+
+
+assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);      
+
+  assert CallOK({this} + flattenAMFOs(oo), {this} + context);
 
   //assert CallOK(xtra, context);
 
-  assert  CallOK({this} + oo.AMFO, {this} + context);
+  assert  CallOK({this} + flattenAMFOs(oo), {this} + context);
 
   assert COK(this, context+{this}) by { reveal COKOK; }
 
@@ -277,131 +262,29 @@ lemma {:onlyNUKE} gonerill(xx : set<Object>, yy : set<Object>)
 
 
 
-  constructor {:onlyFROZZ} frozen(ks : map<string,Mode>) 
-    ensures region == World
-    ensures fieldModes == ks
-    ensures fields == map[] //object fields starts uninitialised
-    ensures AMFO == {this}
-    ensures this in AMFO
-    ensures this !in extra
-    ensures Ready()
-    ensures OwnersValid()
-    ensures Valid()
-    ensures TRUMP()
-    ensures nick is string
-    ensures MOGO()
-    ensures  fresh(this)    
-    ensures extra == {}
-    modifies {}
-  { //////reveal Ready(); //////reveal TRUMP(); //////reveal MAGA(); //////reveal MOGO();
-    region := World;
-    fieldModes := ks;
-    fields := map[];
-    AMFO := {this};
-    nick := "";
-    extra := {};
-    new;
-    assert extra == {};
-    assert Ready();
-    assert AMFO <= AMFO;
-    assert AllOwnersAreWithinThisHeap(AMFO);
-    assert fields == map[];
-    assert AllOutgoingReferencesAreOwnership(AMFO);
-    assert AllOutgoingReferencesWithinThisHeap(AMFO);
-    assert OwnersValid();
-    assert Valid();
-    assert TRUMP();
-    assert MOGO();
-  }
-
-constructor {:onlyFROZZ} frozen2(ks : map<string,Mode>, oHeap : set <Object>) 
-    ensures region == World
-    ensures fieldModes == ks
-    ensures fields == map[] //object fields starts uninitialised
-    ensures AMFO == {this}
-    ensures this in AMFO
-    ensures this !in extra
-    ensures Ready()
-    ensures OwnersValid()
-    ensures Valid()
-    ensures TRUMP()
-    ensures nick is string
-    ensures MOGO()
-
-    ensures unchanged(oHeap)
-    requires CallOK(oHeap)
-    ensures  CallOK(oHeap)
-    ensures  COK(this,oHeap+{this})
-    ensures  fresh(this)
-    ensures extra == {}    
-    modifies {}
-  { //////reveal Ready(); //////reveal TRUMP(); //////reveal MAGA(); //////reveal MOGO();
-    region := World;
-    fieldModes := ks;
-    fields := map[];
-    AMFO := {this};
-    nick := "";
-    extra := {};
-    new;
-    assert extra == {};    assert Ready();
-    assert fields == map[];
-    assert OwnersValid();
-    assert Valid();
-    assert TRUMP();
-    assert MOGO();
-  
-    var context := (oHeap+{this});
-    assert this in context;
-    assert AMFO <= context;
-    assert forall oo <- AMFO :: oo.Ready();
-    assert (Ready() && Valid());
-    assert AllOutgoingReferencesAreOwnership(context);
-    assert AllOutgoingReferencesWithinThisHeap(context);
-    assert AllOwnersAreWithinThisHeap(context);
-    reveal AllTheseOwnersAreFlatOK();
-    assert AllTheseOwnersAreFlatOK(extra);
-    assert AllTheseOwnersAreFlatOK(AMFO - {this});
-
-    reveal COK();
-    assert COK(this,context);
-    }
 
 
 
-
-
-
-
-
-/*opaque*/ predicate {:onlyNUKE} Ready() 
+/*opaque*/ predicate  Ready() 
 // ready means all the owenrs are (at least) ready...
 // I had to inline the defition --- see "//Ready()inlined"
 // WHO the fuck knows WHY?
 // update this, update that too.
 
 //it's important: this has *no*  readsclausew
-   decreases AMFO
+   decreases AMFO, 1  
 {
-  && (this !in extra)
-  && (region.World? || region.Heap?)
-  && (region.World? ==> (AMFO == {this}))
-  && (region.World? ==> (extra == {}))
-  && (region.Heap?  ==> (AMFO == region.owner.AMFO + extra + {this}))
-  && (region.Heap?  ==> (AMFO > region.owner.AMFO))
-  && (region.Heap?  ==> region.owner.Ready())
-  && (region.Heap?  ==> (forall owner <- region.owner.AMFO :: AMFO > owner.AMFO))
-  && (region.Heap?  ==> (forall owner <- region.owner.AMFO :: owner.Ready()))
-  && (forall owner <- (AMFO - {this}) :: AMFO > owner.AMFO)
-  && (forall owner <- (AMFO - {this}) :: owner.Ready())
-  && (forall owner <- (extra)         :: AMFO > owner.AMFO)   //subsumed by the above 2 lines, but...
-  && (forall owner <- (extra)         :: owner.Ready())
-
-  && (flattenAMFOs(AMFO - {this}) <= AMFO)
+  && (AMFO == flattenAMFOs(owner + {this}))
+  && (forall oo <- owner :: AMFO > oo.AMFO)
+  && (forall oo <- owner :: oo.Ready())
+  // && (flattenAMFOs(allExternalOwners()) <= AMFO)
+  //KJX hmmma
+  && OwnersValid()
   }
 
 
 
-function owners() : set<Object>
+function allExternalOwners() : set<Object>
  //all o's owners except o itself
  {  AMFO - {this} }
 
@@ -412,11 +295,9 @@ predicate {:onlyValid} Valid()
    reads this`fields, this`fieldModes
      requires Ready()
   //ensures Valid() ==> OwnersValid()
- // reads this, this`region, AMFO, fields.Values, AMFO`fields, AMFO`region, 
+ // reads this, this`Owner, AMFO, fields.Values, AMFO`fields, AMFO`Owner, 
  //    (set o1 <- AMFO, o2 <- o1.fields.Values :: o2) //JESUS MARY AND JOSEPH AND THE WEE DONKEY
   {
-    (region.World? || region.Heap?)   //turn off other regions  //HMMM
-        &&
     OwnersValid()
        &&
   /////////KJX {:todo}  REINSTATE COS WITHOUT DOESNT HELP IS EVEIL EVILEVILEVIL
@@ -469,7 +350,7 @@ lemma NoFieldsAreGoodFields(context : set<Object>)
     // reads this, fields.Values, this, os//semi-evil
     requires Ready() //requires forall n <- fields :: ownersOK(fields[n],os)
     {
-       owners() <= os
+       allExternalOwners() <= os
     }
 
   function outgoing() : set<Object> reads this`fields { fields.Values }
@@ -493,46 +374,17 @@ assert OwnersValid();
 }
 
 
-
-predicate {:onlyNUKE} OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec}
-  decreases AMFO
+//KJX should refactor all these invariants
+predicate OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec}
+  decreases AMFO, 0
   //requires Ready()
   {  
-  && (Ready())
-  && (region.World? || region.Heap?)  
   && (this in AMFO)
-  && (region.World? ==> (AMFO == {this}))
-  && (region.Heap? ==> (AMFO > {}))
-  && ((region.Heap?) ==> region.owner in AMFO)
-  && ((region.Heap?) ==> assert region.owner in AMFO; AMFO > region.owner.AMFO)
-  && ((region.Heap?) ==> (AMFO == region.owner.AMFO + extra + {this}))
-  && ((region.Heap?) ==> assert region.owner in AMFO; region.owner.Ready())
-  && (forall own <- (AMFO - {this}) :: (own.AMFO < AMFO) && own.Ready())
+  && (owner <= AMFO)
+  && (AMFO == flattenAMFOs(owner) + {this})
   && (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
   && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
   }
-
-
-
-// predicate  {:vcs_split_on_every_assert}  WTFOwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec}
-//   decreases AMFO
-//   ensures rv ==> (region.World? || region.Heap?)  
-//   ensures rv ==>  (this !in AMFO)
-//   ensures rv ==>  (region.World? ==> (AMFO == {}))
-//   ensures rv ==>  (region.Heap? ==> (AMFO > {}))
-//   ensures rv ==>  ((region.Heap?) ==> region.owner in AMFO)
-//   ensures rv ==>  ((region.Heap?) ==> assert region.owner in AMFO; AMFO > region.owner.AMFO)
-// //  ensures rv ==>  ((region.Heap?) ==> assert region.owner in AMFO; |AMFO| > |region.owner.AMFO|)
-//   ensures rv ==>  ((region.Heap?) ==> (AMFO == region.owner.AMFO + {region.owner}))
-//   ensures rv ==>  ((region.Heap?) ==> assert region.owner in AMFO; region.owner.Ready())
-//   ensures rv ==>  (forall own <- (AMFO - {this}) :: (own.AMFO < AMFO) && own.Ready())
-//   ensures rv ==>  (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
-//   ensures rv ==>  (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
-//     //  ensures (forall b <- AMFO, c <- b.AMFO :: c in AMFO && recInside(b,c) && recInside(this,c)))
-//   {  
-//      //////reveal Ready();
-//      Ready() 
-//   }
 
 
 lemma {:onlyAMFO} AMFOsisAMFOs() 
@@ -550,13 +402,14 @@ lemma {:onlyAMFO} AMFOsisAMFOs2()
 
 lemma  CallMyOwnersWillWitherAway(a : Object, context : set<Object>)
   requires CallOK(context)
-  requires (a in context) || (COK(a, context))
+  requires (a in context) || (COK(a, context))  //umm why the || 
   ensures  a.AMFO <= context
   ensures  forall oo <- a.AMFO :: COK(oo, context)
   //should we add more stuff in here, like::
   // ensures  forall oo <- a.AMFO :: oo.AMFO <= a.AMFO <= context
-  ensures a.region.Heap? ==> COK(a.region.owner,context)
-  ensures a.region.Heap? ==> a.region.owner in context
+  //KJX doesnt CallOK do this?
+  ensures CallOK(a.owner, context)
+  ensures a.owner <= context
 {
   reveal   CallOK();
   reveal   COK();
@@ -669,19 +522,7 @@ assert true;
 
 
 
-predicate  ExtraIsExtra(xtra : set<Object>, context : set<Object>)
-  // why did I put all thjese READS clases im hjere - when they are unnecessary..?
-  // reads (set x <- xtra, xa <- x.AMFO :: xa)`fields
-  // reads (set x <- xtra, xa <- x.AMFO :: xa)`fieldModes
-  // reads  xtra`fields, xtra`fieldModes
-{
-//  && CallOK(xtra, context) ///DO I WANT THIS, O JUST "READY"""
-  && (forall e <- xtra :: e in e.AMFO) 
-  && (forall e <- xtra :: e.AMFO <= context)
-  //&& (forall e <- xtra :: e.AMFO <= xtra)     //is this want we want..?
-   ///NO! it isn't.  kept for now as a reminder
-   //I bet this can be refactored into the COK if it isn't already
-}
+
 
 //compare the fucking AllOwnersAreWthinThisHeap???
 opaque predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
@@ -730,7 +571,7 @@ lemma MaybeOrMaybeNot(o : Object, os : set<Object>)
   }
 
 /*oopaque or not or both */
-function  flattenAMFOs(os : set<Object>) : (of : set<Object>)
+ function  flattenAMFOs(os : set<Object>) : (of : set<Object>)
    //flattened set of os.AMFO 
    //earlier version required o in all objects AMFS, that's gone now
    //could put it back, require os to be Ready, or remove the os+ below
@@ -743,6 +584,18 @@ function  flattenAMFOs(os : set<Object>) : (of : set<Object>)
     os +   ///not needed if we keep "requires forall o <- os :: o in o.AMFO"
     (set o <- os, oo <- o.AMFO :: oo)
 }
+
+lemma AMFOisBigger(o : Object)
+  requires o.Ready()
+  ensures  (forall oo <- o.allExternalOwners() :: o.AMFO >= oo.AMFO)
+ {
+   assert o.AMFO == flattenAMFOs(o.owner) + {o};
+   assert o.AMFO == flattenAMFOs(o.owner + {o});
+
+   assert (forall oo <- o.allExternalOwners() :: o.AMFO >= oo.AMFO);
+ }
+
+
 
 //GRRRR
 // lemma EitherWayIsFlat(a : Object, rrm : Map, amx : set<Object>)
@@ -760,29 +613,12 @@ function  flattenAMFOs(os : set<Object>) : (of : set<Object>)
 
 
 
-lemma FlatExtras(xtra : set<Object>, context : set<Object>)
-   requires forall o <- xtra :: o in o.AMFO
-   requires forall o <- xtra :: o.AMFO <= context
-   requires CallOK(xtra, context)
-
-   ensures  CallOK(xtra, context)
-   ensures (forall e <- xtra :: e.AMFO <= context)
-   ensures  xtra <= context 
-  // ensures  ExtraIsExtra(flattenAMFOs(xtra), context)
-   {
-     reveal CallOK(), COK();
-     assert CallOK(xtra, context);// by { reveal fuka;}
-     assert ExtraIsExtra(flattenAMFOs(xtra), context);  
-  
-   }
-
 lemma Splurge(o : Object, context : set<Object>) 
-  requires o.region.Heap?
   requires COK(o, context)
 
   ensures  forall oo <- (o.AMFO - {o}) :: o.AMFO > oo.AMFO
   ensures  reveal COK(); flattenAMFOs(o.AMFO - {o}) <= o.AMFO
-  ensures  AllTheseOwnersAreFlatOK(o.owners())
+  ensures  AllTheseOwnersAreFlatOK(o.allExternalOwners())
 {
   reveal COK();
 
@@ -803,7 +639,7 @@ lemma Splurge(o : Object, context : set<Object>)
     //requires os <= objects   
     //reads this, objects
     requires forall o <- os :: o.Ready() && o.Valid()
-    reads os,  os`fields//, os`region //os`AMFO,
+    reads os,  os`fields//, os`Owner //os`AMFO,
     reads (set o1 <- os, o2 <- o1.ValidReadSet() :: o2)
 
     // //reads set o <- os :: o`AMFO
@@ -812,7 +648,7 @@ lemma Splurge(o : Object, context : set<Object>)
 
     // reads (set o1 <- os, o2 <- o1.ValidReadSet() :: o2)
 
-    //reads objects`fields, objects`region // objects`AMFO,
+    //reads objects`fields, objects`Owner // objects`AMFO,
     {
      forall o <- os :: StandaloneObjectIsValid(o,os) 
     }
@@ -847,9 +683,9 @@ predicate OutgoingReferencesAreInTheseObjects(os : set<Object>)
 predicate OutgoingHeapReferencesAreInTheseObjects(os : set<Object>) 
       reads os
 {
-  // OutgoingReferencesAreInTheseObjects(os)
-      (forall f <- os, t <- f.outgoing()
-         | f.region.Heap? && t.region.Heap? :: t in os ) 
+//      (forall f <- os, t <- f.outgoing() :: t in os )
+      (forall f <- os :: f.outgoing() <= os ) 
+
 }
 
 predicate OutgoingReferencesFromTheseObjectsAreToTheseObjects(fs : set<Object>, ts : set<Object>) 
@@ -858,12 +694,11 @@ predicate OutgoingReferencesFromTheseObjectsAreToTheseObjects(fs : set<Object>, 
      (forall f <- fs :: f.outgoing() <= ts) 
 }
 
-predicate   OutgoingHeapReferencesFromTheseObjectsAreToTheseObjects(fs : set<Object>, ts : set<Object>) 
+predicate OutgoingHeapReferencesFromTheseObjectsAreToTheseObjects(fs : set<Object>, ts : set<Object>) 
       reads fs
 {
-//  OutgoingReferencesFromTheseObjectsAreToTheseObjects(fs,ts)
-     (forall f <- fs, t <- f.outgoing()
-      | f.region.Heap? && t.region.Heap? :: t in ts ) 
+//     (forall f <- fs, t <- f.outgoing() :: t in ts ) 
+     (forall f <- fs :: f.outgoing() <= ts) 
 }
 
 

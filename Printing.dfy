@@ -5,7 +5,7 @@ method printobject(o : Object)
 {
       printobj(o);
       print "\n  ";
-      printset(owners(o));
+      printset(allExternalOwners(o));
       print "\n";
       printobjfields(o);
 }
