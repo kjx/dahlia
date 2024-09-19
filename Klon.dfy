@@ -1,6 +1,10 @@
 
 type Mapping = map<Object,Object>
 
+//future refactoring TODOs
+// oHeap -> contest
+// remove Mpaaing (should be an vmap
+
 
 ///shoujld thsi be m.KEys or m.ks...
 predicate OrigMapOK(m : Mapping)
@@ -311,7 +315,7 @@ datatype Map = Map(
   //    p : Object,  // Owner of the new (target) clone.  needs to be inside the source object's movement
   oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts
   ns : set<Object>) //ns - new objects  (must be !! oHeap,   vs <= oHeap + ns
-{
+{   
   // general rule: where possible, work with ks and vs rther than m.Keys & m.Values...
   // that's the point of setting this up, right?
 
@@ -5775,7 +5779,7 @@ assert  OrigBigfoot(mapThruMap(os,m),mapThruMap(context,m));
 
 datatype Klon = Klon
 (
-  m : iso<Object,Object>,  //m : Mapping
+  m : vmap<Object,Object>,  //m : Mapping
   ks : set<Object>, //ks - set, keys of the mapping   (must be m.Keys, subset of oHeap)
   vs : set<Object>, //vs - set, values or the mapping (must be m.Values, subset of oHeap + ns)
   o : Object,  //o - Owner within which the clone is being performaed, in oHeap
@@ -5787,23 +5791,23 @@ datatype Klon = Klon
 }
 
 function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
-  requires klonIsoOK(c'.m)
+  requires klonVMapOK(c'.m)
   requires canKlonKV(c', k, v)
-  ensures  klonIsoOK(c.m)
+  ensures  klonVMapOK(c.m)
 {
 
-   c'.(m:= isoKV(c'.m,k,v))
+   c'.(m:= VMapKV(c'.m,k,v))
 }
 
 
 predicate canKlonKV(c' : Klon, k : Object, v : Object)
 {
-  && canIsoKV(c'.m, k, v)
+  && canVMapKV(c'.m, k, v)
   && (k.AMFO <= c'.m.Keys+{k}) 
-  && (mapThruIsoKV(k.AMFO, c'.m, k, v) == v.AMFO)
+  && (mapThruVMapKV(k.AMFO, c'.m, k, v) == v.AMFO)
 }
 
-predicate klonIsoOK(m : iso<Object,Object>)
+predicate klonVMapOK(m : vmap<Object,Object>)
 {
 //AMFO  
   && (forall k <- m.Keys :: k.AMFO <= m.Keys)
