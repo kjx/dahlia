@@ -17,8 +17,7 @@ method {:verify false} Main1() {
 
   print "Main Test for loopback\n";
   
-var t := new Object.frozen(protoTypes);
-t.nick := "t";
+var t := new Object.make(protoTypes, {}, {}, "t");
 
 //   t
 //   a      b c 
@@ -31,27 +30,27 @@ assert COK(t, {t});
 // protoTypes 8-)
 // cat dat eye fucker jat kye lat nxt rat 
 
-var a := new Object.cake(protoTypes, t, {t}, "a");
+var a := new Object.make(protoTypes, {t}, {t}, "a");
 
-var b := new Object.cake(protoTypes, t, {t}, "b");
+var b := new Object.make(protoTypes, {t}, {t}, "b");
 
-var c := new Object.cake(protoTypes, t, {t}, "c");
+var c := new Object.make(protoTypes, {t}, {t}, "c");
 
-var d := new Object.cake(protoTypes, a, {t,a}, "d");  
+var d := new Object.make(protoTypes, {a}, {t,a}, "d");  
 
-var e := new Object.cake(protoTypes, d, {t,a,d}, "e"); //we're gonna clone this one..?
+var e := new Object.make(protoTypes, {d}, {t,a,d}, "e"); //we're gonna clone this one..?
 
-var f := new Object.cake(protoTypes, e, {t,a,d,e}, "f");
+var f := new Object.make(protoTypes, {e}, {t,a,d,e}, "f");
 
-var g := new Object.cake(protoTypes, f,  {t,a,d,e,f},   "g");
+var g := new Object.make(protoTypes, {f},  {t,a,d,e,f},   "g");
 
-var h := new Object.cake(protoTypes, g, {t,a,d,e,f,g}, "h");
+var h := new Object.make(protoTypes, {g}, {t,a,d,e,f,g}, "h");
 
 
-var i := new Object.cake(protoTypes, e, {t,a,d,e,f,g,h}, "i");
-var j := new Object.cake(protoTypes, e, {t,a,d,e,f,g,h}, "j");
-var k := new Object.cake(protoTypes, e, {t,a,d,e,f,g,h}, "k");
-var l := new Object.cake(protoTypes, e, {t,a,d,e,f,g,h}, "l");
+var i := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "i");
+var j := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "j");
+var k := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "k");
+var l := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "l");
 
 
 assert t.Ready();
@@ -131,33 +130,33 @@ assert l.AllOwnersAreWithinThisHeap(os);
 
 assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
 
-print "about to clone a\n";
+// print "about to clone a\n";
 
-var m := Map(map[], {}, {}, a, os, {} );
+// var m := Map(map[], {}, {}, a, os, {} );
 
-var ra, rm := Clone_Via_Map(a, m);
+// var ra, rm := Clone_Via_Map(a, m);
 
-// 
-//     m : Mapping,  //m : Mapping 
-//     ks : set<Object>, //ks - set, keys of the mapping   (must be m.Keys, subset of oHeap)
-//     vs : set<Object>, //vs - set, values or the mapping (must be m.Values, subset of oHeap + ns)
-//     o : Object,  //o - Owner within which the clone is being performaed, in oHeap
-//     oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts 
-//     ns : set<Object>) 
+// // 
+// //     m : Mapping,  //m : Mapping 
+// //     ks : set<Object>, //ks - set, keys of the mapping   (must be m.Keys, subset of oHeap)
+// //     vs : set<Object>, //vs - set, values or the mapping (must be m.Values, subset of oHeap + ns)
+// //     o : Object,  //o - Owner within which the clone is being performaed, in oHeap
+// //     oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts 
+// //     ns : set<Object>) 
 
-print "+++++++++++++\n";
-print "original store (os)\n";
-print "+++++++++++++\n";
-printobjectset(os);
-print "+++++++++++++\n";
-print "clones tm.Values - os\n";
-print "+++++++++++++\n";
-printobjectset(rm.m.Values - os);
-print "+++++++++++++\n";
-printmapping(rm.m);
+// print "+++++++++++++\n";
+// print "original store (os)\n";
+// print "+++++++++++++\n";
+// printobjectset(os);
+// print "+++++++++++++\n";
+// print "clones tm.Values - os\n";
+// print "+++++++++++++\n";
+// printobjectset(rm.m.Values - os);
+// print "+++++++++++++\n";
+// printmapping(rm.m);
 
 
-print "\nDone\n";
+// print "\nDone\n";
 } 
 // end
 
@@ -174,8 +173,7 @@ method {:verify false} Main() {
 
 print "main showing RefOK etc\n";
   
-var t := new Object.frozen(protoTypes);
-t.nick := "t";
+var t := new Object.make(protoTypes, {}, {}, "t");
 
 //   t
 //   a       b       c
@@ -183,18 +181,18 @@ t.nick := "t";
 //  ij kl            g 
 //                   h
 
-var a := new Object.cake(protoTypes, t, {t},         "a");
-var b := new Object.cake(protoTypes, t, {t},         "b");
-var c := new Object.cake(protoTypes, t, {t},         "c");
-var d := new Object.cake(protoTypes, a, {a,t},       "d");
-var e := new Object.cake(protoTypes, a, {a,t},       "e");
-var f := new Object.cake(protoTypes, c, {t,a,c},     "f");
-var g := new Object.cake(protoTypes, f, {t,a,c,f},   "g");
-var h := new Object.cake(protoTypes, g, {t,a,c,f,g}, "h");
-var i := new Object.cake(protoTypes, c, {t,a,d},     "i");
-var j := new Object.cake(protoTypes, c, {t,a,d},     "j");
-var k := new Object.cake(protoTypes, c, {t,a,e},     "k");
-var l := new Object.cake(protoTypes, c, {t,a,e},     "l");
+var a := new Object.make(protoTypes, {t}, {t},         "a");
+var b := new Object.make(protoTypes, {t}, {t},         "b");
+var c := new Object.make(protoTypes, {t}, {t},         "c");
+var d := new Object.make(protoTypes, {a}, {a,t},       "d");
+var e := new Object.make(protoTypes, {a}, {a,t},       "e");
+var f := new Object.make(protoTypes, {c}, {t,a,c},     "f");
+var g := new Object.make(protoTypes, {f}, {t,a,c,f},   "g");
+var h := new Object.make(protoTypes, {g}, {t,a,c,f,g}, "h");
+var i := new Object.make(protoTypes, {c}, {t,a,d},     "i");
+var j := new Object.make(protoTypes, {c}, {t,a,d},     "j");
+var k := new Object.make(protoTypes, {c}, {t,a,e},     "k");
+var l := new Object.make(protoTypes, {c}, {t,a,e},     "l");
 
 
 var os : set<Object> := {t,   a, b, c, d, e, f, g, h, i, j, k, l };
@@ -236,7 +234,8 @@ print "Ownership - Inside =========================\n\n";
 
       for i := 0 to |oq|
        {
-         printobj(oq[i]);
+        print oq[i].nick;
+//         printobj(oq[i]);
          print "  ";
 
          for j := 0 to |oq|
@@ -290,8 +289,8 @@ var matrix : seq<string>:= [
          for j := 0 to |matrix[0]|
           {
          print match (inside(oq[i],oq[j]), (matrix[i][j]) )
-           case (true,  'x') => "o"
-           case (true,  ' ') => "m"  //missing
+           case (true,  'x') => "o"  //OK
+           case (true,  ' ') => "M"  //missing
            case (false, ' ') => " "
            case (false, 'x') => "F"; //false posiutive, ie FUCKED
           }
@@ -307,7 +306,8 @@ print "REFERENCE OK refOK =========================\n\n";
 
       for i := 0 to |oq|
        {
-         printobj(oq[i]);
+         print oq[i].nick;
+         //printobj(oq[i]);
          print "  ";
 
          for j := 0 to |oq|
@@ -362,8 +362,8 @@ var keanu :=
          for j := 0 to |keanu[0]|
           {
          print match (refOK(oq[i],oq[j]), (keanu[i][j]) )
-           case (true,  'x') => "o"
-           case (true,  ' ') => "m"  //missing
+           case (true,  'x') => "o"  //OK
+           case (true,  ' ') => "M"  //missing
            case (false, ' ') => " "
            case (false, 'x') => "F"; //false posiutive, ie FUCKED
           }
