@@ -225,7 +225,7 @@ lemma IAmTheOnlyOne<T>( t : T,  ts : set<T>)
    }
 }
   
-//james' attempt at the full verison with all the working
+//james' attempt at the full verVMapn with all the working
 lemma IAmTheContradictoryOne<T>( t : T,  ts : set<T>) 
    requires ((t in ts) && (|ts| == 1))
      ensures ts == {t}
@@ -546,20 +546,21 @@ lemma UniqueIsInjective<K,V>(m : map<K,V>)
 /////     /////     /////     /////     /////     /////     /////
     /////     /////     /////     /////     /////     /////     /////
 
-    
-type iso<K,V> = u : map<K,V> | AllMapEntriesAreUnique(u) 
+  
+type vmap<K,V> = u : map<K,V> | AllMapEntriesAreUnique(u) 
+//intertible map
 
-// method shouldFail() returns (m : iso<int,int>)
+// method shouldFail() returns (m : vmap<int,int>)
 //   //and it does fail
 // {
 //   m := map[1:=11,2:=11];
 // }
 
-function isoKV<K(==),V(==)>(m' : iso<K,V>, k : K, v : V) : (m : iso<K,V>)
+function VMapKV<K(==),V(==)>(m' : vmap<K,V>, k : K, v : V) : (m : vmap<K,V>)
 //extends m'  with x:=x forall x in d
   //  requires (k !in m'.Keys) && (v !in m'.Values)
   //  requires (forall k' <- m'.Keys :: (k != k') && (v != m'[k']))
-   requires canIsoKV(m', k, v)
+   requires canVMapKV(m', k, v)
    ensures  m == m'[k:=v]
    ensures  m.Keys == m'.Keys + {k}
    ensures  m.Values == m'.Values + {v}
@@ -568,39 +569,39 @@ function isoKV<K(==),V(==)>(m' : iso<K,V>, k : K, v : V) : (m : iso<K,V>)
       m'[k:=v]
   }
 
-predicate canIsoKV<K(==),V(==)>(m' : iso<K,V>, k : K, v : V)
+predicate canVMapKV<K(==),V(==)>(m' : vmap<K,V>, k : K, v : V)
   {
      (k !in m'.Keys) && (v !in m'.Values) 
  //  (forall k' <- m'.Keys :: (k != k') && (v != m'[k']))
   }
 
-lemma IsoKVcanIsoKV<K,V>(m' : iso<K,V>, k : K, v : V)
-    requires canIsoKV(m', k, v)
-    ensures  isoKV(m', k, v) == m'[k:=v]
+lemma VMapKVcanVMapKV<K,V>(m' : vmap<K,V>, k : K, v : V)
+    requires canVMapKV(m', k, v)
+    ensures  VMapKV(m', k, v) == m'[k:=v]
    {}
 
-function mapThruIso<K,V>(ks : set<K>, m : iso<K,V>) : set<V>
+function mapThruVMap<K,V>(ks : set<K>, m : vmap<K,V>) : set<V>
     requires ks <= m.Keys
   {
       (set k <- ks :: m[k]) 
   }
 
 
-function mapThruIsoKV<K,V>(ks : set<K>, m' : iso<K,V>, k : K, v : V) : (m : set<V>)
+function mapThruVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V) : (m : set<V>)
     requires ks <= m'.Keys+{k}
-    requires canIsoKV(m', k, v)    
+    requires canVMapKV(m', k, v)    
   {
       (set x <- ks :: m'[k:=v][x]) 
   }
 
-  lemma MapThruIsoKVisOK<K,V>(ks : set<K>, m' : iso<K,V>, k : K, v : V)
+  lemma MapThruVMapKVVMapK<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
     requires ks <= m'.Keys+{k}
-    requires canIsoKV(m', k, v)  
-    ensures  mapThruIsoKV(ks, m', k, v) == mapThruIso(ks, isoKV(m', k, v))
+    requires canVMapKV(m', k, v)  
+    ensures  mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, VMapKV(m', k, v))
       {
-         assert mapThruIsoKV(ks, m', k, v) == (set x <- ks :: m'[k:=v][x]);
-         assert mapThruIsoKV(ks, m', k, v) == (set x <- ks :: (isoKV(m', k, v)[x]));
-         assert mapThruIsoKV(ks, m', k, v) == mapThruIso(ks, (isoKV(m', k, v)) );
+         assert mapThruVMapKV(ks, m', k, v) == (set x <- ks :: m'[k:=v][x]);
+         assert mapThruVMapKV(ks, m', k, v) == (set x <- ks :: (VMapKV(m', k, v)[x]));
+         assert mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, (VMapKV(m', k, v)) );
       }
 
       
