@@ -116,8 +116,6 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
 
 
 
-
-//:onlyGRUNTS} w
   constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string) 
     requires forall o <- oo :: o.Ready()
     requires CallOK(oo, context)

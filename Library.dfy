@@ -266,6 +266,35 @@ lemma IAmTheContradictoryOne<T>( t : T,  ts : set<T>)
 
 predicate not(x : bool) { !x }  //becuase sometimes ! is too hard to see!
 
+
+ghost function gset2seq<T>(X: set<T>) : (S: seq<T>)
+  ensures forall x <- X :: x in S
+  ensures forall s <- S :: s in X
+  ensures |X| == |S|
+  ensures forall x <- X :: (multiset(X))[x] == 1
+  ensures forall s <- S :: (multiset(S))[s] == 1
+  ensures forall i | 0 <= i < |S|, j | 0 <= j < |S| :: (S[i] == S[j]) <==> i == j
+  ensures (set s <- S) == X
+ {
+  var Y := X;
+  if (Y == {}) then [] else (
+      var y : T :| y in Y;
+     [y] + gset2seq( Y - {y} ) )
+  } 
+//  by method { S := set2seq(X); 
+//   assert forall x <- X :: x in S;
+//   assert forall s <- S :: s in X;
+//   assert |X| == |S|;
+//   assert forall x <- X :: (multiset(X))[x] == 1;
+//   assert forall s <- S :: (multiset(S))[s] == 1;
+//   assert forall i | 0 <= i < |S|, j | 0 <= j < |S| :: (S[i] == S[j]) <==> i == j;
+//   assert (set s <- S) == X;
+//   assert S == fset2seq(X);
+//  }
+
+
+
+
 method set2seq<T>(X: set<T>) returns (S: seq<T>)
   ensures forall x <- X :: x in S
   ensures forall s <- S :: s in X
@@ -273,9 +302,14 @@ method set2seq<T>(X: set<T>) returns (S: seq<T>)
   ensures forall x <- X :: (multiset(X))[x] == 1
   ensures forall s <- S :: (multiset(S))[s] == 1
   ensures forall i | 0 <= i < |S|, j | 0 <= j < |S| :: (S[i] == S[j]) <==> i == j
+  ensures (set s <- S) == X
+  // ensures S == gset2seq(X)
   modifies { }
 {
-  S := []; var Y := X;
+  S := []; 
+  // var Z := {}; //enshittified the code to do something impossible...
+  var Y := X; 
+  //  assert S == fset2seq(Z);
   while Y != {}
     decreases Y
     invariant |S| + |Y| == |X|
@@ -285,10 +319,16 @@ method set2seq<T>(X: set<T>) returns (S: seq<T>)
     invariant forall x <- X :: (multiset(X))[x] == 1
     invariant forall s <- S :: (multiset(S))[s] == 1
     invariant forall i | 0 <= i < |S|, j | 0 <= j < |S| :: (S[i] == S[j]) <==> i == j
+   // invariant S == fset2seq(Z)
     {
     var y: T;
     y :| y in Y;
-    S, Y := S + [y], Y - {y};
+    // assert S == fset2seq(Z);
+    // assert S+[y] == fset2seq(Z)+[y];
+    // assert S+[y] == fset2seq(Z+{y});
+    // S, Z, Y := S+[y], Z+{y}, Y-{y};]
+    S, Y := S+[y], Y-{y};
+    // assert S == fset2seq(Z);
   }
 }
 
@@ -437,7 +477,7 @@ function {:onlyXAM} Extend_A_Map<KV>(m': map<KV,KV>, d : set<KV>) : (m: map<KV,K
    (map x <- d :: x) +  m'
   }
 
-predicate  {:onlyNUKE} AllMapEntriesAreUnique<K,V(==)>(m : map<K,V>)
+predicate AllMapEntriesAreUnique<K,V(==)>(m : map<K,V>)
 {
     reveal UniqueMapEntry();
     forall i <- m.Keys :: UniqueMapEntry(m, i)
@@ -604,4 +644,3 @@ function mapThruVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V) : (m : se
          assert mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, (VMapKV(m', k, v)) );
       }
 
-      
