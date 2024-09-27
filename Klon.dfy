@@ -381,9 +381,9 @@ lemma roundTrip1(k : Object, v : Object, m : Map)
     assert MapOK(m.m);
     assert AllMapEntriesAreUnique(m.m);
 
-    reveal atV();
-    reveal at();
-    reveal UniqueMapEntry();
+    // reveal atV();
+    // reveal at();
+    // reveal UniqueMapEntry();
 
     assert m.at(k)  == v;  //why is this needed?
     assert m.m[k]   == v;
@@ -1395,7 +1395,7 @@ lemma roundTrip1(k : Object, v : Object, m : Map)
 
     reveal rv.calid();
     assert rv.calid();
-    reveal AreWeNotMen();
+//    reveal AreWeNotMen();
     assert forall k <- rv.m.Keys :: rv.AreWeNotMen(k,rv);
 
     reveal rv.calidObjects();
@@ -3320,7 +3320,7 @@ method Clone_Clone_Clone(a : Object, m' : Map)
     reveal m.calidOK();
     COKfromCallOK(a, m.oHeap);
     assert COK(a, m.oHeap);
-    reveal COK();
+    reveal COK();   
     assert a.Ready();
     assert a.AMFO > flattenAMFOs(a.owner);
     assert flattenAMFOs(a.owner) <=  a.AMFO;

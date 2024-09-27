@@ -1,4 +1,4 @@
-
+ 
 const protoTypes : map<string, Mode> := 
       map["jat":= Evil]
          ["dat":= Evil]
