@@ -365,7 +365,8 @@ datatype Map = Map(
     }
   }
 
-  static lemma roundTrip1(k : Object, v : Object, m : Map)
+
+lemma roundTrip1(k : Object, v : Object, m : Map)
     requires m.calid()
     requires m.got(k)
     requires m.at(k) == v
@@ -1819,7 +1820,7 @@ method Clone_Via_Map(a : Object, m' : Map)
 
   assert b.fieldModes == a.fieldModes;
 
-
+      print "Yay babhy hyou got that done\n";
 
 
   assert a !in m.ks;
@@ -1845,7 +1846,9 @@ method Clone_Via_Map(a : Object, m' : Map)
   assert (forall x <- m.ks :: x.allExternalOwners() <= m.ks);
 
   assert a !in m.vs;
+  print "about to putOutside\n";
   m := m.putOutside(a);   ///HOPEY?  CHANGEY?
+    print "crashy?  washy?\n";
   assert b.fieldModes == a.fieldModes;
 
   assert (b == a) by {
@@ -1872,6 +1875,7 @@ method Clone_Via_Map(a : Object, m' : Map)
     assert a in m.ks;
     assert b.fieldModes == a.fieldModes;
 
+print "returnin' from the outsidee case\n";
 
     // assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
 
@@ -1889,7 +1893,7 @@ method Clone_Via_Map(a : Object, m' : Map)
       // assert a !in m'.ks ==> b !in m'.ns;  }  //end of inside case
   } //end of inside case
 
-  ///////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////// 
   //tidying up after the cases..
 
   // assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?

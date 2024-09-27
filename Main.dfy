@@ -13,7 +13,7 @@ const protoTypes : map<string, Mode> :=
 
 
 
-method {:verify false} Main1() {
+method {:verify false} Main() {
 
   print "Main Test for loopback\n";
   
@@ -130,11 +130,11 @@ assert l.AllOwnersAreWithinThisHeap(os);
 
 assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
 
-// print "about to clone a\n";
+print "about to clone a\n";
 
-// var m := Map(map[], {}, {}, a, os, {} );
+var m := Map(map[], {}, {}, a, os, {} );
 
-// var ra, rm := Clone_Via_Map(a, m);
+var ra, rm := Clone_Via_Map(a, m);
 
 // // 
 // //     m : Mapping,  //m : Mapping 
@@ -144,19 +144,19 @@ assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
 // //     oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts 
 // //     ns : set<Object>) 
 
-// print "+++++++++++++\n";
-// print "original store (os)\n";
-// print "+++++++++++++\n";
-// printobjectset(os);
-// print "+++++++++++++\n";
-// print "clones tm.Values - os\n";
-// print "+++++++++++++\n";
-// printobjectset(rm.m.Values - os);
-// print "+++++++++++++\n";
-// printmapping(rm.m);
+print "+++++++++++++\n";
+print "original store (os)\n";
+print "+++++++++++++\n";
+printobjectset(os);
+print "+++++++++++++\n";
+print "clones tm.Values - os\n";
+print "+++++++++++++\n";
+printobjectset(rm.m.Values - os);
+print "+++++++++++++\n";
+printmapping(rm.m);
 
 
-// print "\nDone\n";
+print "\nDone\n";
 } 
 // end
 
@@ -169,7 +169,7 @@ assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
 
 
 
-method {:verify false} Main() {
+method {:verify false} Main0() {
 
 print "main showing RefOK etc\n";
   
