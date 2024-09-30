@@ -1,11 +1,11 @@
 
-type Mapping = map<Object,Object>
+//type Mapping = map<Object,Object>
 
 //future refactoring TODOs
 // oHeap -> contest
 // remove Mpaaing (should be an vmap
 
-
+type Mapping = vmap<Object,Object>
  
 //streamlined MapOK - notably pulled out AMDO & extra to one line each
 // 
@@ -13,10 +13,10 @@ predicate MapOK(m : Mapping, ks : set<Object> := m.Keys) // incrementalisation a
   requires ks <= m.Keys
 {
   && (forall k <- ks :: k.owner <= ks)
-  && (forall k <- ks :: (set oo <- k.owner :: m[oo]) == m[k].owner)
+  && (forall k <- ks :: mapThruMapping(k.owner,  m) == m[k].owner)
 
   && (forall k <- ks :: k.AMFO <= ks)
-  && (forall k <- ks :: (set oo <- k.AMFO :: m[oo]) == m[k].AMFO)
+  && (forall k <- ks :: mapThruMapping(k.AMFO,  m) == m[k].AMFO)
 }
 
 
@@ -37,7 +37,7 @@ function MapKV(m : Mapping,   x : Object,  v : Object) : (r : Mapping)
     && (forall oo <- x.allExternalOwners() :: oo in m.Keys &&  m[oo] in v.AMFO)
     && (x.owner <= (x.AMFO - {x}))
 
-    && (mapThruVMap(x.owner,m) == v.owner)
+    && (mapThruMapping(x.owner,m) == v.owner)
     && ((set oo <- x.allExternalOwners() :: m[oo]) == v.allExternalOwners()) //NEW BIT  ///note that x can't be in AMFO FUCKER
     && (forall x <- m.Keys :: (set oo <- x.AMFO :: m[oo]) == m[x].AMFO) //NEW BIT
 
@@ -61,35 +61,31 @@ function MapKV(m : Mapping,   x : Object,  v : Object) : (r : Mapping)
 
     assert r.Keys == m.Keys + {x};
     
-  
-
- 
-  assert (forall x <- r.Keys :: (mapThruVMap(x.owner,r) == r[x].owner))
+  assert (forall x <- r.Keys :: (mapThruMapping(x.owner,r) == r[x].owner))
   by {
     assert MapOK(m);
-    assert (forall x <- m.Keys :: mapThruVMap(x.owner,m) == m[x].owner);
+    assert (forall x <- m.Keys :: mapThruMapping(x.owner,m) == m[x].owner);
     assert forall k <- r.Keys ::
         if (k in m.Keys) then r[k] == m[k] else r[k] == v; //can one do be better here?
     assert r[x] == v;
-    assert mapThruVMap(r[x].owner, r) == v.owner;
-    assert (forall x <- m.Keys ::  mapThruVMap(x.owner,m) == r[x].owner);
-    assert (forall x <- m.Keys ::  mapThruVMap(x.owner,r) == r[x].owner);
-    assert (mapThruVMap(x.owner,m) == r[x].owner == v.owner);
-    assert (forall x <- r.Keys :: (mapThruVMap(x.owner,r) == r[x].owner));
+    assert (forall x <- m.Keys ::  mapThruMapping(x.owner,r) == r[x].owner);
+    assert (forall x <- m.Keys ::  mapThruMapping(x.owner,r) == r[x].owner);
+    assert (mapThruMapping(x.owner,m) == r[x].owner == v.owner);
+    assert (forall x <- r.Keys :: (mapThruMapping(x.owner,r) == r[x].owner));
   }
 
-  assert (forall x <- r.Keys, oo <- x.AMFO :: r[oo] in r[x].AMFO)
-  by {
-    assert MapOK(m);
-    assert (forall x <- m.Keys, oo <- x.AMFO :: m[oo] in m[x].AMFO);
-    assert forall k <- r.Keys ::
-        if (k in m.Keys) then r[k] == m[k] else r[k] == v;
-    assert (forall x <- m.Keys, oo <- x.AMFO :: r[oo] in r[x].AMFO);
-    assert (forall oo <- x.AMFO - {x} :: r[oo] in v.AMFO);
-    assert r[x] == v;
-    assert (x in x.AMFO) && (v in v.AMFO) && (r[x] in r[x].AMFO);
-    assert (forall x <- r.Keys, oo <- x.AMFO :: r[oo] in r[x].AMFO);
-  }
+  // assert (forall x <- r.Keys, oo <- x.AMFO :: r[oo] in r[x].AMFO)
+  // by {
+  //   assert MapOK(m);
+  //   assert (forall x <- m.Keys, oo <- x.AMFO :: m[oo] in m[x].AMFO);
+  //   assert forall k <- r.Keys ::
+  //       if (k in m.Keys) then r[k] == m[k] else r[k] == v;
+  //   assert (forall x <- m.Keys, oo <- x.AMFO :: r[oo] in r[x].AMFO);
+  //   assert (forall oo <- x.AMFO - {x} :: r[oo] in v.AMFO);
+  //   assert r[x] == v;
+  //   assert (x in x.AMFO) && (v in v.AMFO) && (r[x] in r[x].AMFO);
+  //   assert (forall x <- r.Keys, oo <- x.AMFO :: r[oo] in r[x].AMFO);
+  // }
 
 
   assert (forall x <- r.Keys :: (set oo <- x.AMFO :: r[oo]) == r[x].AMFO)
@@ -97,19 +93,20 @@ function MapKV(m : Mapping,   x : Object,  v : Object) : (r : Mapping)
     assert MapOK(m);
     assert (forall x <- m.Keys :: (set oo <- x.AMFO :: m[oo]) == m[x].AMFO);
     assert (forall k <- r.Keys ::  if (k in m.Keys) then r[k] == m[k] else r[k] == v);
-    assert (forall x <- m.Keys :: (set oo <- x.allExternalOwners() :: r[oo]) == r[x]. allExternalOwners());
+ //   assert (forall x <- m.Keys :: (set oo <- x.allExternalOwners() :: r[oo]) == r[x]. allExternalOwners());
 //    assert (set oo <- x.AMFO :: r[oo]) == r[x].AMFO;
 assert mapThruMappingKV(x.AMFO, m, x, v) == v.AMFO;
-     assert ((set oo <- x.AMFO :: r[oo]) == v.AMFO);
-    assert (forall k <- {x} :: (set oo <- k.AMFO :: r[oo]) == v.AMFO);
+//     assert ((set oo <- x.AMFO :: r[oo]) == v.AMFO);
+//    assert (forall k <- {x} :: (set oo <- k.AMFO :: r[oo]) == v.AMFO);
     assert r[x] == v;
     assert r.Keys == m.Keys + {x};
     assert ( x in x.AMFO) && (v in v.AMFO) && (r[x] in r[x].AMFO);
-    assert (set oo <- x.AMFO :: r[oo]) == v.AMFO;
-    assert (forall k <- m.Keys+{x} :: (set oo <- k.AMFO :: r[oo]) == r[k].AMFO);
+    assert mapThruMapping(x.AMFO, m) == v.AMFO;
+    assert (forall k <- m.Keys+{x} :: mapThruMapping(k.AMFO, m) == r[k].AMFO);
 
-    assert (forall x <- r.Keys :: (set oo <- x.AMFO :: r[oo]) == r[x].AMFO);
+    assert (forall k <- r.Keys :: mapThruMapping(k.AMFO, m) == r[k].AMFO);
   }
+    assert mapThruMapping(r[x].owner, r) == v.owner;
 
 
 
@@ -137,8 +134,8 @@ assert mapThruMappingKV(x.AMFO, m, x, v) == v.AMFO;
 
     assert r == m[x:=v];
 
-    assert mapThruMapping(x.AMFO,  m) == v.AMFO;
-    assert mapThruMapping(x.owner, m) == v.owner;
+    assert mapThruMapping(x.AMFO,  r) == v.AMFO;
+    assert mapThruMapping(x.owner, r) == v.owner;
 
     assert (forall k <- {x} :: k.owner <= r.Keys);
     assert (forall k <- {x} :: (set oo <- k.owner :: r[oo]) == r[k].owner);
@@ -216,25 +213,6 @@ datatype Map = Map(
   // general rule: where possible, work with ks and vs rther than m.Keys & m.Values...
   // that's the point of setting this up, right?
 
-
-  predicate fromold(prev : Map)
-    reads oHeap`fields, oHeap`fieldModes
-    reads ns`fields, ns`fieldModes
-    reads prev.oHeap`fields, prev.oHeap`fieldModes
-    reads prev.ns`fields, prev.ns`fieldModes
-  {
-    reveal calid(), calidObjects(), calidOK(), calidMap(), calidSheep();
-    //      old(from(prev))
-
-    && calid()         //should these be requirements?
-       // && old(prev.calid())
-    && mapGEQ(m, prev.m)
-    && ks    >= prev.ks
-    && vs    >= prev.vs
-    && o     == prev.o
-    && oHeap == prev.oHeap
-    && ns    >= prev.ns
-  }
 
 
 
@@ -318,9 +296,11 @@ datatype Map = Map(
     requires COK(k, {k})
     requires CallOK({}, {k})
     requires CallOK({k})
-    requires AllTheseOwnersAreFlatOK(k.AMFO)
-    requires AllTheseOwnersAreFlatOK({}, k.AMFO + {})
+    requires AllTheseOwnersAreFlatOK({k})
   {
+    reveal CallOK(), COK();
+    assert k.Ready();
+
     var jd := new Object.make( map[], {k}, {k}, "hello");
     assert jd !in oHeap;
     Vance(jd);
@@ -1693,7 +1673,7 @@ method Clone_Via_Map(a : Object, m' : Map)
 
   assert unchanged(a) && unchanged(m.oHeap);
 
-  print "CALL Clone_Via_Map:", fmtobj(a), " owner:", fmtobj(m.o), "\n";
+  print "CALL Clone_Via_Map:", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
   print "VARIANT CVM ", |(m'.oHeap - m'.ks)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 20, "\n";
 
@@ -1738,7 +1718,7 @@ method Clone_Via_Map(a : Object, m' : Map)
 
     COKfromCallOK(b, m.vs, m.oHeap+m.ns);
     assert COK(b, m.oHeap+m.ns);
-    print "RETN Clone_Via_Map: ", fmtobj(a)," already cloned,  returning ",fmtobj(b), "\n";
+
 
 
 
@@ -1767,6 +1747,9 @@ method Clone_Via_Map(a : Object, m' : Map)
     assert  m.oHeap == m'.oHeap;
     assert  m.ns    >= m'.ns;
     //  reveal  m.from();
+
+    print "RETN Clone_Via_Map: ", fmtobj(a)," already cloned,  returning ",fmtobj(b), "\n";
+
     return;
   } // a in ks, already cloned
 
@@ -1885,12 +1868,16 @@ print "returnin' from the outsidee case\n";
   }///END OF THE OUTSIDE CASE
   else
   { //start of the Inside case
-
+print "start of the Inside case\n";
       print "Clone_Via_Map owners:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
 
       b, m := Clone_Clone_Clone(a, m);
 
       // assert a !in m'.ks ==> b !in m'.ns;  }  //end of inside case
+
+
+print "end of the Inside case\n";
+
   } //end of inside case
 
   /////////////////////////////////////////////////////////////// 
@@ -1940,6 +1927,8 @@ print "returnin' from the outsidee case\n";
 
   assert m.from(m');
   //  }
+  print "RETN Clone_Via_Map:", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
+
 }
 
 
@@ -2028,6 +2017,8 @@ method Clone_All_Fields(a : Object, b : Object, m' : Map)
   modifies b`fields   ///GGRRR
 {
   m := m';
+
+  print "CALL Clone_All_Fields: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
   assert m'.calid() by { reveal MPRIME; }
 
@@ -2351,7 +2342,6 @@ method Clone_All_Fields(a : Object, b : Object, m' : Map)
     //    assert m'.calid(); }
     //    
 
-    //assert rm.fromold(m');
 
     assert  CallOK(m.ks, m.oHeap)
     by { reveal m.calid();    assert m.calid();
@@ -2365,7 +2355,6 @@ method Clone_All_Fields(a : Object, b : Object, m' : Map)
 
 
   //DONE FIELDS
-  print "RETN Clone_All_Fields done ", fmtobj(a), "\n";
 
   assert COK(b, m.oHeap+m.ns) by { reveal HEREB; }
   assert mapLEQ(m'.m,m.m);
@@ -2456,6 +2445,7 @@ method Clone_All_Fields(a : Object, b : Object, m' : Map)
   // 
   assert old(m'.calid());
   //     }
+  print "RETN Clone_All_Fields done ", fmtobj(a), "\n";
 
   return;
 }
@@ -3326,7 +3316,7 @@ method Clone_Clone_Clone(a : Object, m' : Map)
     assert flattenAMFOs(a.owner) <=  a.AMFO;
   }
 
-  print "Clone_Clone_CLone ", fmtobj(a), " recursive call ", fmtown(a.owner) ,"\n";
+  print "Clone_Clone_CLone ", fmtobj(a), " calling Clone_All_Owners", fmtown(a.owner) ,"\n";
 
 
   //extraOK        reveal COK(); assert a.owner.extra == {}; //extra not yet cloned
@@ -3336,9 +3326,10 @@ method Clone_Clone_Clone(a : Object, m' : Map)
 
   assert a.owner <= m.m.Keys;
 
-  var rowner := mapThruMapping(a.owner, m.m);
 
-  print "Clone_Clone_CLone ", fmtobj(a), " recursive call RETURNS ", fmtown(rowner) ,"\n";
+  var rowner := mapThruMapping(a.owner, rm.m);
+
+  print "Clone_Clone_CLone ", fmtobj(a), " Clone_All_Owners RETURNS ", fmtown(rowner) ,"\n";
 
 
   assert CallOK(rowner, rm.oHeap+rm.ns);
@@ -3510,7 +3501,7 @@ method Clone_Clone_Clone(a : Object, m' : Map)
 
   assert rrm.ks <= rrm.oHeap;
 
-
+print "Clone_Clone_Clone ", fmtobj(a), " boodle boodle boodle\n";
 
 
 
@@ -3551,6 +3542,7 @@ method Clone_Clone_Clone(a : Object, m' : Map)
   //        assert AllTheseOwnersAreFlatOK(flattenAMFOs(a.owner) + a.extra);
   var aAMFOs := a.allExternalOwners() + {a};
   //  assert AllTheseOwnersAreFlatOK(aAMFOs);https://www.youtube.com/
+
 
 
   //assert forall ax <- a.extra :: imageUnderMap(ax, rrm.m[ax], rrm);
@@ -3643,8 +3635,10 @@ method Clone_Clone_Clone(a : Object, m' : Map)
 
   assert AllTheseOwnersAreFlatOK(rowner);//both originally had a .AMFO on the end - do we need it?  yes?  no?  what's the difference?
 
-  b := new Object.make(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick);
 
+print "CALLING MAKE...";
+  b := new Object.make(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick);
+print "BACK FROM MAKE with ",fmtobj(b),"\n";
 
 
   // currently ignoring REXTRA //TODO...   //extra not yet cloned
@@ -3716,7 +3710,7 @@ method Clone_Clone_Clone(a : Object, m' : Map)
 
   m := xm;
 
-  //        m := Clone_All_Fields(a,b, xm);
+  m := Clone_All_Fields(a,b, xm);
 
   /////   /////    /////    /////   /////    /////    /////   /////    /////
   /////   /////    /////    /////   /////    /////    /////   /////    /////
@@ -3977,7 +3971,7 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Map)
   ensures a.AMFO <= m.ks  //seems weird but we are populating m, right...
 
   ensures old(m'.calid())
-  ensures m.fromold(m')
+  ensures m.from(m')
 
   ensures a.fieldModes == b.fieldModes
 
@@ -4005,7 +3999,7 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Map)
 
   var v_cfm := ((m.oHeap - m.ks +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5);//Clone_Field_Map
 
-
+print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
 
   print "VARIANT CFM ", |(m'.oHeap - m'.ks)+{a}|, " ", |a.AMFO|, " ", |(a.fields.Keys - b.fields.Keys - {n})|, " ", 10, "\n";
 
@@ -4364,14 +4358,20 @@ lemma mapThruMappingKVIsNICE(os : set<Object>, m : Mapping, k : Object, v : Obje
 {
 }
 
-
+lemma mapThruMapKVisOK(os : set<Object>, m : Map, k : Object, v : Object)
+  requires m.calid()
+  requires os <= m.ks + {k}
+  requires os <= m.m.Keys + {k}
+  
+  ensures mapThruMapKV(os, m, k, v) == mapThruMap(os, m.(m:= m.m[k:=v]))
+{}
 
 function  mapThruMapKV(os : set<Object>, m : Map, k : Object, v : Object) : (r : set<Object>)
   reads m.oHeap`fields, m.oHeap`fieldModes
   reads m.ns`fields, m.ns`fieldModes
   requires m.calid()
   requires os <= m.ks + {k}
-  requires os <= m.m.Keys + {v}
+  requires os <= m.m.Keys + {k}
 
   ensures  r  <= m.m.Values + {v}
   ensures  r  <= (m.vs + {v}) <= (m.oHeap + m.ns + {v})
@@ -4679,7 +4679,7 @@ assert  (forall x <- {k} :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO);
       //   && (forall x <- (aa.Keys+{k}) :: (set oo <- x.AMFO :: bb[oo]) == bb[x].AMFO)
       //   && (forall x <- (aa.Keys+{k}) :: x.region.Heap? == bb[x].region.Heap?)
       //   && (forall x <- (aa.Keys+{k}) :: x.owner <= x.AMFO)
-      //   && (forall x <- (aa.Keys+{k}) :: x.owner <= bb.Keys)
+      //   && (forall x <- (aa.Keys+{k}) :: x.owner <= bb.Keys) 
       //   && (forall x <- (aa.Keys+{k}) :: aa[x.owner] == bb[x].owner )
       //   && (forall x <- (aa.Keys+{k}) :: x.extra <= x.AMFO)
       //   && (forall x <- (aa.Keys+{k}) :: x.extra <= bb.Keys)
@@ -4932,7 +4932,7 @@ method Clone_All_Owners(a : Object,  m' : Map)  returns (m : Map)
   requires m'.calid()
 
   ensures  m.calid()
-  //ensures  a !in m.ks //mustn't have cloned a yet...
+  //ensures  a !in m.ks //mustn't have cloned a yet...`
   //  ensures  a.AMFO <= m.ks  //should beecome AMFO? - oh yep
 
 
@@ -5434,8 +5434,8 @@ assert  OrigBigfoot(mapThruMap(os,m),mapThruMap(context,m));
 datatype Klon = Klon
 (
   m : vmap<Object,Object>,  //m : Mapping
-  ks : set<Object>, //ks - set, keys of the mapping   (must be m.Keys, subset of oHeap)
-  vs : set<Object>, //vs - set, values or the mapping (must be m.Values, subset of oHeap + ns)
+//  ks : set<Object>, //ks - set, keys of the mapping   (must be m.Keys, subset of oHeap)
+//  vs : set<Object>, //vs - set, values or the mapping (must be m.Values, subset of oHeap + ns)
   o : Object,  //o - Owner within which the clone is being performaed, in oHeap
   //    p : Object,  // Owner of the new (target) clone.  needs to be inside the source object's movement
   oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts
@@ -5446,32 +5446,42 @@ datatype Klon = Klon
 
 function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
   requires klonVMapOK(c'.m)
-  requires canKlonKV(c', k, v)
+  requires klonCanKV(c', k, v)
   ensures  klonVMapOK(c.m)
 {
+   var c := c'.(m:= VMapKV(c'.m,k,v));
 
-   c'.(m:= VMapKV(c'.m,k,v))
+
+
+
+
+   c
 }
 
 
-predicate canKlonKV(c' : Klon, k : Object, v : Object)
+predicate klonCanKV(c' : Klon, k : Object, v : Object)
 {
   && canVMapKV(c'.m, k, v)
   && (k.AMFO <= c'.m.Keys+{k}) 
   && (mapThruVMapKV(k.AMFO, c'.m, k, v) == v.AMFO)
+
+  && (k.owner <= k.AMFO)
+  && (k.owner <= c'.m.Keys+{k})  
+  && (mapThruVMapKV(k.owner, c'.m, k, v) == v.owner)
 }
 
 predicate klonVMapOK(m : vmap<Object,Object>)
 {
 //AMFO  
   && (forall k <- m.Keys :: k.AMFO <= m.Keys)
-  && (forall k <- m.Keys :: (set oo <- k.AMFO :: m[oo]) == m[k].AMFO)
+  && (forall k <- m.Keys :: mapThruVMap(k.AMFO, m) == m[k].AMFO)
 
 //region & owners?
   && (forall x <- m.Keys :: x.owner <= x.AMFO)
   && (forall x <- m.Keys :: x.owner <= m.Keys)
-  && (forall x <- m.Keys :: mapThruMapping(x.owner, m) == m[x].owner )
+  && (forall x <- m.Keys :: mapThruVMap(x.owner, m) == m[x].owner)
 
 //field valuesa? //KJX
 }
+
 
