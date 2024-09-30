@@ -13,7 +13,7 @@ const protoTypes : map<string, Mode> :=
 
 
 
-method {:verify false} Main1() {
+method {:verify false} Main() {
 
   print "Main Test for loopback\n";
   
@@ -170,7 +170,7 @@ print "\nDone\n";
 
 
 
-method {:verify false} Main() {
+method {:verify false} Main0() {
 
 print "main showing RefOK etc\n";
   
