@@ -516,11 +516,6 @@ assert true;
 
 } //end class Object
 
-//extended validity
-
-
-
-
 
 //compare the fucking AllOwnersAreWthinThisHeap???
 opaque predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
@@ -592,8 +587,6 @@ lemma AMFOisBigger(o : Object)
 
    assert (forall oo <- o.allExternalOwners() :: o.AMFO >= oo.AMFO);
  }
-
-
 
 //GRRRR
 // lemma EitherWayIsFlat(a : Object, rrm : Map, amx : set<Object>)
