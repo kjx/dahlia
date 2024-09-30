@@ -480,8 +480,8 @@ datatype Map = Map(
     assert MapOK(m.m);
     assert AllMapEntriesAreUnique(m.m);
 
-    reveal atV();
-    reveal at();
+    // reveal atV();
+    // reveal at();
     reveal UniqueMapEntry();
 
     assert m.at(k)  == v;  //why is this needed?
@@ -1521,7 +1521,7 @@ datatype Map = Map(
 
     reveal rv.calid();
     assert rv.calid();
-    reveal AreWeNotMen();
+//    reveal AreWeNotMen();
     assert forall k <- rv.m.Keys :: rv.AreWeNotMen(k,rv);
 
     reveal rv.calidObjects();
@@ -1833,7 +1833,7 @@ method Clone_Via_Map(a : Object, m' : Map)
 
   assert unchanged(a) && unchanged(m.oHeap);
 
-  print "CALL Clone_Via_Map:", fmtobj(a), " owner:", fmtobj(m.o), "\n";
+  print "CALL Clone_Via_Map:", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
   print "VARIANT CVM ", |(m'.oHeap - m'.ks)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 20, "\n";
 
@@ -1880,34 +1880,6 @@ method Clone_Via_Map(a : Object, m' : Map)
     assert COK(b, m.oHeap+m.ns);
     print "RETN Clone_Via_Map: ", fmtobj(a)," already cloned,  returning ",fmtobj(b), "\n";
 
-
-
-    assert MapOK(m.m) && (a.AMFO <= m.ks) && (a.extra <= m.ks)  by
-    {
-      reveal m.calid();
-      assert m.calid();
-      reveal m.calidOK();
-      assert m.calidOK();
-      reveal m.calidObjects();
-      assert m.calidObjects();
-      reveal m.calidMap();
-      assert m.calidMap();
-      assert m.ks == m.m.Keys;
-      assert MapOK(m.m) && a.AMFO <= m.m.Keys;
-      assert MapOK(m.m) && a.AMFO <= m.ks;
-      assert a.extra <= m.ks;
-    }
-
-    reveal m.calid();
-    assert m.calid();
-    reveal m.calidSheep();
-    assert m.calidSheep();
-
-    assert  b.fieldModes == a.fieldModes;
-    assert  m.o     == m'.o;
-    assert  m.oHeap == m'.oHeap;
-    assert  m.ns    >= m'.ns;
-    //  reveal  m.from();
     return;
   } // a in ks, already cloned
 
@@ -1957,8 +1929,10 @@ method Clone_Via_Map(a : Object, m' : Map)
         assert m.m.Values == m.vs;
         assert a !in m.vs;
       }
-      b, m := Clone_Outside_Heap(a, m);
 
+      print "Hey Baby let's CLONE Outside HEAP\n";
+      b, m := Clone_Outside_Heap(a, m);
+ print "Yay babhy hyou got that done HEAP\n";
       // assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
 
       //END outside  HEAP OBJECT
@@ -1966,8 +1940,9 @@ method Clone_Via_Map(a : Object, m' : Map)
     else
     {
       print "Clone_Via_Map world:", fmtobj(a),"\n";
-
+     print "Hey Baby let's CLONE Outside WORLD\n";
       b, m := Clone_Outside_World(a, m);
+ print "Yay babhy hyou got that done WORLD\n";
 
       // assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
 
@@ -1992,6 +1967,8 @@ method Clone_Via_Map(a : Object, m' : Map)
     assert forall kx <- a.extra :: m.m[kx] in m.m[a].extra;
     assert a.extra <= m.ks;
 
+print "returnin' from the outsidee case\n";
+
     // assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
 
     return;  //we may as well just return here.
@@ -2000,9 +1977,10 @@ method Clone_Via_Map(a : Object, m' : Map)
   }///END OF THE OUTSIDE CASE
   else
   { //start of the Inside case
+print "start of the Inside case\n";
 
     if (a.region.Heap?) {  //start of inside heap case
-      print "Clone_Via_Map owners:", fmtobj(a), " owned by ", fmtobj(a.region.owner) ,"\n";
+      print "Clone_Via_Map InsideHeap owners:", fmtobj(a), " owned by ", fmtobj(a.region.owner) ,"\n";
 
       b, m := Clone_Inside_Heap(a, m);
       //  assert b.fields.Keys == {};  //we now do clone fields though!!
@@ -2012,12 +1990,16 @@ method Clone_Via_Map(a : Object, m' : Map)
       //END inside HEAP OBJECT
     } else {
       //inside "world"" OBJECT
+      print "Clone_Via_Map InsideWorld owners:", fmtobj(a), " owned by ", fmtobj(a.region.owner) ,"\n";
 
       b, m := Clone_Inside_World(a, m);
       //  assert b.fields.Keys == {};
 
       // assert a !in m'.ks ==> b !in m'.ns;   //KJX sure about this?
     }   //end of inside world heap case
+
+print "end of the Inside case\n";
+    
   } //end of inside case
 
 
@@ -2068,8 +2050,9 @@ method Clone_Via_Map(a : Object, m' : Map)
 
   assert m.from(m');
   //  }
-}
+  print "RETN Clone_Via_Map:", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
+}
 
 
 
@@ -2161,6 +2144,8 @@ method Clone_All_Fields(a : Object, b : Object, m' : Map)
   modifies b`fields   ///GGRRR
 {
   m := m';
+
+  print "CALL Clone_All_Fields: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
   assert m'.calid() by { reveal MPRIME; }
 
@@ -2498,7 +2483,6 @@ method Clone_All_Fields(a : Object, b : Object, m' : Map)
 
 
   //DONE FIELDS
-  print "RETN Clone_All_Fields done ", fmtobj(a), "\n";
 
   assert COK(b, m.oHeap+m.ns) by { reveal HEREB; }
   assert mapLEQ(m'.m,m.m);
@@ -2589,6 +2573,7 @@ method Clone_All_Fields(a : Object, b : Object, m' : Map)
   //
   assert old(m'.calid());
   //     }
+  print "RETN Clone_All_Fields done ", fmtobj(a), "\n";
 
   return;
 }
@@ -4004,7 +3989,7 @@ method Clone_Inside_Heap(a : Object, m' : Map)
 
   m := xm;
 
-  //        m := Clone_All_Fields(a,b, xm);
+         m := Clone_All_Fields(a,b, xm);
 
   /////   /////    /////    /////   /////    /////    /////   /////    /////
   /////   /////    /////    /////   /////    /////    /////   /////    /////
@@ -4297,6 +4282,7 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Map)
   var v_cfm := ((m.oHeap - m.ks +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5);//Clone_Field_Map
 
 
+print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
 
   print "VARIANT CFM ", |(m'.oHeap - m'.ks)+{a}|, " ", |a.AMFO|, " ", |(a.fields.Keys - b.fields.Keys - {n})|, " ", 10, "\n";
 
@@ -4610,6 +4596,7 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Map)
   //     }
 
   assert old(m'.calid());
+print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
 
 } //end Clone: /_Field_Map
 
