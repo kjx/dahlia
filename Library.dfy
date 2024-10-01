@@ -463,7 +463,7 @@ function seq2set2<T>(q : seq<T>) : set<T> {
 
 
 
-function {:onlyXAM} Extend_A_Map<KV>(m': map<KV,KV>, d : set<KV>) : (m: map<KV,KV>)
+function Extend_A_Map<KV>(m': map<KV,KV>, d : set<KV>) : (m: map<KV,KV>)
 //extend m'  with x:=x forall x in d
    requires AllMapEntriesAreUnique(m')
    ensures  AllMapEntriesAreUnique(m)
@@ -505,21 +505,21 @@ lemma InversionLove<K,V>(m : map<K,V>, n : map<V,K>)
   assert forall k <- n.Keys :: m[n[k]] == k;
 }
 
-opaque predicate {:onlyNUKE} UniqueMapEntry2<K,V(==)>(m : map<K,V>, k : K) 
+opaque predicate  UniqueMapEntry2<K,V(==)>(m : map<K,V>, k : K) 
  requires k in m
 {
   //true
   m[k] !in  (m - {k}).Values  //dodgy UniqueMapEntry //AreWeNotMen
 }
 
-opaque predicate {:onlyNUKE} UniqueMapEntry<K,V(==)>(m : map<K,V>, k : K) 
+opaque predicate UniqueMapEntry<K,V(==)>(m : map<K,V>, k : K) 
  requires k in m
 {
   //true
   forall i <- m.Keys :: m[i] == m[k] ==> i == k  //dodgy UniqueMapEntry //AreWeNotMen
 }
 
-lemma {:onlyNUKE} UME1<K,V>(m : map<K,V>, k : K)
+lemma UME1<K,V>(m : map<K,V>, k : K)
  requires k in m
  requires UniqueMapEntry2(m,k)
  ensures  UniqueMapEntry(m,k)
@@ -532,7 +532,7 @@ lemma {:onlyNUKE} UME1<K,V>(m : map<K,V>, k : K)
    assert forall i <- mmk.Keys :: i != k && m[i] != m[k];
  }
 
-lemma {:onlyNUKE} UME2<K,V>(m : map<K,V>, k : K) 
+lemma  UME2<K,V>(m : map<K,V>, k : K) 
  requires k in m
  requires UniqueMapEntry(m,k)
  ensures  UniqueMapEntry2(m,k)

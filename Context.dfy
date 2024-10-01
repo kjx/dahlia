@@ -44,7 +44,7 @@ lemma COKgetsDeclaredFields(a : Object, context : set<Object>)
 }
 
 
-lemma {:onlyNUKE} COKWiderContext2(a : Object, less : set<Object>, more : set<Object>)
+lemma COKWiderContext2(a : Object, less : set<Object>, more : set<Object>)
 //given COK(a,less) get COK(a, more)
   requires a in less
   requires COK(a,less)
@@ -55,7 +55,7 @@ lemma {:onlyNUKE} COKWiderContext2(a : Object, less : set<Object>, more : set<Ob
 }
 
 
-lemma {:onlyNUKE} COKWiderContext(a : Object, context : set<Object>, extra : set<Object>) 
+lemma COKWiderContext(a : Object, context : set<Object>, extra : set<Object>) 
   requires a in context
   requires COK(a,context)
   ensures COK(a,context + extra)
@@ -63,7 +63,7 @@ lemma {:onlyNUKE} COKWiderContext(a : Object, context : set<Object>, extra : set
   reveal COK();
 }
 
-lemma {:onlyNUKE} CallOKWiderContext(aa: set<Object>, context : set<Object>, extra : set<Object>) 
+lemma CallOKWiderContext(aa: set<Object>, context : set<Object>, extra : set<Object>) 
   requires aa <= context
   requires CallOK(aa,context)
   ensures CallOK(aa,context + extra)
@@ -72,7 +72,7 @@ lemma {:onlyNUKE} CallOKWiderContext(aa: set<Object>, context : set<Object>, ext
   forall a <- aa { COKWiderContext(a,context,extra); }
 }
 
-lemma {:onlyNUKE} CallOKWiderContext2(aa: set<Object>, less : set<Object>, more : set<Object>) 
+lemma CallOKWiderContext2(aa: set<Object>, less : set<Object>, more : set<Object>) 
   requires aa <= less <= more
   requires CallOK(aa,less)
   ensures CallOK(aa,more)
@@ -83,7 +83,7 @@ lemma {:onlyNUKE} CallOKWiderContext2(aa: set<Object>, less : set<Object>, more 
 
 
 
-lemma {:onlyNUKE} CallOKWiderFocus(aa: set<Object>, bb : set<Object>, context : set<Object>) 
+lemma CallOKWiderFocus(aa: set<Object>, bb : set<Object>, context : set<Object>) 
   requires aa <= context
   requires bb <= context
   requires CallOK(aa,context)
@@ -97,7 +97,7 @@ lemma {:onlyNUKE} CallOKWiderFocus(aa: set<Object>, bb : set<Object>, context : 
 }
 
 
-lemma {:onlyNUKE} CallOKWiderFocus2(less: set<Object>, more : set<Object>, context : set<Object>) 
+lemma CallOKWiderFocus2(less: set<Object>, more : set<Object>, context : set<Object>) 
   requires less <= more <= context
   requires CallOK(less,context)
   requires CallOK((more - less), context)
@@ -141,7 +141,7 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
 
  }  
 
-method {:onlyNUKE} COKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
+method COKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
   requires COK(a,context)
   requires CallOK(context)
   requires n in a.fields
@@ -173,7 +173,7 @@ method {:onlyNUKE} COKat(a : Object, n : string, context : set<Object>) returns 
   assert  COK(r,context);
 }
 
-opaque predicate {:onlyNUKE} CallOK(aa :set<Object>, context : set<Object> := aa)
+opaque predicate CallOK(aa :set<Object>, context : set<Object> := aa)
   reads aa`fields, aa`fieldModes
 //  reads context`fields, context`fieldModes
   // reads (set o1 <- context, o2 <- o1.ValidReadSet() :: o2)`fields
@@ -184,7 +184,7 @@ opaque predicate {:onlyNUKE} CallOK(aa :set<Object>, context : set<Object> := aa
 
 
 
-lemma {:onlyNUKE} CallOKtoSubset(aa :set<Object>, context : set<Object> := aa)
+lemma CallOKtoSubset(aa :set<Object>, context : set<Object> := aa)
   requires CallOK(aa, context)
   ensures  aa <= context
   {
