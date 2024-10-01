@@ -117,7 +117,7 @@ method printobjfields(o : Object)
   }
 }
 
-method {:onlyClone} printmapping(m: Mapping)
+method printmapping(m: vmap<Object,Object>)
   modifies {}
   ensures unchanged(m.Keys,m.Values)
 {
@@ -138,7 +138,7 @@ method {:onlyClone} printmapping(m: Mapping)
 
 
 
-method printmappingIsIsomorphic(m: Mapping, o : Object, os : set<Object>)
+method printmappingIsIsomorphic(m: vmap<Object,Object>, o : Object, os : set<Object>)
 {
   var t := m;
   while t != map[]
@@ -165,7 +165,7 @@ method printmappingIsIsomorphic(m: Mapping, o : Object, os : set<Object>)
 
 
 
-// method printIsomorphicOWNED(a : Object, o : Object, m : Mapping, os : set<Object>)
+// method printIsomorphicOWNED(a : Object, o : Object, m : vmap<Object,Object>, os : set<Object>)
 //   decreases os
 
 //   {
