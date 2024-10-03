@@ -530,6 +530,8 @@ opaque predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object>
     //&& flattenAMFOs(a.AMFO + {a}) <= (a.AMFO + {a}) //or even this?
 
 predicate OrigBigfoot(os : set<Object>, context : set<Object> := os) 
+//os and the AMFO of every o in os are bound by context
+//alternative formulation of AllTheseOwnerAreFlatOK 
 {
   && (os <= context)
   && (forall o <- os :: o.AMFO <=  context)
