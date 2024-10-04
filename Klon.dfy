@@ -1576,9 +1576,6 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
   opaque predicate calid() : (r : bool)
     reads oHeap`fields, oHeap`fieldModes
     reads ns`fields, ns`fieldModes
-
-    ensures r ==> (m.Keys == m.Keys)
-    ensures r ==> (m.Values == m.Values)
   {
     reveal calidObjects();
 
@@ -1811,6 +1808,7 @@ method Clone_Via_Map(a : Object, m' : Klon)
   m := m';
 
   assert m.calid();
+  assert MCALID: m.calid();
 
   assert  m.o     == m'.o;
   assert  m.oHeap == m'.oHeap;
@@ -1958,17 +1956,31 @@ method Clone_Via_Map(a : Object, m' : Klon)
   assert a !in m.m.Keys;
   assert a in m.oHeap;
   assert m.oHeap !! m.ns by {
+    reveal m.calid();
+    assert m.calid();
     reveal m.calidObjects();
     assert m.calidObjects();
     assert m.oHeap !! m.ns;
   }
   assert outside(a,m.o);
-  a.CallMyOwnersWillWitherAway(a, m.oHeap);
+  a.CallMyOwnersWillWitherAway(a, m.oHeap) by {
+    reveal m.calid();
+    assert m.calid();
+    reveal m.calidOK();
+    assert m.calidOK();
+    assert CallOK(m.oHeap);
+    a.CallMyOwnersWillWitherAway(a, m.oHeap);
+  }
 
-  reveal m.calidObjects();
-  assert m.calidObjects();
-  assert m.m.Keys <= m.oHeap;
-  OutsidersArentMapValues(a,m);
+
+  OutsidersArentMapValues(a,m) by {
+    reveal m.calid();
+    assert m.calid();
+    reveal m.calidObjects();
+    assert m.calidObjects();
+    assert m.m.Keys <= m.oHeap;
+    OutsidersArentMapValues(a,m);
+  }
 
   reveal m.calidMap();
   assert m.calidMap();
