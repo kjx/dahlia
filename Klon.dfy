@@ -745,6 +745,8 @@ lemma roundTrip1(k : Object, v : Object, m : Klon)
     } //END putInside
   
 opaque predicate FUKKA(d : Klon)
+  reads d.m.Keys`fieldModes
+  reads d.m.Values`fieldModes
 {
   forall x <- d.m.Keys :: x.fieldModes == d.m[x].fieldModes
 }
@@ -1762,39 +1764,37 @@ method Clone_Via_Map(a : Object, m' : Klon)
   requires COK(a, m'.oHeap)
 
  //FROMHERE 
-  //ensures  m.calid()
+  ensures  m.calid()
 
-  // ensures  a in m.m.Keys
-  // ensures  a in m.m.Keys
-  // ensures  b in m.m.Values
-  // ensures  b in m.m.Values
-  // ensures  a in m.m.Keys && m.at(a) == b
-  // ensures  COK(b,m.oHeap+m.ns)
+  ensures  a in m.m.Keys
+  ensures  m.m[a] == b
+  ensures  b in m.m.Values
+  ensures  COK(b,m.oHeap+m.ns)
 
-  // //should I package this up - as aw twostate or a onestate?
-  // ensures  mapLEQ(m'.m,m.m)
-  // ensures  m.m.Keys >= m'.m.Keys + {a}
-  // ensures  m.m.Values >= m'.m.Values + {b}
-  // ensures  m.from(m')
+  //should I package this up - as aw twostate or a onestate?
+  ensures  mapLEQ(m'.m,m.m)
+  ensures  m.m.Keys >= m'.m.Keys + {a}
+  ensures  m.m.Values >= m'.m.Values + {b}
+  ensures  m.from(m')
 
-  // ensures  m.o == m'.o
-  // ensures  m.oHeap == m'.oHeap
-  // ensures  m.ns >= m'.ns
-  // //  ensures  if (inside(a, m'.o)) then (b in m.ns) else (b == a)
-  // //  ensures  reveal m.calid(); reveal m.calidMap(); assert m.calid(); assert
-  // ensures  klonVMapOK(m.m)
-  // ensures  a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...
-  // // should we say something about b.AMFO?  b.AMFO <= m.m.Values? por again m.hasV(b)?
-  // // m.key(a)?  m.val(a)???
-  // ensures  m.from(m')
-  //ensures b.AMFO == set x <- a.AMFO :: m.m[x]
+  ensures  m.o == m'.o
+  ensures  m.oHeap == m'.oHeap
+  ensures  m.ns >= m'.ns
+  //  ensures  if (inside(a, m'.o)) then (b in m.ns) else (b == a)
+  //  ensures  reveal m.calid(); reveal m.calidMap(); assert m.calid(); assert
+  ensures  klonVMapOK(m.m)
+  ensures  a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...
+  // should we say something about b.AMFO?  b.AMFO <= m.m.Values? por again m.hasV(b)?
+  // m.key(a)?  m.val(a)???
+  ensures  m.from(m')
+  ensures b.AMFO == set x <- a.AMFO :: m.m[x]
 
-  // // ensures  a !in m'.m.Keys ==> b !in m'.ns  //KJX sure about this?
-  // ensures  unchanged(a)
-  // ensures  unchanged(m'.oHeap)
-  // ensures  unchanged(m'.ns)
+  // ensures  a !in m'.m.Keys ==> b !in m'.ns  //KJX sure about this?
+  ensures  unchanged(a)
+  ensures  unchanged(m'.oHeap)
+  ensures  unchanged(m'.ns)
 
-  // ensures b.fieldModes == a.fieldModes
+  ensures b.fieldModes == a.fieldModes
 
 //TOHERE
 
@@ -1963,7 +1963,9 @@ method Clone_Via_Map(a : Object, m' : Klon)
     assert m.oHeap !! m.ns;
   }
   assert outside(a,m.o);
-  a.CallMyOwnersWillWitherAway(a, m.oHeap) by {
+
+  
+  {
     reveal m.calid();
     assert m.calid();
     reveal m.calidOK();
@@ -1973,7 +1975,7 @@ method Clone_Via_Map(a : Object, m' : Klon)
   }
 
 
-  OutsidersArentMapValues(a,m) by {
+  {
     reveal m.calid();
     assert m.calid();
     reveal m.calidObjects();
@@ -1991,6 +1993,23 @@ method Clone_Via_Map(a : Object, m' : Klon)
 
   assert a !in m.m.Values;
   print "about to putOutside\n";
+
+
+assert
+    && canVMapKV(m.m, a, a)
+  && (a in m.oHeap)  //KJX do I want this here?
+  && (a.AMFO <= m.m.Keys+{a}) 
+  && (mapThruVMapKV(a.AMFO, m.m, a, a) == a.AMFO)
+
+  && (a.owner <= a.AMFO)
+  && (a.owner <= m.m.Keys+{a})  
+  && (mapThruVMapKV(a.owner, m.m, a, a) == a.owner)
+
+  && (a.fieldModes == a.fieldModes)
+  ;
+
+assert klonCanKV(m, a, a);
+
   m := m.putOutside(a);   ///HOPEY?  CHANGEY?
     print "crashy?  washy?\n";
   assert b.fieldModes == a.fieldModes;
@@ -3262,95 +3281,95 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
 
 
 
-
-method Clone_KaTHUMP(a : Object, m' : Klon)
-  //spike method to test AMFO being "owner-closed"
-  //means the clones are "owner-cooned"
-  // that all the owners (and their AMFOS) are in the current objects AMFOS
-  //  i.e,  forall oo <- MYOWNERS :: oo in oo.AMFO
-  //  forall oo <- MYOWNERS - this? :: oo.AMFO <= this.AMFO..
-  // so if .e.g a[x] == c,   then we want m[a[x]] == m[c]...
-  // (please James, write a comment about what yhis method is doing]
-  returns (b : Object, m : Klon)
-  decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 15 //Clone_Inside_Heap
-
-  //this case
-  requires a !in m'.m.Keys
-  requires inside(a,m'.o)
-
-  //extraOK  requires a.extra == {} //extra not yet clone
-
-
-  //all Clone_
-  requires m'.calid()
-  requires a in m'.oHeap
-  requires COK(a, m'.oHeap)
-
-  //from clone extra owners
-  ensures  m.calid() //needed to be able to call some of the below  en
-  //ensures  a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...  //kathump
-  ensures  m.from(m')
-
-  // ensures  a !in m'.m.Keys ==> b !in m'.ns
-  // ensures  b  in m'.ns ==> a  in m'.m.Keys
-
-{ //kathump
-
-  m := Clone_All_Owners(a, m');
-  b := a;  //OOPS!  //KJX WHAT THE FUICKY FUCK FUCK
-
-  assert m.calid();
-  reveal m.calid();
-  assert m.calidObjects();
-  reveal m.calidObjects();
-  assert m.calidOK();
-  reveal m.calidOK();
-  assert m.calidMap();
-  reveal m.calidMap();
-  assert m.calidSheep();
-  reveal m.calidSheep();
-  COKfromCallOK(a, m.oHeap);
-  assert COK(a, m.oHeap);
-  reveal COK();
-  assert a.Ready();
-  assert a.owner <= a.AMFO;
-  assert COK(m.o, m.oHeap);
-  assert CallOK(m.oHeap);
-  COKAMFO(a, m.oHeap);
-  assert CallOK(a.AMFO, m.oHeap);
-  assert a.owner <= a.AMFO;
-  CallOKNarrowFocus(a.owner, m.oHeap);
-  assert CallOK(a.owner, m.oHeap);
-
-  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //
-
-  assert AllTheseOwnersAreFlatOK(a.AMFO - {a});
-  //  reveal AllTheseOwnersAreFlatOK();
-  assert OrigBigfoot(a.AMFO - {a});
-
-  assert flattenAMFOs(a.owner) == a.allExternalOwners();
-  assert OrigBigfoot(a.allExternalOwners());
-  assert AllTheseOwnersAreFlatOK(a.allExternalOwners()) by
-  {
-    reveal AllTheseOwnersAreFlatOK();
-    assert AllTheseOwnersAreFlatOK(a.allExternalOwners());
-  }
-  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //
-
-
-  // assert a.allExternalOwners() <= m.m.Keys;
-
-  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //
-
-
-  assert  m.from(m');
-
-
-  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //
-
-  // assert  a !in m'.m.Keys ==> b !in m'.ns;
-  // assert  b  in m'.ns ==> a  in m'.m.Keys;
-}
+// 
+// method Clone_KaTHUMP(a : Object, m' : Klon)
+//   //spike method to test AMFO being "owner-closed"
+//   //means the clones are "owner-cooned"
+//   // that all the owners (and their AMFOS) are in the current objects AMFOS
+//   //  i.e,  forall oo <- MYOWNERS :: oo in oo.AMFO
+//   //  forall oo <- MYOWNERS - this? :: oo.AMFO <= this.AMFO..
+//   // so if .e.g a[x] == c,   then we want m[a[x]] == m[c]...
+//   // (please James, write a comment about what yhis method is doing]
+//   returns (b : Object, m : Klon)
+//   decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 15 //Clone_Inside_Heap
+// 
+//   //this case
+//   requires a !in m'.m.Keys
+//   requires inside(a,m'.o)
+// 
+//   //extraOK  requires a.extra == {} //extra not yet clone
+// 
+// 
+//   //all Clone_
+//   requires m'.calid()
+//   requires a in m'.oHeap
+//   requires COK(a, m'.oHeap)
+// 
+//   //from clone extra owners
+//   ensures  m.calid() //needed to be able to call some of the below  en
+//   //ensures  a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...  //kathump
+//   ensures  m.from(m')
+// 
+//   // ensures  a !in m'.m.Keys ==> b !in m'.ns
+//   // ensures  b  in m'.ns ==> a  in m'.m.Keys
+// 
+// { //kathump
+// 
+//   m := Clone_All_Owners(a, m');
+//   b := a;  //OOPS!  //KJX WHAT THE FUICKY FUCK FUCK
+// 
+//   assert m.calid();
+//   reveal m.calid();
+//   assert m.calidObjects();
+//   reveal m.calidObjects();
+//   assert m.calidOK();
+//   reveal m.calidOK();
+//   assert m.calidMap();
+//   reveal m.calidMap();
+//   assert m.calidSheep();
+//   reveal m.calidSheep();
+//   COKfromCallOK(a, m.oHeap);
+//   assert COK(a, m.oHeap);
+//   reveal COK();
+//   assert a.Ready();
+//   assert a.owner <= a.AMFO;
+//   assert COK(m.o, m.oHeap);
+//   assert CallOK(m.oHeap);
+//   COKAMFO(a, m.oHeap);
+//   assert CallOK(a.AMFO, m.oHeap);
+//   assert a.owner <= a.AMFO;
+//   CallOKNarrowFocus(a.owner, m.oHeap);
+//   assert CallOK(a.owner, m.oHeap);
+// 
+//   //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //
+// 
+//   assert AllTheseOwnersAreFlatOK(a.AMFO - {a});
+//   //  reveal AllTheseOwnersAreFlatOK();
+//   assert OrigBigfoot(a.AMFO - {a});
+// 
+//   assert flattenAMFOs(a.owner) == a.allExternalOwners();
+//   assert OrigBigfoot(a.allExternalOwners());
+//   assert AllTheseOwnersAreFlatOK(a.allExternalOwners()) by
+//   {
+//     reveal AllTheseOwnersAreFlatOK();
+//     assert AllTheseOwnersAreFlatOK(a.allExternalOwners());
+//   }
+//   //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //
+// 
+// 
+//   // assert a.allExternalOwners() <= m.m.Keys;
+// 
+//   //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //
+// 
+// 
+//   assert  m.from(m');
+// 
+// 
+//   //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //
+// 
+//   // assert  a !in m'.m.Keys ==> b !in m'.ns;
+//   // assert  b  in m'.ns ==> a  in m'.m.Keys;
+// }
 
 
 
@@ -4078,18 +4097,19 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
 
   requires a in m'.oHeap
   requires a in m'.m.Keys
+  requires a.AMFO <= m'.m.Keys //KJX should be part of some invariant
 
-  requires b in m'.m.Values
   requires b in m'.ns
+  requires b in m'.m.Values
+  requires b.AMFO <= m'.m.Keys //KJX should be part of some invariant - also 
+  
+
   requires (a in m'.m.Keys) && m'.m[a] == b
   requires m'.o    in m'.oHeap
   requires m'.m.Keys   <= m'.oHeap
 
-  requires b.fieldModes == a.fieldModes
 
-  // requires b.fieldModes[n] == Evil //evilKJX this is actually evil
-  //well not *that* evil as I still must satisfy refOK
-
+    //not sure why I'd need this..
   requires forall n <- b.fields :: (n in b.fieldModes) &&
                                    AssignmentCompatible(b, b.fieldModes[n], b.fields[n])
 
@@ -4129,7 +4149,7 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
 
 
   ensures klonVMapOK(m.m)
-  ensures a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...
+  ensures a.AMFO <= m.m.Keys // shoulnd't that be requires
 
   ensures old(m'.calid())
   ensures m.from(m')
@@ -4157,6 +4177,15 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   assert unchanged(m'.ns);
 
   m := m';
+
+assert m.from(m');
+//SPLURGE
+assert (m.calid()) by
+{
+  reveal m.calid(), m.calidObjects(), m.calidOK(), m.calidMap(), m.calidSheep();
+  assert m.calidObjects() && m.calidOK() && m.calidMap() && m.calidSheep() && m.calid();
+}
+//END SPLURGE
 
   var v_cfm := ((m.oHeap - m.m.Keys +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5);//Clone_Field_Map
 
@@ -4189,7 +4218,6 @@ print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
   var ofv := COKat(a,n,m.oHeap);
 
   label B3:
-  assert m.calid();
   assert m'.calid() by { reveal MPRIME; }
 
 
@@ -4199,18 +4227,31 @@ print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
   var rfv, rm := Clone_Via_Map(ofv, m);
 
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+  assert rm.from(m);
+  assert klonVMapOK(rm.m);
+  
+  m := rm;
 
+  //SPLURGE
+  assert (m.calid()) by
+  {
+    reveal m.calid(), m.calidObjects(), m.calidOK(), m.calidMap(), m.calidSheep();
+    assert m.calidObjects() && m.calidOK() && m.calidMap() && m.calidSheep() && m.calid();
+  }
+  //END SPLURGE
 
-  //assert rfv !in m'.ns;
   assert unchanged(m'.ns);
 
-  assert m'.calid() by { reveal MPRIME; }
+//   assert m'.calid() by { reveal MPRIME; }
+// 
+//   assert unchanged@B3(m'.oHeap);
 
-  assert unchanged@B3(m.oHeap);
+  assert rfv in  m.oHeap+m.m.Values;
+  assert rfv in  m.oHeap+m.ns;
+  assert COK(rfv,m.oHeap+m.ns);
 
-  assert rfv in  rm.oHeap+rm.m.Values;
-  assert rfv in  rm.oHeap+rm.ns;
-  assert COK(rfv,rm.oHeap+rm.ns);
+
+  mapThruKlonPreservesInsideOwner(a, ofv, b, rfv, m);
   assert refOK(b, rfv);
   assert AssignmentCompatible(b, b.fieldModes[n], rfv)
   by {
@@ -4242,19 +4283,31 @@ print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
         assert AssignmentCompatible(a, a.fieldModes[n], a.fields[n]);
         assert ofv == a.fields[n];
      //   assert ofv.owner == a; //KJX what should this be>?
-        assert b == rm.m[a];
-        assert rfv == rm.m[ofv];
+        assert b == m.m[a];
+        assert rfv == m.m[ofv];
      //   assert b == rfv.owner;
-        // assert b == rm.m[a.fields[n].owner];
+        // assert b == m.m[a.fields[n].owner];
         // assert b == rfv.owner;
+        mapThruKlonPreservesInside(ofv,a, rfv, b, m);
         assert AssignmentCompatible(b, b.fieldModes[n], rfv);
 
       case Peer =>
         assert AssignmentCompatible(a, a.fieldModes[n], ofv);
         assert a.owner == ofv.owner;
         // if a.region.Heap? {
-          assert (mapThruKlon(a.owner, rm) == b.owner);
-          assert mapThruKlon(ofv.owner, rm) == rfv.owner;
+
+
+          assert COK(a, m.oHeap);
+          assert COK(a, m.oHeap);
+          RVfromCOK(a, m.oHeap);
+          assert a.OwnersValid();
+          assert a.owner <= a.AMFO <= m.m.Keys;
+
+          assert klonVMapOK(m.m);
+          assert m.m[a] == b;
+          assert (mapThruKlon(a.owner, m) == b.owner);
+          assert m.m[ofv] == rfv;
+          assert mapThruKlon(ofv.owner, m) == rfv.owner;
           assert rfv.owner == b.owner;
           assert b.owner == rfv.owner;
         // } else {
@@ -4276,29 +4329,33 @@ print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
 
 
 
-  assert rm.calid();
-  assert m.calid();
-  m := rm;
-  assert rm.calid();
   assert m.calid();
 
-  bNotInoHeap(b,m);
+  assert b in m.ns;
 
+assert (b !in m.oHeap) by {
+
+  reveal m.calid(), m.calidObjects(), m.calidOK(), m.calidMap(), m.calidSheep();
+  assert m.calidObjects() && m.calidOK() && m.calidMap() && m.calidSheep() && m.calid();
+
+bNotInoHeap(b,m);
+}
+  
   label B4:
 
   assert m.calidOK() by { reveal m.calid(); }
   assert m'.calid() by { reveal MPRIME; }
+  assert m.calid() by {  reveal m.calid(), m.calidObjects(), m.calidOK(), m.calidMap(), m.calidSheep(); }
 
 
   assert COK(b, rm.oHeap+rm.ns) by
   {
     assert b in m'.ns;
     assert b in m.ns;
-    assert b in rm.ns;
     assert COK(b, m'.oHeap+m'.ns);
-    assert m'.ns <= rm.ns <= m.ns;
-    COKWiderContext2(b,m'.oHeap+m'.ns,rm.oHeap+rm.ns);
-    assert COK(b, rm.oHeap+rm.ns);
+    assert m'.ns <= m.ns;
+    COKWiderContext2(b,m'.oHeap+m'.ns,m.oHeap+m.ns);
+    assert COK(b, m.oHeap+m.ns);
   }
 
 
@@ -4334,6 +4391,8 @@ print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
   if (b != rfv) {
 
     assert rm == m;
+//    assert rm.from(m);  //HOW ODD
+
 
     assert COK(rfv,m.oHeap+m.ns);
     assert COK(b,  m.oHeap+m.ns) by {
@@ -4430,8 +4489,21 @@ print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
   }
 
 
+
+
   assert unchanged(m'.ns - {b});
 
+// IHasCalidObjects(m);
+// 
+// assert klonVMapOK(m.m);
+// 
+// IHasCalidMap(m);
+
+
+  // requires AllMapEntriesAreUnique(r.m)
+  // requires klonVMapOK(r.m)
+  // requires (forall x <- r.m.Keys :: (not(inside(x,r.o)) ==> (r.m[x] == x)))
+  // requires (forall x <- r.m.Keys, oo <- x.AMFO :: r.m[oo] in r.m[x].AMFO)
 
   assert m.calid() by
   {
@@ -4443,12 +4515,24 @@ print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
 
     assert m.calidObjects();
     assert m.calidOK();
-    assert m.calidMap();
+
+
+    assert AllMapEntriesAreUnique(m.m);
+    assert klonVMapOK(m.m);
+    assert (forall x <- m.m.Keys :: (not(inside(x,m.o)) ==> (m.m[x] == x)));
+    assert (forall x <- m.m.Keys, oo <- x.AMFO :: m.m[oo] in m.m[x].AMFO);
+    
+    assert m.calidMap();/////////////////////////
 
     assert m.m.Keys == m.m.Keys;
     reveal m.AreWeNotMen();
     assert forall x <- m.m.Keys :: m.AreWeNotMen(x, m);
-    assert m.calidSheep();
+
+    assert (forall x <- m.m.Keys :: m.AreWeNotMen(x, m));
+    assert (forall x <- m.m.Keys :: x.fieldModes == m.m[x].fieldModes);
+    assert AllMapEntriesAreUnique(m.m);
+
+    assert m.calidSheep();/////////////////////////
 
     assert m.calid();
 
@@ -4467,6 +4551,9 @@ print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
   //     }
 
   assert old(m'.calid());
+
+  MapOKFromCalid(m);
+  assert klonVMapOK(m.m);
 
 } //end Clone: /_Field_Map
 
@@ -4550,6 +4637,11 @@ lemma KlonVMapOKfromCalid(m : Klon)
 function  mapThruKlonKV(os : set<Object>, m : Klon, k : Object, v : Object) : (r : set<Object>)
   reads m.oHeap`fields, m.oHeap`fieldModes
   reads m.ns`fields, m.ns`fieldModes
+  reads m.m.Values`fieldModes
+  reads m.m.Keys`fieldModes
+  reads k`fieldModes
+  reads v`fieldModes
+
   requires m.calid()
   requires os <= m.m.Keys + {k}
   requires klonCanKV(m, k, v)
@@ -4622,7 +4714,7 @@ lemma mapThruKlonPreservesSets(less: set<Object>, more : set<Object>, m : Klon)
   requires more <= m.m.Keys
   requires more <= m.m.Keys
   requires less == more
-  ensures  mapThruKlon(less,m) <= mapThruKlon(more,m)
+  ensures  mapThruKlon(less,m) == mapThruKlon(more,m)
 {
   reveal m.calid(), m.calidObjects(), m.calidOK(), m.calidMap(), m.calidSheep();
   BothSidesNow(m.m);
@@ -4707,6 +4799,73 @@ lemma mapThruKlonPreservesAMFO(less: set<Object>, other : set<Object>, m : Klon)
 
 
 
+lemma mapThruKlonPreservesInside(part: Object, whole : Object,
+      m'part: Object, m'whole : Object, m : Klon)
+  requires m.calid()
+  requires inside(part,whole)
+  requires {part,whole} <= m.m.Keys
+  requires mapThruKlon({part},m) == {m'part}
+  requires mapThruKlon({whole},m) == {m'whole}
+  ensures  inside(m'part,m'whole)
+  {
+  reveal m.calid();
+  assert m.calid();
+  reveal m.calidOK();
+  assert m.calidOK();
+  reveal m.calidObjects();
+  assert m.calidObjects();
+  reveal m.calidMap();
+  assert m.calidMap();
+  reveal m.calidSheep();
+  assert m.calidSheep();
+  assert klonVMapOK(m.m);
+
+
+  assert inside(part,whole);
+  assert whole.AMFO <= part.AMFO;
+  mapThruKlonPreservesSubsets(whole.AMFO, part.AMFO, m);
+  assert mapThruKlon(whole.AMFO,m) <= mapThruKlon(part.AMFO,m);
+  mapThruKlonPreservesAMFO({part},  {m'part},  m);
+  mapThruKlonPreservesAMFO({whole}, {m'whole}, m);
+  assert m'whole.AMFO <= m'part.AMFO;
+  assert inside(m'part,m'whole);
+  }
+
+lemma mapThruKlonPreservesInsideOwner(part: Object, whole : Object,
+      m'part: Object, m'whole : Object, m : Klon)
+  requires m.calid()
+  requires insideOwner(part,whole)
+  requires {part,whole} <= m.m.Keys
+  requires mapThruKlon({part},m) == {m'part}
+  requires mapThruKlon({whole},m) == {m'whole}
+  ensures  insideOwner(m'part,m'whole)
+  {
+  reveal m.calid();
+  assert m.calid();
+  reveal m.calidOK();
+  assert m.calidOK();
+  reveal m.calidObjects();
+  assert m.calidObjects();
+  reveal m.calidMap();
+  assert m.calidMap();
+  reveal m.calidSheep();
+  assert m.calidSheep();
+  assert klonVMapOK(m.m);
+
+
+  assert insideOwner(part,whole);
+  assert whole.allExternalOwners() <= part.AMFO;
+  mapThruKlonPreservesSubsets(whole.allExternalOwners(), part.AMFO, m);
+  assert mapThruKlon(whole.allExternalOwners(), m) <= mapThruKlon(part.AMFO,m);
+  mapThruKlonPreservesAMFO({part},  {m'part},  m);
+  mapThruKlonPreservesAMFO({whole}, {m'whole}, m);
+  assert m'whole.allExternalOwners() <= m'part.AMFO;
+  assert insideOwner(m'part,m'whole);
+  }
+
+
+
+
 lemma mapThruKlonKVExtendsAMFO(m : Klon, k : Object, v : Object, n : Klon) 
    requires m.calid()
    requires klonVMapOK(m.m) // should follow from m.calid() but...
@@ -4773,7 +4932,7 @@ lemma IHasCalidMap(r : Klon)
   {
         reveal r.calidObjects(); assert r.calidObjects();
         reveal r.calidOK(); assert r.calidOK();
-        assert
+        assert                                                                                                                                                                                                                                       
           && AllMapEntriesAreUnique(r.m)
           && klonVMapOK(r.m) // potentiall should expand this out?
           && (forall x <- r.m.Keys :: (not(inside(x,r.o)) ==> (r.m[x] == x)))
@@ -4817,7 +4976,8 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   //  ensures  a.AMFO <= m.m.Keys  //should beecome AMFO? - oh yep
 
 
-  ensures  m.from(m')
+  ensures m.from(m')
+  ensures a.owner <= m.m.Keys
 
   modifies {}
   //TODO  ensures a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...
@@ -4874,7 +5034,7 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   assert mapLEQ(m'.m,xm.m);
   assert xm.from(m');
 
-  var MX := a.owner;
+  var MX := a.owner - xm.m.Keys;
 
 
   while ((MX != {}) && (a !in xm.m.Keys))
@@ -5021,6 +5181,8 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
     xm := rm;
     assert xm.m.Keys >= m'.m.Keys;
     assert xm.m.Keys > oldmks;
+    
+    assert MX <= (a.owner - xm.m.Keys);
 
     assert xm.from(m');
 
