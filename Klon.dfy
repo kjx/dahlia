@@ -4989,7 +4989,7 @@ lemma IHasCalidSheep(r : Klon)
 
 
 
-method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
+method {:only} Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   //adds all thers owners of a into the map
   decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 12
 
@@ -5004,7 +5004,7 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
 
   ensures m.from(m')
   ensures a.owner <= m.m.Keys
-
+  ensures a.allExternalOwners() <= m.m.Keys
   modifies {}
   //TODO  ensures a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...
 {
@@ -5191,7 +5191,8 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
       assert m.m.Keys == m.m.Keys by { reveal m.calidObjects(); assert m.calidObjects(); }
       assert a.AMFO <= m.m.Keys;
       assert a.owner <= m.m.Keys;
-
+      assert a.allExternalOwners() <= m.m.Keys; 
+ 
       assert (b.fieldModes == a.fieldModes);
 
       return;
@@ -5216,6 +5217,10 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   } // end loop MX
 
   m := xm;
+
+  assert a.owner <= m.m.Keys;
+  AMFOsFromOwnersFromCalid(a,m);
+  assert a.allExternalOwners() <= m.m.Keys;
 }
 
 
