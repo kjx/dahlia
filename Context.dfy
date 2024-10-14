@@ -21,6 +21,22 @@ lemma COKAMFO(a : Object, context : set<Object>)
 } 
 
 
+lemma {:only} COKowner(a : Object, context : set<Object>) 
+  decreases a.AMFO
+  requires COK(a, context)
+  requires CallOK(context)
+
+  ensures  CallOK(a.owner, context)
+  ensures  AllTheseOwnersAreFlatOK(a.AMFO - {a})  
+  ensures  AllTheseOwnersAreFlatOK(a.allExternalOwners())    
+  ensures  a.OwnersValid()
+{ 
+  reveal COK();
+  reveal CallOK();
+} 
+
+
+
 
 lemma CallOKAMFO(aa : Owner, context : set<Object>) 
   requires CallOK(aa, context)
@@ -138,7 +154,9 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
     && (a.AllOwnersAreWithinThisHeap(context))
 
     && AllTheseOwnersAreFlatOK(a.AMFO - {a})   //point here is we don't want a loop  in the definitoin of the COK predicate I think()
-
+//KJX redo to be a.AllExternalOwners() (or AMXO?)
+//now surfaced by COKowner :-)
+//should it be within the context?? (or owners are within this heap doe sthat!) 
  }  
 
 method COKat(a : Object, n : string, context : set<Object>) returns ( r : Object )

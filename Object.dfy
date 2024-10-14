@@ -116,28 +116,32 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
 
 
 
-  constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string) 
+  constructor {:only} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string) 
     requires forall o <- oo :: o.Ready()
     requires CallOK(oo, context)
     requires CallOK(context) //KJX is this redundant Or wouidl it be redundat the other way around???
-    requires AllTheseOwnersAreFlatOK(oo)  //hmm?
-
+    // requires AllTheseOwnersAreFlatOK(oo)  //hmm? what would this mean?
     //requires CallOK({oo}+oo.AMFO, context)
+
+    //KJX shouldn't there be some topological restriction on where or when
+    //you can create new objects/contexts / regions?
+    //what sgoiuld they be?
 
     requires CallOK(flattenAMFOs(oo), context) //KJX is this right?
 
     ensures owner == oo 
     ensures fieldModes == ks
     ensures fields == map[] 
-    ensures AMFO == flattenAMFOs(oo + {this}) 
+    ensures AMFO == flattenAMFOs(oo) + {this}
     ensures this  in AMFO
+    ensures this !in owner
 
     ensures (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO)
-    ensures (forall o <- AMFO :: inside(this, o))
-
+    ensures (forall o <-  AMFO :: inside(this, o))
 
     ensures OwnersValid()
     ensures Ready()
+
                                                                                    
     ensures COK(this, context+{this})                  
     ensures nick == name
@@ -238,7 +242,7 @@ assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);
 
   assert COK(this, context+{this}) by { reveal COKOK; }
 
-//print "Object.cake() just constructed ", fmtobj(this), "\n";
+//print "Object.make() just constructed ", fmtobj(this), "\n";
   }
 
 
@@ -263,7 +267,7 @@ assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);
 
 
 
-/*opaque*/ predicate  Ready() 
+/*opaque*/ predicate {:only} Ready() 
 // ready means all the owenrs are (at least) ready...
 // I had to inline the defition --- see "//Ready()inlined"
 // WHO the fuck knows WHY?
@@ -272,7 +276,9 @@ assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);
 //it's important: this has *no*  readsclausew
    decreases AMFO, 1  
 {
-  && (AMFO == flattenAMFOs(owner + {this}))
+  && (AMFO == (flattenAMFOs(owner) + {this}))
+  && (allExternalOwners() == flattenAMFOs(owner))  //KJX hmmm again 
+  && (AMFO == (allExternalOwners() + {this}))      //KJX hmmm indeed
   && (forall oo <- owner :: AMFO > oo.AMFO)
   && (forall oo <- owner :: oo.Ready())
   // && (flattenAMFOs(allExternalOwners()) <= AMFO)
@@ -287,12 +293,12 @@ function allExternalOwners() : set<Object>
  {  AMFO - {this} }
 
 ///*opaque*/ 
-predicate {:onlyValid} Valid()
+predicate Valid()
   decreases |AMFO|
 //  reads ValidReadSet()`fields,  ValidReadSet()`fieldModes
    reads this`fields, this`fieldModes
      requires Ready()
-  //ensures Valid() ==> OwnersValid()
+  //ensures Valid() ==> g()
  // reads this, this`Owner, AMFO, fields.Values, AMFO`fields, AMFO`Owner, 
  //    (set o1 <- AMFO, o2 <- o1.fields.Values :: o2) //JESUS MARY AND JOSEPH AND THE WEE DONKEY
   {
@@ -377,7 +383,8 @@ predicate OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec}
   decreases AMFO, 0
   //requires Ready()
   {  
-  && (this in AMFO)
+  && (this  in AMFO)
+  && (this !in owner)
   && (owner <= AMFO)
   && (AMFO == flattenAMFOs(owner) + {this})
   && (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
@@ -385,29 +392,30 @@ predicate OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec}
   }
 
 
-lemma {:onlyAMFO} AMFOsisAMFOs() 
+lemma AMFOsisAMFOs() 
    requires Ready()
    requires OwnersValid()
    ensures forall oo <- AMFO :: oo.AMFO <= AMFO
 {}
 
-lemma {:onlyAMFO} AMFOsisAMFOs2() 
+lemma AMFOsisAMFOs2() 
    requires Ready()
    requires OwnersValid()
    ensures forall x <- AMFO, oo <- x.AMFO :: oo.AMFO <= AMFO
 {}
 
 
-lemma  CallMyOwnersWillWitherAway(a : Object, context : set<Object>)
+lemma CallMyOwnersWillWitherAway(a : Object, context : set<Object>)
+     //if CallOK(context) && COK(a,context)
+     //then my owners & AMFOs are all OK in context too 
   requires CallOK(context)
   requires (a in context) || (COK(a, context))  //umm why the || 
-  ensures  a.AMFO <= context
-  ensures  forall oo <- a.AMFO :: COK(oo, context)
-  //should we add more stuff in here, like::
-  // ensures  forall oo <- a.AMFO :: oo.AMFO <= a.AMFO <= context
-  //KJX doesnt CallOK do this?
-  ensures CallOK(a.owner, context)
-  ensures a.owner <= context
+
+  ensures  CallOK(a.owner, context)
+  ensures  a.owner <= context  //should follow
+  ensures  a.AMFO <= context  //ditto, etc... 
+  ensures  forall oo <- a.AMFO :: COK(oo, context) //ditto - no idea if it's good to keep these or not. 
+  ensures  CallOK(a.AMFO, context)
 {
   reveal   CallOK();
   reveal   COK();
@@ -518,9 +526,14 @@ assert true;
 
 
 //compare the fucking AllOwnersAreWthinThisHeap???
+//why in here, not in Ownerhsip.dfy?
+//why opaqie all of a sudden?
+// thisi  kind of SHITTY.
+// given one arg, yes they are all flat, 
+// given TWO args, checks all owners flatten witin context!!!
 opaque predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
 // true iff all os's AMFOS are inside os
-// probalby need to do - {a} if these are for {a} or else it gets circular...?
+// probalby need to do - {a} if these are for {a} or else it gets circular...?  //INDEED
 {
 //  && (forall o <- os :: o in o.AMFO)
   && flattenAMFOs(os) <= context
@@ -566,17 +579,14 @@ lemma MaybeOrMaybeNot(o : Object, os : set<Object>)
   }
 
 /*oopaque or not or both */
- function  flattenAMFOs(os : set<Object>) : (of : set<Object>)
+function flattenAMFOs(os : set<Object>) : (of : set<Object>)
    //flattened set of os.AMFO 
    //earlier version required o in all objects AMFS, that's gone now
    //could put it back, require os to be Ready, or remove the os+ below
    //currently going with the version with fewer requirements...
-   //requires forall o <- os :: o in o.AMFO  //not needed adding in os anyway
-   ensures  forall o <- os :: o in of
-   ensures  forall o <- os, oo <- o.AMFO :: oo in of
-   ensures  os <= of
+   //requires forall o <- os :: o in o.AMFO  //not needed adding
 {
-    os +   ///not needed if we keep "requires forall o <- os :: o in o.AMFO"
+    os +   ///not technically needed if we keep "requires forall o <- os :: o in o.AMFO"
     (set o <- os, oo <- o.AMFO :: oo)
 }
 

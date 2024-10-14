@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////////////
+ //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 /// LIBRARY CODE (mostly stolen)
 //////////////////////////////////////////////////////////////////////////////
@@ -512,12 +512,13 @@ opaque predicate  UniqueMapEntry2<K,V(==)>(m : map<K,V>, k : K)
   m[k] !in  (m - {k}).Values  //dodgy UniqueMapEntry //AreWeNotMen
 }
 
-opaque predicate UniqueMapEntry<K,V(==)>(m : map<K,V>, k : K) 
- requires k in m
+opaque predicate  {:only}  UniqueMapEntry<K,V(==)>(m : map<K,V>, k : K, v : V := m[k]) 
+ requires k in m.Keys
 {
   //true
-  forall i <- m.Keys :: m[i] == m[k] ==> i == k  //dodgy UniqueMapEntry //AreWeNotMen
+  forall i <- m.Keys :: m[i] == v ==> i == k  //dodgy UniqueMapEntry //AreWeNotMen
 }
+
 
 lemma UME1<K,V>(m : map<K,V>, k : K)
  requires k in m
@@ -634,7 +635,7 @@ function mapThruVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V) : (m : se
       (set x <- ks :: m'[k:=v][x]) 
   }
 
-  lemma MapThruVMapKVVMapK<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
+  lemma MapThruVMapKVVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
     requires ks <= m'.Keys+{k}
     requires canVMapKV(m', k, v)  
     ensures  mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, VMapKV(m', k, v))
@@ -644,3 +645,32 @@ function mapThruVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V) : (m : se
          assert mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, (VMapKV(m', k, v)) );
       }
 
+
+
+lemma {:only} IfImNotTheExtraKeyTheUnderlyingMapIsFine<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
+    requires ks <= m'.Keys
+    requires k !in m'.Keys
+    requires canVMapKV(m', k, v)    
+    ensures  mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, m')
+    {}
+
+
+lemma {:only} MapThruVMapExtensionality<K,V>(k0 : set<K>, k1 : set<K>, r : set<V>, m : vmap<K,V>)
+    requires k0 <= m.Keys
+    requires k1 <= m.Keys
+  ensures  (mapThruVMap(k0,m) + mapThruVMap(k1,m)) == mapThruVMap(k0+k1, m)
+  {}
+
+
+  lemma {:only} MapThruVMapKVExtensionality<K,V>(k0 : set<K>, k1 : set<K>, v0 : set<V>, v1 : set<V>, m : vmap<K,V>,  k : K, v : V)
+    requires k0 <= m.Keys
+    requires k1 <= m.Keys
+    requires v0 <= m.Values
+    requires v1 <= m.Values
+    requires k0 !! k1
+    requires v0 !! v1
+    requires mapThruVMap(k0,m) == v0
+    requires mapThruVMap(k1,m) == v1
+
+  ensures  (mapThruVMap(k0,m) + mapThruVMap(k1,m)) == mapThruVMap(k0+k1, m) == (v0+v1)
+  {}
