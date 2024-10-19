@@ -10,6 +10,7 @@ function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
   requires klonVMapOK(c'.m)
   requires klonCanKV(c', k, v)
   ensures  klonVMapOK(c.m)
+  ensures  c.ns == c'.ns + nu(k,v)
 //  ensures  c'.calid() ==> c.calid() //presenvation of calidity
   reads c'.m.Values`fieldModes
   reads c'.m.Keys`fieldModes
@@ -31,12 +32,14 @@ reads v`fieldModes
 {
   && canVMapKV(c'.m, k, v)
   && (k in c'.oHeap)  //KJX do I want this here?
-  && (k.AMFO <= c'.m.Keys+{k}) 
-  && (mapThruVMapKV(k.AMFO, c'.m, k, v) == v.AMFO)
+//  && (v in (if (v==k) then (c'.oHeap) else (c'.ns)) //nope - happens afterwards
+  && (if (v==k) then (v in c'.oHeap) else (v !in c'.oHeap)) //nope - happens afterwards
 
   && (k.owner <= k.AMFO)
   && (k.owner <= c'.m.Keys+{k})  
   && (mapThruVMapKV(k.owner, c'.m, k, v) == v.owner)
+  && (k.AMFO <= c'.m.Keys+{k})  
+  && (mapThruVMapKV(k.AMFO, c'.m, k, v) == v.AMFO)  
 
   && (k.fieldModes == v.fieldModes)
 }
@@ -69,6 +72,188 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
 
 } 
 
+lemma klonKVVMapOK(m0 : Klon, k : Object, v : Object, m1 : Klon)
+  requires klonVMapOK(m0.m)
+  requires klonCanKV(m0, k, v)
+  requires m1 == klonKV(m0, k, v)
+  ensures klonVMapOK(m1.m)
+  {
+        reveal m0.calid(), m0.calidObjects(), m0.calidOK(), m0.calidMap(), m0.calidSheep();
+  }
+
+
+lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
+  requires m0.calid()
+  requires klonVMapOK(m0.m)  
+  requires klonCanKV(m0, k, v)
+
+  requires k in m0.oHeap
+  requires COK(k, m0.oHeap)
+  requires (v==k) ==> v in m0.oHeap
+  requires (v==k) ==> (COK(v,m0.oHeap))
+  requires (v!=k) ==> (COK(v,m0.oHeap+m0.ns+{v}))
+
+  
+  requires m1 == klonKV(m0, k, v)
+
+  requires (k==v) <==> outside(k, m1.o)
+
+  ensures klonVMapOK(m1.m)
+  ensures m1.calid()
+  {
+        reveal m0.calid(), m0.calidObjects(), m0.calidOK(), m0.calidMap(), m0.calidSheep();
+        klonKVVMapOK(m0, k, v, m1);
+
+
+  //calidObiects
+        assert m0.ns !! m0.oHeap;
+        assert (v==k) ==> v in m0.oHeap;
+        assert m1.oHeap == m0.oHeap;
+        assert m1.ns == (m0.ns + nu(k,v));
+        assert m1.ns !! m0.oHeap;
+
+        assert
+            && (m1.o in m1.oHeap)
+            && (m1.m.Keys <= m1.oHeap)
+            && (m1.ns !! m1.oHeap)
+            && (m1.m.Values <= m1.ns + m1.oHeap)
+            && (m1.ns <= m1.m.Values)
+            ;
+        assert m1.calidObjects();
+
+
+//calidOK
+        assert 
+            && (m1.o in m1.oHeap)
+            && (m1.m.Keys <= m1.oHeap)
+            && (m1.m.Values <= m1.oHeap+m1.ns)
+            && COK(m1.o, m1.oHeap)
+            && CallOK(m1.oHeap);
+   
+      CallOKfromCOK(k,m0.oHeap);
+      CallOKWiderFocus(m0.m.Keys, {k}, m0.oHeap);
+      assert CallOK(m1.m.Keys, m1.oHeap);
+
+ 
+  assert (v !in m0.ns);
+  assert (v==k) ==> (COK(v,m0.oHeap));
+  assert (v!=k) ==> (COK(v,m0.oHeap+m0.ns+{v}));
+
+      assert CallOK(m0.m.Values, m0.oHeap+m0.ns);
+
+if (v == k)  {
+   assert v in m0.oHeap;
+   assert m1 == klonKV(m0,k,v);
+   assert m1.oHeap == m0.oHeap;
+   assert m1.ns == m0.ns; 
+   assert v in m1.oHeap;   
+
+   assert CallOK(m0.ns, m0.oHeap+m0.ns); 
+   assert CallOK(m1.ns, m1.oHeap+m1.ns);   //cos ==
+
+   assert (COK(v,m1.oHeap));
+   CallOKfromCOK(v,m1.oHeap);
+   assert CallOK({v},m1.oHeap);
+   CallOKWiderContext({v},m1.oHeap,m1.ns);
+   assert CallOK({v},m1.oHeap+m1.ns);
+
+   assert CallOK(m0.m.Values, m0.oHeap+m0.ns); 
+   assert CallOK(m0.m.Values, m1.oHeap+m1.ns);   //cos ==
+   CallOKWiderFocus(m0.m.Values,{v},m1.oHeap+m1.ns);
+   assert CallOK(m0.m.Values+{v}, m1.oHeap+m1.ns); 
+   assert m1.m.Values == m0.m.Values + {v};
+   assert CallOK(m1.m.Values, m1.oHeap+m1.ns);   
+
+} else {
+   assert v != k;
+   assert m1 == klonKV(m0,k,v);   
+   assert m1.oHeap == m0.oHeap;
+   assert m1.ns == m0.ns+{v};
+   assert v in m1.ns;
+
+   assert (COK(v, m0.oHeap+m0.ns+{v}));
+   assert m0.oHeap+m0.ns+{v}   ==  m0.oHeap+(m0.ns+{v});
+   assert m0.oHeap+(m0.ns+{v}) ==  m1.oHeap+m1.ns;
+   assert COK(v, m1.oHeap+m1.ns);
+   CallOKfromCOK(v,m1.oHeap+m1.ns);
+   assert CallOK({v},m1.oHeap+m1.ns);
+
+   assert CallOK(m0.ns, m0.oHeap+m0.ns); 
+   CallOKWiderContext(m0.ns, m0.oHeap+m0.ns, {v});
+   assert CallOK(m0.ns, m0.oHeap+m0.ns+{v});
+   assert m0.oHeap+m0.ns+{v}   ==  m0.oHeap+(m0.ns+{v});
+   assert m0.oHeap+(m0.ns+{v}) ==  m1.oHeap+m1.ns;
+   assert CallOK(m0.ns, m1.oHeap+m1.ns);
+   CallOKWiderFocus(m0.ns,{v},m1.oHeap+m1.ns);
+   assert CallOK(m0.ns+{v}, m1.oHeap+m1.ns);
+   assert CallOK(m1.ns, m1.oHeap+m1.ns);
+
+
+   assert CallOK(m0.m.Values, m0.oHeap+m0.ns); 
+   assert CallOK(m0.m.Values, m1.oHeap+m0.ns);  //not the same.
+   CallOKWiderContext(m0.m.Values, m1.oHeap+m0.ns, {v});
+   assert CallOK(m0.m.Values, m1.oHeap+m0.ns+{v}); 
+   assert CallOK(m0.m.Values, m1.oHeap+(m0.ns+{v})); 
+   assert m0.ns+{v} == m1.ns;
+   assert CallOK(m0.m.Values, m1.oHeap+m1.ns); 
+
+   CallOKWiderFocus(m0.m.Values,{v},m1.oHeap+m1.ns);
+   assert CallOK(m0.m.Values+{v}, m1.oHeap+m1.ns);
+   assert m1.m.Values == m0.m.Values + {v};
+   assert CallOK(m1.m.Values, m1.oHeap+m1.ns); 
+
+   }
+
+      assert CallOK(m1.m.Values, m1.oHeap+m1.ns);
+      assert CallOK(m1.ns, m1.oHeap+m1.ns);
+
+        assert m1.calidOK();
+
+//calidMap 
+assert 
+    && AllMapEntriesAreUnique(m1.m)
+    && klonVMapOK(m1.m) // potentiall should expand this out?
+    && (forall x <- m1.m.Keys, oo <- x.AMFO :: m1.m[oo] in m1.m[x].AMFO)
+;
+
+assert (forall x <- m0.m.Keys :: (not(inside(x,m0.o)) ==> (m0.m[x] == x)));
+assert m1.o == m0.o;
+assert (forall x <- m0.m.Keys :: (m1.m[x] == m0.m[x]));
+assert (forall x <- m0.m.Keys :: (not(inside(x,m1.o)) ==> (m1.m[x] == x)));
+assert m1.m[k] == v;
+assert m1.m.Keys == m0.m.Keys + {k};
+assert m1.o == m0.o;
+assert forall x <- m1.m.Keys :: m1.m[x] == (
+       if (x in m0.m.Keys) 
+         then (assert (m1.m[x] == m0.m[x]); (m0.m[x]))
+         else (assert x == k; assert (outside(x,m0.o)) ==> (m1.m[x] == x == k == v); (m1.m[x])));
+
+assert forall x <- m1.m.Keys :: (not(inside(x,m1.o)) ==> (m1.m[x] == x));
+        assert m1.calidMap();
+
+//calidSheepKV
+    reveal m0.AreWeNotMen();
+    reveal UniqueMapEntry();
+assert
+    && (forall x <- m0.m.Keys :: m0.AreWeNotMen(x, m0))
+    && (forall x <- m0.m.Keys :: m0.m[x].fieldModes == m1.m[x].fieldModes)
+    && AllMapEntriesAreUnique(m0.m);
+FORALLAWNMFUCKED(m0,m1);
+assert
+    && (forall x <- m0.m.Keys :: m1.AreWeNotMen(x, m1))
+    && (forall x <- m1.m.Keys :: x.fieldModes == 
+          if (x in m0.m.Keys) 
+              then (m1.m[x].fieldModes)
+              else (assert (x == k) && (m1.m[x] == v) && (k.fieldModes == v.fieldModes); v.fieldModes)
+       )
+    && AllMapEntriesAreUnique(m1.m)
+    ;
+     
+        assert m1.calidSheep(); 
+
+        assert m1.from(m0);
+        assert m1.calid();
+  }
 
 
 datatype Klon = Klon
@@ -102,12 +287,12 @@ datatype Klon = Klon
     //     requires prev.calid()
   {
     reveal calid(), calidObjects(), calidOK(), calidMap(), calidSheep();
-    && calid()         //should these be requirements?
-       //       && prev.calid()   //currently YES because the underlyign thing will require calid and reutnr calid
     && mapGEQ(m, prev.m)
     && o     == prev.o
     && oHeap == prev.oHeap
     && ns    >= prev.ns
+    && calid()         //should these be requirements?
+       //KJX       && prev.calid()   //currently YES because the underlyign thing will require calid and reutnr calid
   }
 
 
@@ -1418,16 +1603,19 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
 
 
 
+
   opaque predicate AreWeNotMen(x : Object,  rv : Klon)  //hmmm wgt etc?
     reads oHeap`fields, oHeap`fieldModes
     reads ns`fields, ns`fieldModes
     requires x in rv.m.Keys
   {
-    && (   (inside(x,rv.o)) ==> rv.m[x] in rv.ns)
+    && (   (inside(x,rv.o)) ==> (rv.m[x] in rv.ns))
     && (not(inside(x,rv.o)) ==> (rv.m[x] == x))
     && (   (inside(x,rv.o)) ==> (UniqueMapEntry(rv.m,x)))
     && (not(inside(x,rv.o)) ==> (UniqueMapEntry(rv.m,x)))
   }
+
+
 
   lemma WeAreDevo()
     requires calid()
@@ -1593,10 +1781,8 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
     && o in oHeap
     && m.Keys <= oHeap
     && ns !! oHeap
-
     && m.Values <= ns + oHeap
     && ns <= m.Values
-
   }
 
   opaque predicate calidOK()
@@ -1731,7 +1917,23 @@ lemma calidOKFromCalid()
 
 } ///end datatype Klon
 
+lemma AWNMFUCKED(x : Object,  rv : Klon, other : Klon)
+  requires x in rv.m.Keys
+  requires rv.AreWeNotMen(x,rv)
+  ensures  other.AreWeNotMen(x,rv)
+  { 
+    reveal rv.AreWeNotMen();
+    assert other.AreWeNotMen(x,rv);
+  }
 
+
+lemma FORALLAWNMFUCKED(rv : Klon, other : Klon)
+  requires forall x <- rv.m.Keys :: rv.AreWeNotMen(x,rv)
+  ensures  forall x <- rv.m.Keys :: other.AreWeNotMen(x,rv)
+  { 
+    reveal rv.AreWeNotMen();
+    assert  forall x <- rv.m.Keys :: other.AreWeNotMen(x,rv);
+  }
 
 
 
@@ -1771,7 +1973,7 @@ lemma SubsetOfKeysOfExtendedMap(subset : set<Object>, left : Klon, right : Klon)
 //actual cloning methods
 
 
-method {:only} Clone_Via_Map(a : Object, m' : Klon)
+method Clone_Via_Map(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //entry point for Clone - clones a according to map m'
   //call with m' empty
@@ -2136,7 +2338,7 @@ print "end of the Inside case\n";
 
 
 
-method {:only} Clone_All_Fields(a : Object, b : Object, m' : Klon)
+method Clone_All_Fields(a : Object, b : Object, m' : Klon)
   returns (m : Klon)
   //clone all fields a.n into b.n
   //a should be preexisting (in m'.oHeapl); b should be "new"  in m'.ns
@@ -3420,7 +3622,7 @@ method {:only} Clone_All_Fields(a : Object, b : Object, m' : Klon)
 
 
 
-method {:only} Clone_Clone_Clone(a : Object, m' : Klon)
+  method Clone_Clone_Clone(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //actually does the clone....
   // was the old Clone_Inside_Heap
@@ -4012,11 +4214,43 @@ assert mapThruVMapKV(a.owner, rrm.m, a, b) == mapThruVMap(a.owner, rm.m);
 
     assert klonCanKV(rrm,a,b);
 
-
-
- 
     var km := klonKV(rrm,a,b);
 
+    klonCalidKVCalid(rrm,a,b,km);
+    assert km.calid();
+
+// 
+//     assert km.calid() by {
+//         reveal km.calid(), km.calidObjects(), km.calidOK(), km.calidMap(), km.calidSheep();
+// 
+//         assert rrm.ns !! rrm.oHeap;
+//         assert b !in rrm.oHeap;
+//         assert km.ns == (rrm.ns + {b});
+//         assert (rrm.ns + {b}) !! rrm.oHeap;
+// 
+//         assert
+//             && (km.o in km.oHeap)
+//             && (km.m.Keys <= km.oHeap)
+//             && (km.ns !! km.oHeap)
+//             && (km.m.Values <= km.ns + km.oHeap)
+//             && (km.ns <= km.m.Values)
+//             ;
+// 
+//         assert km.calidObjects();
+//         assert km.calidOK();
+//         assert km.calidMap();
+//         assert km.calidSheep();    
+//         assert km.from(rrm);
+//         assert km.calid();
+//     }
+
+
+
+
+ assert km.ns == rrm.ns + nu(a,b);
+assert a != b;
+ assert nu(a,b) == {b};
+ 
     assert km.AreWeNotMen(a, km)  by { 
       reveal km.AreWeNotMen(); 
     
@@ -4026,21 +4260,32 @@ assert mapThruVMapKV(a.owner, rrm.m, a, b) == mapThruVMap(a.owner, rm.m);
       assert b !in rrm.m.Values;
 
       assert inside(a,km.o);
-      assert forall k <- km.m.Keys :: km.AreWeNotMen(k,km);
-      assert a !in km.m.Keys;
-      assert b !in km.m.Values;
+      KlonKVExtendsTo(rrm, a, b, km);
+      assert forall k <- rrm.m.Keys :: km.m[k] == rrm.m[k];
+      assert forall k <- rrm.m.Keys :: rrm.AreWeNotMen(k,rrm);
+FORALLAWNMFUCKED(rrm,km);
+//      assert forall k <- rrm.m.Keys :: rrm.AreWeNotMen(k,km);
+
+      assert inside(a,km.o);
+
+      assert a in km.m.Keys;
+      assert km.m[a] == b;
 
       assert UniqueMapEntry(km.m,a,b);
+      assert UniqueMapEntry(km.m,a);
+
       assert b in km.ns; 
       assert b == km.m[a];
-      assert b in km.ns;
+      assert km.m[a] in km.ns;
 
+    assert inside(a,km.o) ==> km.m[a] in km.ns;
+    assert inside(a,km.o) ==> UniqueMapEntry(km.m,a);
 
       assert km.AreWeNotMen(a, km);
     }
 
-    assert rrm.AreWeNotMen(a, klonKV(rrm,a,b)) == km.AreWeNotMen(a, km);
-    assert rrm.AreWeNotMen(a, klonKV(rrm,a,b));
+    assert km.AreWeNotMen(a, klonKV(rrm,a,b)) == km.AreWeNotMen(a, km);
+    assert km.AreWeNotMen(a, klonKV(rrm,a,b));
 
     assert a  in rrm.oHeap;
     assert a !in rrm.m.Keys;
@@ -4079,19 +4324,37 @@ assert (mapThruKlonKV(a.owner, rrm, a, b) == b.owner);
 
 assert a.AMFO == flattenAMFOs(a.owner) + {a};
 
+var amxo := flattenAMFOs(a.owner);
+assert  a.AMFO == amxo + {a};
+var other := mapThruKlon(a.owner,km);
+var omxo := mapThruKlon(amxo, km);
+
+assert km.calid();
+assert a.owner <= km.m.Keys;
+assert amxo <= km.m.Keys;
+assert amxo == flattenAMFOs(a.owner);
+assert AllTheseOwnersAreFlatOK(amxo);
+assert other == mapThruKlon(a.owner, km);
+assert  omxo == mapThruKlon(amxo, km);
+
 mapThruKlonPreservesFlatness3(a.owner, flattenAMFOs(a.owner), 
                     b.owner, flattenAMFOs(b.owner), km);
 
+assert  omxo == flattenAMFOs(other);
+assert  AllTheseOwnersAreFlatOK(omxo);
 
-assert mapThruKlon({a}, klonKV(km, a, b)) == {b};
-mapThruKlonKVisOK({a}, km, a, b);
-assert mapThruKlonKV({a}, km, a, b) == {b};
+assert mapThruKlon({a}, klonKV(rrm, a, b)) == {b};
+assert mapThruKlon({a}, km) == {b};
+mapThruKlonKVisOK({a}, rrm, a, b);
+assert mapThruKlonKV({a}, rrm, a, b) == {b};
 
 assert b.AMFO == flattenAMFOs(b.owner) + {b};
 
 //MapThruVMapExtensionality(flattenAMFOs(a.owner), {a}, b.AMFO, rrm.m);
 
-    assert mapThruKlonKV(a.AMFO, km, a, b) == b.AMFO;
+    assert mapThruKlon(a.AMFO, km) == b.AMFO;
+
+    assert mapThruKlonKV(a.AMFO, rrm, a, b) == b.AMFO;
 
 ///END PRECOND for putInsidfe
 
@@ -5035,7 +5298,7 @@ lemma mapThruKlonSingleton(l : Object, m : Klon)
 
 
 
-lemma {:only} mapThruKlonPreservesAMFO(less: set<Object>, other : set<Object>, m : Klon)
+lemma mapThruKlonPreservesAMFO(less: set<Object>, other : set<Object>, m : Klon)
   requires m.calid()
   requires less <= m.m.Keys
   requires other == mapThruKlon(less, m)
@@ -5063,7 +5326,7 @@ lemma {:only} mapThruKlonPreservesAMFO(less: set<Object>, other : set<Object>, m
 
 
 
-lemma {:only} mapThruKlonPreservesFlatness(less : set<Object>, lessContext : set<Object>,
+lemma mapThruKlonPreservesFlatness(less : set<Object>, lessContext : set<Object>,
                     other : set<Object>, otherContext : set<Object>, m : Klon)
   requires m.calid()
   requires less <= m.m.Keys
@@ -5094,7 +5357,7 @@ lemma {:only} mapThruKlonPreservesFlatness(less : set<Object>, lessContext : set
 
 
 
-lemma {:only} mapThruKlonPreservesFlatness2(less : set<Object>,
+lemma mapThruKlonPreservesFlatness2(less : set<Object>,
                     other : set<Object>, m : Klon)
   requires m.calid()
   requires less <= m.m.Keys
@@ -5110,7 +5373,7 @@ lemma {:only} mapThruKlonPreservesFlatness2(less : set<Object>,
   }
 
 
-lemma {:only} mapThruKlonPreservesFlatness3(owner : set<Object>, amxo : set<Object>,
+lemma mapThruKlonPreservesFlatness3(owner : set<Object>, amxo : set<Object>,
                     other : set<Object>, omxo : set<Object>, m : Klon)
   requires m.calid()
   requires owner <= m.m.Keys
@@ -5207,7 +5470,7 @@ lemma mapThruKlonPreservesInsideOwner(part: Object, whole : Object,
 
 
 
-lemma mapThruKlonKVExtendsAMFO(m : Klon, k : Object, v : Object, n : Klon) 
+lemma KlonKVIsOK(m : Klon, k : Object, v : Object, n : Klon) 
    requires m.calid()
    requires klonVMapOK(m.m) // should follow from m.calid() but...
    requires klonCanKV(m, k, v)
@@ -5320,7 +5583,7 @@ lemma IHasCalidSheep(r : Klon)
 
 
 
-method {:only} Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
+method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   //adds all thers owners of a into the map
   decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 12
 
@@ -5645,7 +5908,7 @@ lemma OwnersValidFromCalid(a : Object, m : Klon)
 }
 
 
-lemma {:only} AMFOsFromOwnersFromCalid(a : Object, m : Klon)
+lemma AMFOsFromOwnersFromCalid(a : Object, m : Klon)
   //better name woiuld be: all All_Exterbal_Owners_Are_Keys
   // given a.owner <= keys of m (and other stuff)
   // all a's AMFOS are ready and valid and in the keys of m
@@ -5864,7 +6127,7 @@ lemma  bNotInoHeap(b : Object, m : Klon)
 
 
 
-lemma {:only} NoKeyNoProblems(ks : set<Object>, m' : Klon, k : Object, v : Object)
+lemma NoKeyNoProblems(ks : set<Object>, m' : Klon, k : Object, v : Object)
     requires m'.calid()
     requires ks <= m'.m.Keys
     requires k !in m'.m.Keys
