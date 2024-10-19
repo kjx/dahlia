@@ -21,7 +21,7 @@ lemma COKAMFO(a : Object, context : set<Object>)
 } 
 
 
-lemma {:only} COKowner(a : Object, context : set<Object>) 
+lemma COKowner(a : Object, context : set<Object>) 
   decreases a.AMFO
   requires COK(a, context)
   requires CallOK(context)

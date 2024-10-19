@@ -116,7 +116,7 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
 
 
 
-  constructor {:only} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string) 
+  constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string) 
     requires forall o <- oo :: o.Ready()
     requires CallOK(oo, context)
     requires CallOK(context) //KJX is this redundant Or wouidl it be redundat the other way around???
@@ -267,7 +267,7 @@ assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);
 
 
 
-/*opaque*/ predicate {:only} Ready() 
+/*opaque*/ predicate Ready() 
 // ready means all the owenrs are (at least) ready...
 // I had to inline the defition --- see "//Ready()inlined"
 // WHO the fuck knows WHY?
@@ -422,12 +422,12 @@ lemma CallMyOwnersWillWitherAway(a : Object, context : set<Object>)
 }
 
 
-/*opaque*/ predicate {:onlyTRUMP} TRUMP() ///*opaque*/ Valid() 
+/*opaque*/ predicate TRUMP() ///*opaque*/ Valid() 
     reads this`fields, this`fieldModes
  //  reads ValidReadSet()`fields, ValidReadSet()`fieldModes
    { Ready() && Valid() }
 
-lemma {:onlyTRUMP} BIDEN() 
+lemma BIDEN() 
   requires TRUMP()
   ensures Ready() && Valid()
 {
@@ -484,7 +484,7 @@ lemma AllStandaloneMonotonic(aa : set<Object>, bb : set<Object>)
 
 //all aa's individually MAGA-ishg within context
 //MAGA could be rewritteninterhsmof this?
-/*opaque*/ predicate {:onlyWANKER} SUPERMAGA(aa : set<Object>, context : set<Object>)
+/*opaque*/ predicate SUPERMAGA(aa : set<Object>, context : set<Object>)
    reads  set o1 <- (aa+context), o2 <- o1.ValidReadSet() :: o2
    reads (aa+context), (aa+context)`fields
    reads set o1 <- (aa+context), o2 <- o1.fields.Values :: o2
@@ -814,7 +814,7 @@ twostate lemma edgeFUCKINGassignment(os : set<Object>,
 
 
 
-lemma {:onlyONLY} HeyFUCKOFF(x : Object, y : Object, zz : set<Object>)
+lemma HeyFUCKOFF(x : Object, y : Object, zz : set<Object>)
   requires x in zz+{y}
   requires x != y 
   ensures  x in zz

@@ -131,31 +131,31 @@ predicate BorrowsLoansConsistentPermissionIncoming(partition : Incoming)
         :: e.m.perm == e'.m.perm)}
           // all Borrows and Loans must have the same permission.
           
-predicate {:onlycuts} OLD__OnlyOneWriterIncoming(partition : Incoming) 
+predicate OLD__OnlyOneWriterIncoming(partition : Incoming) 
      { (forall o <- partition.Keys :: 
         |(set e <- partition[o] | (e.m.Borrow? && e.m.perm == Write) :: e )| <= 1)}
           //if there's a write borrow it must be the only one.
 
 
-predicate  {:onlycuts} WriterEdge(e : Edge) { e.m.Borrow? && e.m.perm == Write }
+predicate  WriterEdge(e : Edge) { e.m.Borrow? && e.m.perm == Write }
 
-predicate  {:onlycuts} OwnedOrLoanedEdge(e : Edge) { e.m.Owned? || e.m.Loaned? }
+predicate  OwnedOrLoanedEdge(e : Edge) { e.m.Owned? || e.m.Loaned? }
 
 
-predicate  {:onlycuts} OwnedOrLoanedEdgeIncoming(partition : Incoming) 
+predicate  OwnedOrLoanedEdgeIncoming(partition : Incoming) 
      { (forall o <- partition.Keys :: 
         |(set e <- partition[o] | OwnedOrLoanedEdge(e) )| <= 1)}
           //if there's a write borrow it must be the only one.
           
-predicate  {:onlycuts} OnlyOneWriterEdgeIncoming(partition : Incoming) 
+predicate  OnlyOneWriterEdgeIncoming(partition : Incoming) 
      { (forall o <- partition.Keys :: 
         |(set e <- partition[o] | WriterEdge(e) )| <= 1)}
           //if there's a write borrow it must be the only one.
 
-predicate  {:onlycuts} OnlyOnePredEdges(pred : Edge -> bool, es : set<Edge>  ) 
+predicate  OnlyOnePredEdges(pred : Edge -> bool, es : set<Edge>  ) 
      { |FilteredEdges(pred, es)| <= 1}
 
-lemma {:onlycuts} OnlyOnePredEdgesMonotonic(pred : Edge -> bool, less : set<Edge>, more : set<Edge> ) 
+lemma OnlyOnePredEdgesMonotonic(pred : Edge -> bool, less : set<Edge>, more : set<Edge> ) 
   requires less <= more
   ensures OnlyOnePredEdges(pred, less) <== OnlyOnePredEdges(pred, more)
   {
@@ -167,13 +167,13 @@ lemma {:onlycuts} OnlyOnePredEdgesMonotonic(pred : Edge -> bool, less : set<Edge
 
 }
 
-function {:onlycuts}  FilteredEdges(pred : Edge -> bool, es : set<Edge>) : (r : set<Edge>) 
+function  FilteredEdges(pred : Edge -> bool, es : set<Edge>) : (r : set<Edge>) 
    ensures r <= es
 {
   set e <- es | pred(e) :: e
 }
 
-lemma {:onlycuts} FilteredEdgesMonotonic(pred : Edge -> bool, less : set<Edge>, more : set<Edge> ) 
+lemma FilteredEdgesMonotonic(pred : Edge -> bool, less : set<Edge>, more : set<Edge> ) 
   requires less <= more
   ensures FilteredEdges(pred, less)    <=     FilteredEdges(pred, more)
   ensures |FilteredEdges(pred, less)|  <=    |FilteredEdges(pred, more)|
@@ -181,11 +181,11 @@ lemma {:onlycuts} FilteredEdgesMonotonic(pred : Edge -> bool, less : set<Edge>, 
   FewerIsLess(FilteredEdges(pred, less),FilteredEdges(pred, more));
 }
 
-predicate {:onlycuts} OnlyOnePredIncoming(pred : Edge -> bool, partition : map<Object,set<Edge>>) 
+predicate OnlyOnePredIncoming(pred : Edge -> bool, partition : map<Object,set<Edge>>) 
      { forall o <- partition.Keys ::  OnlyOnePredEdges(pred, partition[o]) }
 
 
-lemma {:onlycuts} OnlyOnePredIncomingMonotonic(pred : Edge -> bool, lesp : map<Object,set<Edge>>, morp : map<Object,set<Edge>>)
+lemma OnlyOnePredIncomingMonotonic(pred : Edge -> bool, lesp : map<Object,set<Edge>>, morp : map<Object,set<Edge>>)
     requires partitionedLessEQ(lesp, morp) 
     ensures  OnlyOnePredIncoming(pred, lesp) <== OnlyOnePredIncoming(pred, morp)
     {
@@ -198,15 +198,15 @@ lemma {:onlycuts} OnlyOnePredIncomingMonotonic(pred : Edge -> bool, lesp : map<O
     }  
 
 
-predicate {:onlycuts} OnlyOneWriterIncoming(partition : map<Object,set<Edge>>) 
+predicate OnlyOneWriterIncoming(partition : map<Object,set<Edge>>) 
      { OnlyOnePredIncoming(WriterEdge, partition )}
 
 
 
-predicate {:onlycuts} OnlyOneOwnedOrLoanedIncoming(partition : map<Object,set<Edge>>) 
+predicate OnlyOneOwnedOrLoanedIncoming(partition : map<Object,set<Edge>>) 
      { OnlyOnePredIncoming(OwnedOrLoanedEdge, partition )}
 
-lemma {:onlycuts} OnlyOneWriterIncomingMonotonic(lesp : map<Object,set<Edge>>, morp : map<Object,set<Edge>>)
+lemma OnlyOneWriterIncomingMonotonic(lesp : map<Object,set<Edge>>, morp : map<Object,set<Edge>>)
     requires partitionedLessEQ(lesp, morp) 
     ensures  OnlyOneWriterIncoming(lesp) <== OnlyOneWriterIncoming(morp)
     {

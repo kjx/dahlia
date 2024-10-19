@@ -362,7 +362,7 @@ assert forall i | (0 <= i < |S|) && (i != n) :: (S[i] != S[n]);
  }
 
   
-lemma {:onlyAAKE} MappingPlusKeysValues<K,V>(am : map<K,V>, bm : map<K,V>, sm : map<K,V>)
+lemma MappingPlusKeysValues<K,V>(am : map<K,V>, bm : map<K,V>, sm : map<K,V>)
   requires sm == am + bm
   ensures  sm.Keys == am.Keys + bm.Keys 
   ensures  sm.Values <= am.Values + bm.Values
@@ -396,7 +396,7 @@ lemma {:onlyAAKE} MappingPlusKeysValues<K,V>(am : map<K,V>, bm : map<K,V>, sm : 
 }
 
 
-lemma {:onlyKelburjn} MapLEQKeysValues<K,V>(am : map<K,V>, bm : map<K,V>)
+lemma MapLEQKeysValues<K,V>(am : map<K,V>, bm : map<K,V>)
   requires mapLEQ(am,bm)
   ensures  am.Keys <= bm.Keys 
   ensures  am.Values <= bm.Values
@@ -405,7 +405,7 @@ lemma {:onlyKelburjn} MapLEQKeysValues<K,V>(am : map<K,V>, bm : map<K,V>)
 
 
 //well it's nice to know I can write this, but the comprehension is much easie r
-method {:onlyAAKE} set2idMap<T>(X: set<T>) returns (S: map<T,T>)
+method set2idMap<T>(X: set<T>) returns (S: map<T,T>)
   ensures forall x <- X :: x in S && S[x] == x
   ensures forall s <- S.Keys :: s in X && S[s] == s
   ensures |X| == |S|
@@ -429,7 +429,7 @@ method {:onlyAAKE} set2idMap<T>(X: set<T>) returns (S: map<T,T>)
 
 
 //well it's nice to know I can write this, but the comprehension is much easier
-method {:onlyAAKE} set2constMap<K(==),V(==)>(X : set<K>, v : V) returns (S: map<K,V>)
+method set2constMap<K(==),V(==)>(X : set<K>, v : V) returns (S: map<K,V>)
   ensures forall x <- X :: x in S && S[x] == v
   ensures forall s <- S.Keys :: s in X && S[s] == v
   ensures |X| == |S|
@@ -512,7 +512,7 @@ opaque predicate  UniqueMapEntry2<K,V(==)>(m : map<K,V>, k : K)
   m[k] !in  (m - {k}).Values  //dodgy UniqueMapEntry //AreWeNotMen
 }
 
-opaque predicate  {:only}  UniqueMapEntry<K,V(==)>(m : map<K,V>, k : K, v : V := m[k]) 
+opaque predicate   UniqueMapEntry<K,V(==)>(m : map<K,V>, k : K, v : V := m[k]) 
  requires k in m.Keys
 {
   //true
@@ -647,7 +647,7 @@ function mapThruVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V) : (m : se
 
 
 
-lemma {:only} IfImNotTheExtraKeyTheUnderlyingMapIsFine<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
+lemma IfImNotTheExtraKeyTheUnderlyingMapIsFine<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
     requires ks <= m'.Keys
     requires k !in m'.Keys
     requires canVMapKV(m', k, v)    
@@ -655,14 +655,14 @@ lemma {:only} IfImNotTheExtraKeyTheUnderlyingMapIsFine<K,V>(ks : set<K>, m' : vm
     {}
 
 
-lemma {:only} MapThruVMapExtensionality<K,V>(k0 : set<K>, k1 : set<K>, r : set<V>, m : vmap<K,V>)
+lemma MapThruVMapExtensionality<K,V>(k0 : set<K>, k1 : set<K>, r : set<V>, m : vmap<K,V>)
     requires k0 <= m.Keys
     requires k1 <= m.Keys
   ensures  (mapThruVMap(k0,m) + mapThruVMap(k1,m)) == mapThruVMap(k0+k1, m)
   {}
 
 
-  lemma {:only} MapThruVMapKVExtensionality<K,V>(k0 : set<K>, k1 : set<K>, v0 : set<V>, v1 : set<V>, m : vmap<K,V>,  k : K, v : V)
+  lemma MapThruVMapKVExtensionality<K,V>(k0 : set<K>, k1 : set<K>, v0 : set<V>, v1 : set<V>, m : vmap<K,V>,  k : K, v : V)
     requires k0 <= m.Keys
     requires k1 <= m.Keys
     requires v0 <= m.Values
