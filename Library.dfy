@@ -160,7 +160,21 @@ datatype Status =
     }
   }
 
-lemma  SubsetOfMapLEQKeys<K,V>(subset : set<K>, left : map<K,V>, right : map<K,V>)
+lemma {:only} LemmaSetXsPlusSeperateSingleton<X>(xs : set<X>, x : X, xsPlusX : set<X>) 
+  requires x !in xs
+  requires xs + {x} == xsPlusX 
+  ensures  forall t <- xs :: t in xsPlusX
+  ensures  x in xsPlusX
+  ensures  xs <= xsPlusX
+  ensures  {x} <= xsPlusX
+  ensures  forall t <- xsPlusX :: (t in xs) != (t == x)
+  ensures  {x} !! xs
+  ensures  xsPlusX - {x} == xs
+  ensures  xsPlusX - xs  == {x}
+{}
+  
+
+lemma SubsetOfMapLEQKeys<K,V>(subset : set<K>, left : map<K,V>, right : map<K,V>)
   requires subset <= left.Keys
   requires mapLEQ(left,right)
   ensures  subset <= right.Keys

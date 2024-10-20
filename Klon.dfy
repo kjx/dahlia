@@ -3768,7 +3768,14 @@ assert AllTheseOwnersAreFlatOK(a.allExternalOwners()) by {
   assert CallOK(rm.oHeap);
   COKowner(a, rm.oHeap);
   assert a.AMFO == flattenAMFOs(a.owner) + {a} by { reveal COK(); }
-  assert a.allExternalOwners() == a.AMFO - {a};
+  //assert flattenAMFOs(a.owner) == a.allExternalOwners();
+  assert a.AMFO == a.allExternalOwners() + {a} by { reveal COK(); }
+  assert a.allExternalOwners() == a.AMFO - {a} by
+     { reveal COK(); assert COK(a, rm.oHeap); assert a.Ready(); assert a.OwnersValid(); 
+       assert (a.AMFO == (a.allExternalOwners() + {a})) by { reveal COK(); }
+       LemmaSetXsPlusSeperateSingleton(a.allExternalOwners(), a, a.AMFO);
+       assert a.allExternalOwners() == a.AMFO - {a};
+          }
   assert a !in a.owner;
   //assert a !in flattenAMFOs(a.owner);
   assert a.Ready() by { assert rm.calid(); rm.calidOKFromCalid(); assert COK(a, rm.oHeap); reveal COK(); }
@@ -3792,8 +3799,6 @@ assert AllTheseOwnersAreFlatOK(a.allExternalOwners()) by {
   print "Clone_Clone_CLone ", fmtobj(a), " Clone_All_Owners RETURNS ", fmtown(rowner) ,"\n";
 
 
-b := a; return;///FUKOF FUKOF  //FAILS 44 //was 18s
-
 
     //better name woiuld be: all All_Owners_Are_Keys or sometghung
 //AMFOsFromOwnersFromCalid(a, rm);
@@ -3804,10 +3809,13 @@ b := a; return;///FUKOF FUKOF  //FAILS 44 //was 18s
 
 
 
+
 assert AllTheseOwnersAreFlatOK(a.allExternalOwners());
 mapThruKlonPreservesFlatness2(a.allExternalOwners(), rAMXO, rm);
 assert AllTheseOwnersAreFlatOK(rAMXO);
 
+//assume false;
+b := a; return;///FUKOF FUKOF  //FAILS 44 //was 18s
 
 //KJX - I find this unimpressive
   reveal rm.calid();
@@ -5516,9 +5524,27 @@ lemma KlonKVIsOK(m : Klon, k : Object, v : Object, n : Klon)
 
 
 
-
-
-
+// 
+// 
+// lemma {:only} SuperFlat(xs : Owner, fs : Owner)
+//   requires fs == flattenAMFOs(xs)
+//   ensures forall x <- fs :: x.AMFO <= fs;
+//   //ensures  flattenAMFOs(fs) == fs
+//   ensures AllTheseOwnersAreFlatOK(fs)
+//   {
+//     reveal AllTheseOwnersAreFlatOK();
+//     assert fs == xs + (set o <- xs, oo <- o.AMFO :: oo);
+//   //t  assert AllTheseOwnersAreFlatOK(fs); 
+// //assert flattenAMFOs(xs) <= xs;
+// //assert flattenAMFOs(fs) <= fs;
+//     assert (xs + (set o <- xs, oo <- o.AMFO :: oo)) <= fs;
+// 
+//     assert forall x <- xs :: x.AMFO <= fs;
+// 
+//     assert flattenAMFOs(xs) == fs;
+//     assert flattenAMFOs(fs) == fs;
+//     assert flattenAMFOs(flattenAMFOs(fs)) == fs;
+//   }
 
 
 
