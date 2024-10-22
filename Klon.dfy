@@ -3639,7 +3639,7 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
 
 
 
-  method {:only}  Clone_Clone_Clone(a : Object, m' : Klon)
+  method   Clone_Clone_Clone(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //actually does the clone....
   // was the old Clone_Inside_Heap
@@ -3654,31 +3654,31 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
   requires a in m'.oHeap
   requires COK(a, m'.oHeap)
 
-  // ensures  m.calid()
-  // ensures  a in m.m.Keys
-  // ensures  b in m.m.Values
-  // ensures  a in m.m.Keys && m.at(a) == b
-  // ensures  b in m.ns
-  // ensures  COK(b, m.oHeap+m.ns)
+  ensures  m.calid()
+  ensures  a in m.m.Keys
+  ensures  b in m.m.Values
+  ensures  a in m.m.Keys && m.at(a) == b
+//  ensures  b in m.ns
+//  ensures  COK(b, m.oHeap+m.ns)
 
   //should I package this up - as aw twostate or a onestate?
   //it;s about clonbamps, so clonmapLEQ or clonmapEXTENDS
-//   ensures  mapLEQ(m'.m,m.m)
-//   ensures  m.m.Keys >= m'.m.Keys + {a}
-//   ensures  m.m.Values >= m'.m.Values + {b}
-//   ensures  m.o == m'.o
-//   ensures  m.oHeap == m'.oHeap
-//   ensures  m.ns >= m'.ns
-//   //  ensures  if (inside(a, m'.o)) then (b in m.ns) else (b == a)
-//   //  ensures  reveal m.calid(); reveal m.calidMap(); assert m.calid(); assert
-//   ensures klonVMapOK(m.m)
-//   ensures a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...
-//   ensures old(m'.calid())
-//   ensures m.from(m')
+  ensures  mapLEQ(m'.m,m.m)
+  ensures  m.m.Keys >= m'.m.Keys + {a}
+  ensures  m.m.Values >= m'.m.Values + {b}
+  ensures  m.o == m'.o
+  ensures  m.oHeap == m'.oHeap
+  ensures  m.ns >= m'.ns
+  //  ensures  if (inside(a, m'.o)) then (b in m.ns) else (b == a)
+  //  ensures  reveal m.calid(); reveal m.calidMap(); assert m.calid(); assert
+  ensures klonVMapOK(m.m)
+  ensures a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...
+  ensures old(m'.calid())
+  ensures m.from(m')
 // 
 //   //ensures b.AMFO == set x <- a.AMFO :: m.m[x]
 // 
-//   ensures b.fieldModes == a.fieldModes
+  ensures b.fieldModes == a.fieldModes
 //   //   ensures b.fields.Keys == a.fields.Keys
 
   //modifies (set o : Object | o !in (m'.oHeap+m'.ns))`fields
@@ -4368,6 +4368,8 @@ FORALLAWNMFUCKED(rrm,km);
     assert km.AreWeNotMen(a, klonKV(rrm,a,b)) == km.AreWeNotMen(a, km);
     assert km.AreWeNotMen(a, klonKV(rrm,a,b));
 
+assert km.AreWeNotMen(a, km);
+
     assert a  in rrm.oHeap;
     assert a !in rrm.m.Keys;
     assert b !in rrm.oHeap;
@@ -4419,7 +4421,7 @@ assert amxo <= km.m.Keys;
 assert amxo == flattenAMFOs(a.owner);
 assert AllTheseOwnersAreFlatOK(amxo);
 assert other == mapThruKlon(a.owner, km);
-assert other == b.owner;
+//assert other == b.owner;  //KJXOWNERS...
 assert  omxo == mapThruKlon(amxo, km);
 
 //  // //assume false;
@@ -4444,7 +4446,6 @@ assert mapThruKlonKV({a}, rrm, a, b) == {b};
 
 assert b.AMFO == flattenAMFOs(b.owner) + {b};
 
-//MapThruVMapExtensionality(flattenAMFOs(a.owner), {a}, b.AMFO, rrm.m);
 
 
 mapThruKlonPreservesAMFO2(a,b,km);
@@ -4454,27 +4455,38 @@ mapThruKlonPreservesAMFO2(a,b,km);
 
 //    assert mapThruKlonKV(a.AMFO, rrm, a, b) == b.AMFO;
 
-///END PRECOND for putInsidfe
-return;///FUKOF // 
+
+
+assert km == klonKV(rrm,a,b);
+//assert rrm.AreWeNotMen(a, klonKV(rrm,a,b));
+assert klonKV(rrm,a,b).AreWeNotMen(a, klonKV(rrm,a,b));
+assert km.AreWeNotMen(a, km);
+assert km.AreWeNotMen(a, klonKV(rrm,a,b));
+AWNMFUCKED(a, km, rrm);
+assert rrm.AreWeNotMen(a, klonKV(rrm,a,b));
+
+mapThruKlonKVisOK(a.AMFO, rrm, a, b);
+assert mapThruKlonKV(a.AMFO, rrm, a, b) == b.AMFO;
 
   var xm := rrm.putInside(a,b);
   assert xm.m == MappingPlusOneKeyValue(rrm.m,a,b);
 
   assert inside(a, xm.o);
   assert b in xm.ns;
+  assert BINNS: b in xm.ns;
   reveal UniqueMapEntry();
   assert (UniqueMapEntry(xm.m,a));
 
   assert xm.m.Keys >= xm.m.Keys + {a};
   assert xm.m.Values >= xm.m.Values + {b};
-  assert b in xm.ns;
   assert COK(b, xm.oHeap+xm.ns);
+  assert COKB: COK(b, xm.oHeap+xm.ns);
 
   MapOKFromCalid(xm);
   assert xm.calid();
 
-  assert mapThruKlonKV(a.owner, xm, a, b) == b.owner;
-  assert mapThruKlonKV(a.AMFO, xm, a, b) == b.AMFO;
+  //assert mapThruKlonKV(a.owner, xm, a, b) == b.owner;  //KJXOWNERS
+  assert mapThruKlon(a.AMFO, xm) == b.AMFO;
 
   print "Clone_CLone_Clone map updated ", fmtobj(a), ":=", fmtobj(b) ,"\n";
 
@@ -4515,18 +4527,23 @@ return;///FUKOF //
 
 print "FUCKFUCKFUCK  Clone_All_Fields commented out\n";
 
+m := xm;
+
 //KJX  m := Clone_All_Fields(a,b, xm);
 
   /////   /////    /////    /////   /////    /////    /////   /////    /////
   /////   /////    /////    /////   /////    /////    /////   /////    /////
-
-
 
   assert m.m.Keys >= xm.m.Keys;
   assert m.m.Values >= xm.m.Values;
 
   assert m.m.Keys >= m'.m.Keys + {a};
   assert m.m.Values >= m'.m.Values + {b};
+
+  assert b in xm.ns by { reveal BINNS; }
+  assert b in m.ns  by { reveal BINNS; }
+
+  assert COK(b, m.oHeap+m.ns) by { reveal COKB; }
 
   print "Clone_Clone_CLone of ", fmtobj(a), " retuning ", fmtobj(b) ,"\n";
 }
@@ -5398,7 +5415,7 @@ lemma mapThruKlonSingleton(l : Object, m : Klon)
 
 
 
-lemma {:only} mapThruKlonPreservesAMFO(less: set<Object>, other : set<Object>, m : Klon)
+lemma  mapThruKlonPreservesAMFO(less: set<Object>, other : set<Object>, m : Klon)
   requires m.calid()
   requires less <= m.m.Keys
   requires other == mapThruKlon(less, m)
@@ -5429,14 +5446,14 @@ lemma {:only} mapThruKlonPreservesAMFO(less: set<Object>, other : set<Object>, m
 
 
 
-lemma {:only} mapThruKlonPreservesAMFO2(self : Object, other : Object, m : Klon)
+lemma  mapThruKlonPreservesAMFO2(self : Object, other : Object, m : Klon)
   requires m.calid()
   requires {self}  <= m.m.Keys //picky, picky
   requires self.AMFO  <= m.m.Keys //should come from the aboce via calid, calidMap, vmapOK, etc
 
   requires {other} == mapThruKlon({self}, m)
 
-//  ensures  mapThruKlon(self.owner, m) == other.owner
+//  ensures  mapThruKlon(self.owner, m) == other.owner  //KJXOWNERS
   ensures  mapThruKlon(self.AMFO, m)  == other.AMFO
 
   {
@@ -5507,7 +5524,7 @@ lemma mapThruKlonPreservesFlatness2(less : set<Object>,
   }
 
 
-lemma {:only} mapThruKlonPreservesFlatness3(owner : set<Object>, amxo : set<Object>,
+lemma  mapThruKlonPreservesFlatness3(owner : set<Object>, amxo : set<Object>,
                     other : set<Object>, omxo : set<Object>, m : Klon)
   requires m.calid()
   requires owner <= m.m.Keys
