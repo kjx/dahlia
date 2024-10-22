@@ -181,6 +181,15 @@ lemma SubsetOfMapLEQKeys<K,V>(subset : set<K>, left : map<K,V>, right : map<K,V>
 {
 }
 
+
+
+lemma AddToEmptySet<T>(t : T) 
+  ensures {} + {t} == {t}
+  ensures {t} + {} == {t}
+{}
+
+
+
 predicate mapLEQ<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
 {
   (forall k <- left.Keys :: k in right && (left[k] == right[k]))
