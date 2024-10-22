@@ -160,7 +160,7 @@ datatype Status =
     }
   }
 
-lemma {:only} LemmaSetXsPlusSeperateSingleton<X>(xs : set<X>, x : X, xsPlusX : set<X>) 
+lemma LemmaSetXsPlusSeperateSingleton<X>(xs : set<X>, x : X, xsPlusX : set<X>) 
   requires x !in xs
   requires xs + {x} == xsPlusX 
   ensures  forall t <- xs :: t in xsPlusX
