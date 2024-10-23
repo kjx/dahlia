@@ -115,7 +115,6 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
 }
 
 
-
   constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string) 
     requires forall o <- oo :: o.Ready()
     requires CallOK(oo, context)
@@ -245,6 +244,54 @@ assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);
 //print "Object.make() just constructed ", fmtobj(this), "\n";
   }
 
+
+
+
+  constructor fake(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string) 
+//     requires forall o <- oo :: o.Ready()
+//     requires CallOK(oo, context)
+//     requires CallOK(context) //KJX is this redundant Or wouidl it be redundat the other way around???
+//     // requires AllTheseOwnersAreFlatOK(oo)  //hmm? what would this mean?
+//     //requires CallOK({oo}+oo.AMFO, context)
+// 
+//     //KJX shouldn't there be some topological restriction on where or when
+//     //you can create new objects/contexts / regions?
+//     //what sgoiuld they be?
+// 
+//     requires CallOK(flattenAMFOs(oo), context) //KJX is this right?
+// 
+//     ensures owner == oo 
+//     ensures fieldModes == ks
+//     ensures fields == map[] 
+//     ensures AMFO == flattenAMFOs(oo) + {this}
+//     ensures this  in AMFO
+//     ensures this !in owner
+// 
+//     ensures (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO)
+//     ensures (forall o <-  AMFO :: inside(this, o))
+// 
+//     ensures OwnersValid()
+//     ensures Ready()
+// 
+//                                                                                    
+//     ensures COK(this, context+{this})                  
+//     ensures nick == name
+//   
+//     //ensures CallOK({this} + {oo}+oo.AMFO, {this} + context)
+// 
+//     ensures unchanged( context )
+//     ensures fresh(this)
+
+  {
+    owner := oo;
+    fieldModes := ks;
+    fields := map[];
+    AMFO := flattenAMFOs(oo) + {this};
+    nick := name;
+    new;   
+ 
+ print "Object.make() just constructed ", fmtobj(this), "\n";
+  }
 
 
 
