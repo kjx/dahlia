@@ -499,6 +499,8 @@ lemma roundTrip1(k : Object, v : Object, m : Klon)
   }
 
 
+
+
   opaque function putInside(k : Object, v : Object) : (r : Klon)
     //put k -> v into map, k inside o
     reads oHeap`fields, oHeap`fieldModes
@@ -1922,6 +1924,61 @@ lemma calidOKFromCalid()
 }
 
 
+
+
+
+  opaque function putin(k : Object, v : Object) : (r : Klon)
+    //put k -> v into map, k inside o
+    reads oHeap`fields, oHeap`fieldModes
+    reads k`fields, k`fieldModes
+    reads v`fields, v`fieldModes
+    reads ns`fields, ns`fieldModes 
+
+//     requires calid()
+//     requires klonVMapOK(m) //lemma can derive from calid()
+// 
+       requires canVMapKV(m,k,v)
+//     requires klonCanKV(this,k,v)
+//     requires AreWeNotMen(k, klonKV(this,k,v))
+// 
+//     requires k  in oHeap
+//     requires k !in m.Keys
+//     requires v !in oHeap
+//     requires v !in ns
+//     requires v !in m.Values
+//     requires COK(k, oHeap)
+//     requires COK(v, oHeap+ns+{v})
+//     requires m.Keys <= oHeap
+//     requires k.allExternalOwners() <= m.Keys
+//     requires v.allExternalOwners() <= oHeap+ns //need to hae proceessed all owners first
+// 
+//     requires (k.owner <= m.Keys) && (mapThruKlon(k.owner, this) == v.owner)
+//     requires mapThruKlonKV(k.AMFO, this, k, v) == v.AMFO
+// 
+//     requires inside(k, o)
+//     requires v.fieldModes == k.fieldModes
+// 
+//     ensures  r == klonKV(this,k,v)
+//     ensures  klonVMapOK(r.m)
+//     ensures  klonVMapOK(m)
+//     //ensures  r == Klon(VMapKV(m,k,v), o, oHeap, ns+{v})
+// 
+//     ensures  v in r.ns
+//     ensures  k in r.m.Keys && r.m[k] == v
+//     ensures  COK(v, r.oHeap+r.ns)
+//     ensures  k in r.m.Keys
+//     ensures  v in r.m.Values
+//     ensures  r.m == m[k:=v]
+//     ensures  mapLEQ(m, r.m)
+//     ensures  r.calid()
+//     ensures  r.from(this)
+    // ensures  AllMapEntriesAreUnique(this.m)
+  {
+    var rv := Klon(VMapKV(m,k,v), o, oHeap, ns+{v});
+    rv
+    } //END putin
+
+
 } ///end datatype Klon
 
 lemma AWNMFUCKED(x : Object,  rv : Klon, other : Klon)
@@ -2382,7 +2439,7 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
   requires m'.m.Keys   <= m'.oHeap
 
   requires a.AMFO <= m'.m.Keys  //seems weird but we are populating m, right...
-
+ 
   // requires b.fieldModes[n] == Evil //evilKJX this is actually evil
   //well not *that* evil as I still must satisfy refOK
   //  
@@ -3643,7 +3700,9 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //actually does the clone....
   // was the old Clone_Inside_Heap
-  decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 15 
+//  decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 15 
+  decreases (m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys), 15 
+
 
   //this case
   requires inside(a,m'.o)
@@ -4527,9 +4586,15 @@ assert mapThruKlonKV(a.AMFO, rrm, a, b) == b.AMFO;
 
 print "FUCKFUCKFUCK  Clone_All_Fields commented out\n";
 
-m := xm;
+//m := xm;
 
-//KJX  m := Clone_All_Fields(a,b, xm);
+assert (
+    (m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys), 15
+  decreases to
+    (m.oHeap - m.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10
+);
+
+   m := Clone_All_Fields(a,b, xm);
 
   /////   /////    /////    /////   /////    /////    /////   /////    /////
   /////   /////    /////    /////   /////    /////    /////   /////    /////
