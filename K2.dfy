@@ -7,6 +7,8 @@ method Klone_Via_Map(a : Object, m' : Klon)
   requires m'.calid()
   requires a in m'.oHeap  //technically redundant given COKx
   requires COK(a, m'.oHeap)
+  requires a !in m'.m.Keys
+  requires a !in m'.m.Values
 
 //  //FROMHERE 
 //   ensures  m.calid()
@@ -17,13 +19,13 @@ method Klone_Via_Map(a : Object, m' : Klon)
 //   ensures  COK(b,m.oHeap+m.ns)
 // 
 //   //should I package this up - as aw twostate or a onestate?
-//   ensures  mapLEQ(m'.m,m.m)
-//   ensures  m.m.Keys >= m'.m.Keys + {a}
+  ensures  mapLEQ(m'.m,m.m)
+  ensures  m.m.Keys >= m'.m.Keys + {a}
 //   ensures  m.m.Values >= m'.m.Values + {b}
 //   ensures  m.from(m')
 // 
-//   ensures  m.o == m'.o
-//   ensures  m.oHeap == m'.oHeap
+  ensures  m.o == m'.o
+  ensures  m.oHeap == m'.oHeap
 //   ensures  m.ns >= m'.ns
 //   //  ensures  if (inside(a, m'.o)) then (b in m.ns) else (b == a)
 //   //  ensures  reveal m.calid(); reveal m.calidMap(); assert m.calid(); assert
@@ -53,6 +55,7 @@ method Klone_Via_Map(a : Object, m' : Klon)
   modifies {} // only modifes objecst allocated after this point?
 {
   m := m';
+  assert m.m.Keys == m'.m.Keys;
 
   print "CALL Klone_Via_Map:", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
   print "VARIANT CVM ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 20, "\n";
@@ -66,6 +69,8 @@ method Klone_Via_Map(a : Object, m' : Klon)
   if (a in m.m.Keys) {
 
             b := m.m[a];   //what no 'putooutside'
+
+            assert m.m.Keys == m'.m.Keys + {a};
 
             print "RETN Klone_Via_Map: ", fmtobj(a)," already cloned,  returning ",fmtobj(b), "\n";
 
@@ -86,6 +91,12 @@ method Klone_Via_Map(a : Object, m' : Klon)
 
   print "about to putOutside\n";
 
+  m := m.putout(a);   ///HOPEY?  CHANGEY?
+
+   //m := m.(m:=m.m[a:=b]);
+
+  assert m.m.Keys >= m'.m.Keys + {a};
+    print "crashy?  washy?\n";
 
 
 print "returnin' from the outsidee case\n";
@@ -101,7 +112,15 @@ print "returnin' from the outsidee case\n";
 print "start of the Inside case\n";
       print "Klone_Via_Map owners:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
 
+assert ((m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 20
+  decreases to
+        (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 15);
+
+  assert m.m.Keys >= m'.m.Keys;
+
       b, m := Klone_Klone_Klone(a, m);
+
+  assert m.m.Keys >= m'.m.Keys + {a};
 
       // assert a !in m'.m.Keys ==> b !in m'.ns;  }  //end of inside case
 print "end of the Inside case\n";
@@ -113,7 +132,7 @@ print "end of the Inside case\n";
 
   //  }
   print "RETN Klone_Via_Map:", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
-
+  assert m.m.Keys >= m'.m.Keys + {a};
 }
 
 
@@ -172,8 +191,12 @@ method Klone_All_Fields(a : Object, b : Object, m' : Klon)
 //   ensures  CallOK(m.m.Values, m.oHeap+m.ns)
 //   ensures  CallOK(m.ns, m.oHeap+m.ns)
 // 
-//   ensures  m.o     == m'.o
-//   ensures  m.oHeap == m'.oHeap
+  ensures  m.o     == m'.o
+  ensures  m.oHeap == m'.oHeap
+
+  ensures  mapLEQ(m'.m,m.m)
+  ensures  m.m.Keys >= m'.m.Keys
+
 //   ensures  m.ns    >= m'.ns
 //   ensures  m.m.Keys    <= m.oHeap
 // 
@@ -219,6 +242,11 @@ method Klone_All_Fields(a : Object, b : Object, m' : Klon)
 
   for i := 0 to |ns|
 
+  invariant  m.o     == m'.o
+  invariant  m.oHeap == m'.oHeap
+  invariant  mapLEQ(m'.m,m.m)
+  invariant  m.m.Keys >= m'.m.Keys
+
   {
 
     var n : string := ns[i];
@@ -252,6 +280,10 @@ method Klone_All_Fields(a : Object, b : Object, m' : Klon)
     print "okaoka ", (m'.oHeap - m'.m.Keys +{a}) >  (m.oHeap - m.m.Keys +{a}), "\n";
     print "okaoka ", (m'.oHeap - m'.m.Keys +{a}) == (m.oHeap - m.m.Keys +{a}), "\n";
 
+assert ((m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10 
+  decreases to
+        (m.oHeap - m.m.Keys +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5 );
+
     rm := Klone_Field_Map(a,n,b,m);
 
     m := rm;
@@ -260,18 +292,24 @@ method Klone_All_Fields(a : Object, b : Object, m' : Klon)
 
   print "RETN Klone_All_Fields done ", fmtobj(a), "\n";
 
+
+  assert  m.o     == m'.o;
+  assert  m.oHeap == m'.oHeap;
+  assert  mapLEQ(m'.m,m.m);
+  assert  m.m.Keys >= m'.m.Keys;
+
   return;
 }
 //end Klone_All_Fields
 
 
 
-  method   Klone_Klone_Klone(a : Object, m' : Klon)
+  method Klone_Klone_Klone(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //actually does the clone....
   // was the old Klone_Inside_Heap
 //  decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 15 
-  decreases (m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys), 15 
+  decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 15 
 
 
   //this case
@@ -292,11 +330,11 @@ method Klone_All_Fields(a : Object, b : Object, m' : Klon)
 // 
 //   //should I package this up - as aw twostate or a onestate?
 //   //it;s about clonbamps, so clonmapLEQ or clonmapEXTENDS
-//   ensures  mapLEQ(m'.m,m.m)
-//   ensures  m.m.Keys >= m'.m.Keys + {a}
+  ensures  mapLEQ(m'.m,m.m)
+  ensures  m.m.Keys >= m'.m.Keys + {a}
 //   ensures  m.m.Values >= m'.m.Values + {b}
-//   ensures  m.o == m'.o
-//   ensures  m.oHeap == m'.oHeap
+  ensures  m.o == m'.o
+  ensures  m.oHeap == m'.oHeap
 //   ensures  m.ns >= m'.ns
 //   //  ensures  if (inside(a, m'.o)) then (b in m.ns) else (b == a)
 //   //  ensures  reveal m.calid(); reveal m.calidMap(); assert m.calid(); assert
@@ -318,6 +356,10 @@ method Klone_All_Fields(a : Object, b : Object, m' : Klon)
 { //clone inside heap
   m := m';
 
+  assert  m.o     == m'.o;
+  assert  m.oHeap == m'.oHeap;
+  assert  mapLEQ(m'.m,m.m);
+  assert  m.m.Keys >= m'.m.Keys;
 
   print "Klone_Klone_CLone of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
   print "VARIANT CIH ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 15, "\n";
@@ -326,6 +368,11 @@ method Klone_All_Fields(a : Object, b : Object, m' : Klon)
   print "Klone_Klone_CLone ", fmtobj(a), " calling Klone_All_Owners", fmtown(a.owner) ,"\n";
 
   var rm := Klone_All_Owners(a, m);
+
+  assert  rm.o     == m'.o;
+  assert  rm.oHeap == m'.oHeap;
+  assert  mapLEQ(m'.m,rm.m);
+  assert  rm.m.Keys >= m'.m.Keys;
 
 assume a.owner <= rm.m.Keys;
   var rowner := mapThruKlon(a.owner, rm);
@@ -340,10 +387,18 @@ assume a.allExternalOwners() <= rm.m.Keys;
     print "Klone_Klone_CLone ", fmtobj(a), " already cloned: abandoning ship!!\n";
 
 
-    m := rm;
+
     assume rm.calid();
     assume a in rm.m.Keys;
     b := rm.at(a);
+
+
+  assert  rm.o     == m'.o;
+  assert  rm.oHeap == m'.oHeap;
+  assert  mapLEQ(m'.m,rm.m);
+  assert  rm.m.Keys >= m'.m.Keys;
+
+      m := rm;
 
     return;
   } // a in rm.m.Keys - i.e. randomly done while cloning owners
@@ -362,6 +417,11 @@ print "CALLING MAKE...";
 print "BACK FROM MAKE with ",fmtobj(b),"\n";
 
 
+  assert  rrm.o     == m'.o;
+  assert  rrm.oHeap == m'.oHeap;
+  assert  mapLEQ(m'.m,rrm.m);
+  assert  rrm.m.Keys >= m'.m.Keys;
+
 assume klonCanKV(rrm, a, b);
   var xm := rrm.putin(a,b);
 
@@ -371,8 +431,23 @@ assume klonCanKV(rrm, a, b);
 print "FUCKFUCKFUCK  Klone_All_Fields commented out\n";
 
 
+assert (
+    (m'.oHeap - m'.m.Keys),      a.AMFO, (a.fields.Keys), 15 
+  decreases to 
+    (xm.oHeap - xm.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10);
+
+  assert  xm.o     == m'.o;
+  assert  xm.oHeap == m'.oHeap;
+  assert  mapLEQ(m'.m,xm.m);
+  assert  xm.m.Keys >= m'.m.Keys + {a};
+
+
    m := Klone_All_Fields(a,b, xm);
 
+  assert  m.o     == m'.o;
+  assert  m.oHeap == m'.oHeap;
+  assert  mapLEQ(m'.m,m.m);
+  assert  m.m.Keys >= m'.m.Keys;
 
 
   print "Klone_Klone_CLone of ", fmtobj(a), " retuning ", fmtobj(b) ,"\n";
@@ -447,7 +522,7 @@ method Klone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
 // 
 //   ensures  b in m.m.Values
 // 
-//   ensures  mapLEQ(m'.m,m.m)
+  ensures  mapLEQ(m'.m,m.m)
 // 
 //   ensures  CallOK(m.oHeap)
 //   ensures  COK(a, m.oHeap)
@@ -455,10 +530,10 @@ method Klone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
 //   ensures  CallOK(m.m.Values, m.oHeap+m.ns)
 //   ensures  CallOK(m.ns, m.oHeap+m.ns)
 // 
-//   ensures  m.o     == m'.o
-//   ensures  m.oHeap == m'.oHeap
+  ensures  m.o     == m'.o
+  ensures  m.oHeap == m'.oHeap
 //   ensures  m.ns    >= m'.ns
-//   ensures  m.m.Keys    >= m'.m.Keys
+  ensures  m.m.Keys    >= m'.m.Keys
 //   ensures  m.m.Values    >= m'.m.Values
 //   ensures  m.m.Keys    <= m.oHeap
 // 
@@ -500,7 +575,26 @@ assume CallOK(m.oHeap);
 
 assume m.calid();
 
+assert (
+    (m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5 
+  decreases to
+    (m.oHeap - m.m.Keys), a.AMFO, (a.fields.Keys), 20);
+
+
+  assert  m.o     == m'.o;
+  assert  m.oHeap == m'.oHeap;
+  assert  mapLEQ(m'.m,m.m);
+  assert  m.m.Keys >= m'.m.Keys;
+
+assume ofv !in m.m.Keys;
+assume ofv !in m.m.Values;
+
   var rfv, rm := Klone_Via_Map(ofv, m);
+
+  assert  rm.o     == m'.o;
+  assert  rm.oHeap == m'.oHeap;
+  assert  mapLEQ(m'.m,rm.m);
+  assert  rm.m.Keys >= m'.m.Keys;
 
   m := rm;
 
@@ -512,7 +606,7 @@ assume m.calid();
 
 
 
-method Klone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
+ method Klone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   //adds all thers owners of a into the map
   decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 12
 // 
@@ -521,6 +615,12 @@ method Klone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
 //   requires m'.calid()
 // 
 //   ensures  m.calid()
+
+  ensures  mapLEQ(m'.m,m.m)
+  ensures  m.m.Keys >= m'.m.Keys
+  ensures  m.o     == m'.o
+  ensures  m.oHeap == m'.oHeap
+
 //   //ensures  a !in m.m.Keys //can't ensures this cos an onwer could have a pointer to "a"
 // 
 //   ensures m.from(m')
@@ -528,21 +628,38 @@ method Klone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
 //   ensures a.allExternalOwners() <= m.m.Keys
   modifies {}
 {
+  m := m';
   var rm := m';
+  
   var b : Object;  //do we care..
 
-  var xm := rm;
+  var xm := rm; 
+  assert  xm.o     == m'.o;
+  assert  xm.oHeap == m'.oHeap;
+  assert  mapLEQ(m'.m,xm.m);
+  assert  xm.m.Keys >= m'.m.Keys;
 
   var xo : Object;
   var rr : Object;
   var oldmks  : set<Object>;  //dont fucking ask
   var oldmok :=  false;
-
+  
+  assert m'.oHeap == rm.oHeap == xm.oHeap;
   var MX := a.owner - xm.m.Keys;
+
+
 
   while ((MX != {}) && (a !in xm.m.Keys))
     decreases MX
-    {
+    invariant  m.oHeap == m'.oHeap == rm.oHeap == xm.oHeap 
+    invariant  m.o == rm.o == xm.o == m'.o
+    invariant  mapLEQ(m'.m,m.m)
+    invariant  mapLEQ(m'.m,rm.m)
+    invariant  mapLEQ(m'.m,xm.m)
+    invariant  m.m.Keys >= m'.m.Keys
+    invariant  rm.m.Keys >= m'.m.Keys
+    invariant  xm.m.Keys >= m'.m.Keys        
+    {      
     xo :| xo in MX;
 
     MX := MX - {xo};
@@ -551,7 +668,24 @@ method Klone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
     assume xo in xm.oHeap; 
     assume COK(xo, xm.oHeap);
     
+assert (
+    (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 12
+      decreases to
+    (xm.oHeap - xm.m.Keys), xo.AMFO, (xo.fields.Keys), 20  
+ ) by {
+  assert m'.oHeap == xm.oHeap;
+  assert m.m.Keys >= m'.m.Keys;
+  assert rm.m.Keys >= m'.m.Keys;
+  assert xm.m.Keys >= m'.m.Keys    ;
+}
+
+    assume xo !in xm.m.Keys;
+    assume xo !in xm.m.Values;
+
+
     rr, rm := Klone_Via_Map(xo, xm);
+
+    assert rm.oHeap == xm.oHeap;
 
     if (a in rm.m.Keys) {
       m := rm;
