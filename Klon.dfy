@@ -1966,6 +1966,68 @@ lemma calidOKFromCalid()
 //     ensures  v in r.ns
 //     ensures  k in r.m.Keys && r.m[k] == v
 //     ensures  COK(v, r.oHeap+r.ns)
+    ensures  k in r.m.Keys
+    ensures  v in r.m.Values
+    ensures  r.m == m[k:=v]
+    ensures  mapLEQ(m, r.m)
+
+  ensures  mapLEQ(m,r.m)
+  ensures  r.m.Keys >= m.Keys + {k}
+//   ensures  m.m.Values >= m'.m.Values + {b}
+  ensures  r.o == o
+  ensures  r.oHeap == oHeap
+
+//     ensures  r.calid()
+//     ensures  r.from(this)
+    // ensures  AllMapEntriesAreUnique(this.m)
+  {
+    var rv := Klon(VMapKV(m,k,v), o, oHeap, ns+{v});
+    rv
+    } //END putin
+
+
+  opaque function putout(k : Object) : (r : Klon)
+    //put k -> v into map, k inside o
+    reads oHeap`fields, oHeap`fieldModes
+    reads k`fields, k`fieldModes
+    reads ns`fields, ns`fieldModes 
+
+//     requires calid()
+//     requires klonVMapOK(m) //lemma can derive from calid()
+// 
+       requires canVMapKV(m,k,k)
+//     requires klonCanKV(this,k,v)
+//     requires AreWeNotMen(k, klonKV(this,k,v))
+// 
+//     requires k  in oHeap
+//     requires k !in m.Keys
+//     requires v !in oHeap
+//     requires v !in ns
+//     requires v !in m.Values
+//     requires COK(k, oHeap)
+//     requires COK(v, oHeap+ns+{v})
+//     requires m.Keys <= oHeap
+//     requires k.allExternalOwners() <= m.Keys
+//     requires v.allExternalOwners() <= oHeap+ns //need to hae proceessed all owners first
+// 
+//     requires (k.owner <= m.Keys) && (mapThruKlon(k.owner, this) == v.owner)
+//     requires mapThruKlonKV(k.AMFO, this, k, v) == v.AMFO
+// 
+//     requires inside(k, o)
+//     requires v.fieldModes == k.fieldModes
+// 
+    // ensures  r == klonKV(this,k,k)
+    // ensures  klonVMapOK(r.m)
+    // ensures  klonVMapOK(m)
+    ensures  r == Klon(VMapKV(m,k,k), o, oHeap, ns)
+
+//     ensures  v in r.ns
+    ensures  k in r.m.Keys && r.m[k] == k 
+
+    ensures  k in r.m.Values
+    ensures  r.m == m[k:=k]
+    ensures  mapLEQ(m, r.m)
+//     ensures  COK(v, r.oHeap+r.ns)
 //     ensures  k in r.m.Keys
 //     ensures  v in r.m.Values
 //     ensures  r.m == m[k:=v]
@@ -1974,9 +2036,10 @@ lemma calidOKFromCalid()
 //     ensures  r.from(this)
     // ensures  AllMapEntriesAreUnique(this.m)
   {
-    var rv := Klon(VMapKV(m,k,v), o, oHeap, ns+{v});
+    var rv := Klon(VMapKV(m,k,k), o, oHeap, ns);
     rv
     } //END putin
+
 
 
 } ///end datatype Klon
@@ -2301,6 +2364,7 @@ assert
   ;
 
 assert klonCanKV(m, a, a);
+
 {
 reveal m.AreWeNotMen();
   assert forall k <- m.m.Keys :: m.AreWeNotMen(k,m);
