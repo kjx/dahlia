@@ -2114,7 +2114,7 @@ method Clone_Via_Map(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //entry point for Clone - clones a according to map m'
   //call with m' empty
-  decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 20 //Clone_Via_Map
+  decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 20 //Klone_Via_Map
 
   requires m'.calid()
   requires a in m'.oHeap  //technically redundant given COKx
@@ -3765,8 +3765,8 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
   //actually does the clone....
   // was the old Clone_Inside_Heap
 //  decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 15 
-  decreases (m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys), 15 
-
+  
+    decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 15 
 
   //this case
   requires inside(a,m'.o)
@@ -5884,8 +5884,9 @@ lemma IHasCalidSheep(r : Klon)
 
 method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   //adds all thers owners of a into the map
-  decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 12
 
+  decreases (m'.oHeap - m'.m.Keys + {a}), a.AMFO, (a.fields.Keys), 12
+  
   requires a !in m'.m.Keys //mustn't have cloned a yet...
   requires COK(a, m'.oHeap)
   requires m'.calid()
