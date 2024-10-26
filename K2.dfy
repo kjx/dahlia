@@ -143,7 +143,6 @@ method Klone_All_Fields(a : Object, b : Object, m' : Klon)
   returns (m : Klon)
   //clone all fields a.n into b.n
   //a should be preexisting (in m'.oHeapl); b should be "new"  in m'.ns
-
   decreases (m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10 //Klone_All_Fields
 // 
 //   requires MPRIME: m'.calid()
@@ -367,6 +366,19 @@ assert ((m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10
   
   print "Klone_Klone_CLone ", fmtobj(a), " calling Klone_All_Owners", fmtown(a.owner) ,"\n";
 
+assume m'.oHeap == m.oHeap; 
+assume m'.m.Keys <= m.m.Keys;
+assert (m'.oHeap - m'.m.Keys) >= (m.oHeap - m.m.Keys);
+var    ohprime := (m'.oHeap - m'.m.Keys);
+var    noprime := (m.oHeap  - m.m.Keys);
+assert ohprime >= noprime;
+assert (ohprime,10 decreases to noprime,5);
+assert ((m'.oHeap - m'.m.Keys),10 decreases to (m.oHeap - m.m.Keys),5);
+
+  assert ((m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 15
+    decreases to 
+      (m.oHeap - m.m.Keys), a.AMFO, (a.fields.Keys), 12);
+
   var rm := Klone_All_Owners(a, m);
 
   assert  rm.o     == m'.o;
@@ -575,10 +587,19 @@ assume CallOK(m.oHeap);
 
 assume m.calid();
 
+
+assume a in m'.m.Keys;
+assume a in m'.oHeap;
+
+assert (
+    (m'.oHeap - m'.m.Keys + {a})
+    decreases to
+      (m.oHeap - m.m.Keys));
+
 assert (
     (m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5 
   decreases to
-    (m.oHeap - m.m.Keys), a.AMFO, (a.fields.Keys), 20);
+    (m.oHeap - m.m.Keys), ofv.AMFO, (ofv.fields.Keys), 20);
 
 
   assert  m.o     == m'.o;
@@ -608,7 +629,9 @@ assume ofv !in m.m.Values;
 
  method Klone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   //adds all thers owners of a into the map
-  decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 12
+  //decreases (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 12
+  decreases (m'.oHeap - m'.m.Keys + {a}), a.AMFO, (a.fields.Keys), 12
+
 // 
 //   requires a !in m'.m.Keys //mustn't have cloned a yet...
 //   requires COK(a, m'.oHeap)
@@ -639,6 +662,8 @@ assume ofv !in m.m.Values;
   assert  mapLEQ(m'.m,xm.m);
   assert  xm.m.Keys >= m'.m.Keys;
 
+  assert  xm.m.Keys == m'.m.Keys;
+
   var xo : Object;
   var rr : Object;
   var oldmks  : set<Object>;  //dont fucking ask
@@ -651,6 +676,7 @@ assume ofv !in m.m.Values;
 
   while ((MX != {}) && (a !in xm.m.Keys))
     decreases MX
+    invariant  MX == a.owner - xm.m.Keys
     invariant  m.oHeap == m'.oHeap == rm.oHeap == xm.oHeap 
     invariant  m.o == rm.o == xm.o == m'.o
     invariant  mapLEQ(m'.m,m.m)
@@ -667,16 +693,33 @@ assume ofv !in m.m.Values;
     assume xm.calid();
     assume xo in xm.oHeap; 
     assume COK(xo, xm.oHeap);
+    assume a in m'.oHeap;
+    assume a in m'.m.Keys;
+    assume a in xm.m.Keys;
+
+    assert m'.oHeap == xm.oHeap;
+
+assert (({1,2,3}) decreases to ({1,3}));
     
+    assert (xm.m.Keys + {a}) > (m'.m.Keys);
+
+
+assert ((xm.m.Keys + {a}) decreases to (m'.m.Keys));
+
+assert (m'.oHeap - m'.m.Keys + {a}
+  decreases to
+    xm.oHeap - xm.m.Keys);
+
+
 assert (
-    (m'.oHeap - m'.m.Keys), a.AMFO, (a.fields.Keys), 12
+    (m'.oHeap - m'.m.Keys) + {a}, a.AMFO, (a.fields.Keys), 12
       decreases to
     (xm.oHeap - xm.m.Keys), xo.AMFO, (xo.fields.Keys), 20  
  ) by {
   assert m'.oHeap == xm.oHeap;
   assert m.m.Keys >= m'.m.Keys;
   assert rm.m.Keys >= m'.m.Keys;
-  assert xm.m.Keys >= m'.m.Keys    ;
+  assert xm.m.Keys >= m'.m.Keys ;
 }
 
     assume xo !in xm.m.Keys;
@@ -685,14 +728,17 @@ assert (
 
     rr, rm := Klone_Via_Map(xo, xm);
 
+    assert rm.m.Keys > xm.m.Keys;    
     assert rm.oHeap == xm.oHeap;
 
     if (a in rm.m.Keys) {
       m := rm;
       b := m.m[a];
-    }  // if a is in m.Keys after clone -- if it got added magically...
+    return;
+    } // a in rm.m.Keys - i.e. randomly done while cloning owners      
 
     MX := MX - rm.m.Keys;
+
     oldmks := xm.m.Keys;
     oldmok := true;
     xm := rm;

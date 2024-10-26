@@ -528,14 +528,15 @@ lemma InversionLove<K,V>(m : map<K,V>, n : map<V,K>)
   assert forall k <- n.Keys :: m[n[k]] == k;
 }
 
-opaque predicate  UniqueMapEntry2<K,V(==)>(m : map<K,V>, k : K) 
+opaque predicate UniqueMapEntry2<K,V(==)>(m : map<K,V>, k : K) 
  requires k in m
 {
   //true
   m[k] !in  (m - {k}).Values  //dodgy UniqueMapEntry //AreWeNotMen
 }
 
-opaque predicate   UniqueMapEntry<K,V(==)>(m : map<K,V>, k : K, v : V := m[k]) 
+opaque predicate UniqueMapEntry<K,V(==)>(m : map<K,V>, 
+          k : K, v : V := assume k in m.Keys;  m[k])
  requires k in m.Keys
 {
   //true
