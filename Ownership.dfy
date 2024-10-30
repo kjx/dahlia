@@ -216,17 +216,17 @@ lemma ownershipIsMonotonic(a : Object, b : Object, c : set<Object>)
 }
 
 
-lemma OwnersAreOutsideFuckers(a : Object, o : Object) 
+lemma OwnersAreOutsideFuckers(a : Object, o : Object)
     requires a.Ready() && a.Valid()
     requires o.Ready() && o.Valid()
-    requires outside(a,o) 
-    ensures  forall oo <- a.allExternalOwners() ::  outside(oo, a)
-    ensures  forall oo <- a.owner :: outside(oo, a)
+    requires outside(a,o)
+    ensures  forall oo <- a.allExternalOwners() ::  outside(oo, o)
+    ensures  forall oo <- a.owner :: outside(oo, o)
+    ensures  forall oo <- a.AMFO  :: outside(oo, o)
 {
     assert a.owner <= a.AMFO;
     assert a in  a.AMFO;
     assert a !in a.owner;
-
 }
 
 
@@ -235,7 +235,7 @@ lemma OwnersAreOutsideFuckers(a : Object, o : Object)
 lemma IAmInsideMyOwnersAndAMFO(a : Object, o : Object) 
     requires a.Ready() && a.Valid()
     requires o.Ready() && o.Valid()
-    requires inside(a,o) 
+    requires inside(a,o)
     ensures  forall oo <- a.AMFO ::  inside(a, oo)
     ensures  forall oo <- a.owner :: inside(a, oo)
 {
