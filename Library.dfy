@@ -190,6 +190,14 @@ lemma AddToEmptySet<T>(t : T)
 
 
 
+
+lemma SetGEQisGTorEQ<T>(left : set<T>, right : set<T>) 
+    requires  left >= right
+    ensures  (left > right) != (left == right)
+{} 
+
+
+
 predicate mapLEQ<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
 {
   (forall k <- left.Keys :: k in right && (left[k] == right[k]))

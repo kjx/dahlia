@@ -184,10 +184,6 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
           assert (this.AMFO <= ({this}+context));
           RVfromCallOK(oo,context);
 
-           
-          
-  
-
           assert (forall x <- owner, xo <- x.AMFO :: xo in x.AMFO);
   
 

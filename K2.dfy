@@ -81,12 +81,16 @@ method Klone_Via_Map(a : Object, m' : Klon)
   if (outside(a,m.o)) {
     print "Klone_Via_Map ", fmtobj(a), " is really outside ", fmtobj(m.o), "so maps to itself (share not clone)\n";
 
+print "gotta setup owners BEFORE callin putin";
+
+
       print "Hey Baby let's CLONE Outside\n";
 
       b := a;
 
-
       print "Yay babhy hyou got that done\n";
+
+
 
 
   print "about to putOutside\n";
@@ -97,7 +101,6 @@ method Klone_Via_Map(a : Object, m' : Klon)
 
   assert m.m.Keys >= m'.m.Keys + {a};
     print "crashy?  washy?\n";
-
 
 print "returnin' from the outsidee case\n";
 
@@ -424,9 +427,9 @@ print "Klone_Klone_Klone ", fmtobj(a), " boodle boodle boodle\n";
   var context := rrm.oHeap+rrm.ns;    ///why haul ns in here??? --- cos this the owners for the clone!  - the clowners!
 
 
-print "CALLING MAKE...";
+print "CALLING FAKE...";
   b := new Object.fake(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick);
-print "BACK FROM MAKE with ",fmtobj(b),"\n";
+print "BACK FROM FAKE with ",fmtobj(b),"\n";
 
 
   assert  rrm.o     == m'.o;
@@ -749,5 +752,151 @@ assert (
 
 
 
+lemma AGoodAddress<K,V>(k : K, m : map<K,V>) 
+  requires k    in m.Keys
+  ensures  m[k] in m.Values
+{}  
+ 
+
+lemma GoodAddresses<K,V>(m : map<K,V>) 
+  ensures forall k <- m.Keys :: m[k] in m.Values
+{}
+
+lemma CallHerPresident(a : Object, m : Klon)
+  requires m.calid()
+  requires a in m.m.Keys
+//  ensures  m.m[a].owner <= m.m.Values
+  {  
+    reveal m.calid();
+    assert m.calid();
+    reveal m.calidMap();
+    assert m.calidMap();
+
+    assert klonVMapOK(m.m);
+
+    assert //from klonVMapOK(m)
+      && (forall k <- m.m.Keys :: k.AMFO <= m.m.Keys)
+      && (forall k <- m.m.Keys :: mapThruVMap(k.AMFO, m.m) == m.m[k].AMFO)
+      && (forall k <- m.m.Keys :: k.owner <= k.AMFO)
+      && (forall k <- m.m.Keys :: k.owner <= m.m.Keys)
+    ;
+
+    assert (forall k <- m.m.Keys :: k.owner <= k.AMFO <= m.m.Keys);
+
+    // forall k : Object | k in m.m[a].owner 
+    //   ensures ( k in m.m.Values ) {
+    //     assert a in m.m.Keys;
+    //     assert k in m.m[a].owner;        
+    //     AGoodAddress(a, m.m);
+    //     assert m.m[a] in m.m.Values;
+    //     assert k in m.m.Values;
+    //   }
+    
+    forall k : Object | k in m.m.Keys
+      ensures ( m.m[k] in m.m.Values ) {
+        assert k in m.m.Keys;
+        AGoodAddress(k, m.m);      
+        assert m.m[k] in m.m.Values;
+      }
+    
+    assert a       in m.m.Keys;
+    assert a.owner <= m.m.Keys;
+    assert forall ao <- a.AMFO :: m.m[ao] in m.m[a].AMFO;
+  //  assert mapThruKlon(a.owner, m) == m.m[a].owner; 
+
+    mapThruKlonPreservesSubsets(a.AMFO, m.m.Keys, m);
+
+    assert mapThruKlon(m.m.Keys, m) == m.m.Values;
+
+    mapThruKlonPreservesSubsets(a.owner, a.AMFO, m);
+    mapThruKlonPreservesSubsets(a.owner, m.m.Keys, m);
+
+    assert mapThruKlon(a.owner, m) <= m.m.Values;
 
 
+
+//    assert m.m[a].owner <= m.m.Values;
+
+    // 
+    //   && (forall k <- m.m.Keys :: mapThruVMap(k.owner, m.m) == m.m[k].owner)
+    // ;
+
+  }
+
+
+
+lemma HeyOwner(a : Object, m : Klon)
+  requires m.calid()
+  requires a in m.m.Keys
+{
+  var b := m.m[a];
+
+    reveal m.calid();
+    assert m.calid();
+    reveal m.calidMap();
+    assert m.calidMap();
+
+    assert klonVMapOK(m.m);
+
+    assert //from klonVMapOK(m)
+      && (forall k <- m.m.Keys :: k.AMFO <= m.m.Keys)
+      && (forall k <- m.m.Keys :: mapThruVMap(k.AMFO, m.m) == m.m[k].AMFO)
+      && (forall k <- m.m.Keys :: k.owner <= k.AMFO)
+      && (forall k <- m.m.Keys :: k.owner <= m.m.Keys)
+    ;
+
+    assert (forall k <- m.m.Keys :: k.owner <= k.AMFO <= m.m.Keys);
+
+
+// assert a.AMFO == flattenAMFOs(a.owner) + {a};
+// assert mapThruKlon({a},m) == {b};
+
+}
+
+lemma MapFlat(os : set<Object>, m : Klon)
+  requires os <= m.m.Keys
+  requires flattenAMFOs(os) <= m.m.Keys;
+{
+   var mos  := mapThruKlon(os, m);
+   var fmos := flattenAMFOs(mos);
+
+   var fos  := flattenAMFOs(os);
+   var mfos := mapThruKlon(fos, m);
+
+//   assert fmos == mfos;
+
+   var xmos := set o <- os :: m.m[o];
+   assert xmos == mos;
+
+   var xfos := os + (set o <- os, oo <- o.AMFO :: oo);
+   assert xfos == fos;
+
+   var fxmos := flattenAMFOs(xmos);
+   assert fxmos == fmos;
+
+   var mxfos := mapThruKlon(xfos, m);
+   assert mxfos == mfos;
+
+   var xmxfos :=  set o <- xfos :: m.m[o];
+   assert xmxfos == mfos;
+
+   var xfxmos := xmos + (set o <- xmos, oo <- o.AMFO :: oo);
+//   assert xfxmos == xmxfos;
+   
+//assert fxmos == mxfos;
+
+}
+
+
+lemma vmapOKowners(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
+  requires ks <= m.Keys
+  requires klonVMapOK(m, ks)
+  ensures 
+    && (forall k <- ks :: k.owner <= m.Keys)
+    && (forall k <- ks :: mapThruVMap(k.owner, m) == m[k].owner)
+{
+  assume
+  && (forall k <- ks :: k.owner <= m.Keys)
+  && (forall k <- ks :: mapThruVMap(k.owner, m) == m[k].owner)  
+  ;
+}
