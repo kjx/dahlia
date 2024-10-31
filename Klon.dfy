@@ -37,7 +37,7 @@ reads v`fieldModes
 
   //&& (k.owner <= k.AMFO)  //HUH?
   && (k.owner <= c'.m.Keys+{k})  
-  //&& (mapThruVMapKV(k.owner, c'.m, k, v) == v.owner) //KJXOWNERS
+  && (mapThruVMapKV(k.owner, c'.m, k, v) == v.owner) //KJXOWNERS
   && (k.AMFO <= c'.m.Keys+{k})  
   && (mapThruVMapKV(k.AMFO, c'.m, k, v) == v.AMFO)  
 
@@ -93,8 +93,8 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
   && (forall x <- ks :: x.owner <= m.Keys)
 
 //KJXOWNERS
-//   && (forall k <- ks :: k.owner <= m.Keys)
-//   && (forall k <- ks :: mapThruVMap(k.owner, m) == m[k].owner)  
+  && (forall k <- ks :: k.owner <= m.Keys)
+  && (forall k <- ks :: mapThruVMap(k.owner, m) == m[k].owner)  
 
 
 //field values? //KJX
@@ -259,7 +259,13 @@ assert forall x <- m1.m.Keys :: m1.m[x] == (
          else (assert x == k; assert (outside(x,m0.o)) ==> (m1.m[x] == x == k == v); (m1.m[x])));
 
 assert forall x <- m1.m.Keys :: (not(inside(x,m1.o)) ==> (m1.m[x] == x));
-        assert m1.calidMap();
+
+assert forall x <- m0.m.Keys, oo <- x.owner :: m0.m[oo] in m0.m[x].owner;
+assert m1.m[k] == v;
+assert forall oo <- k.owner :: m1.m[oo] in v.owner;
+assert forall x <- m1.m.Keys, oo <- x.owner :: m1.m[oo] in m1.m[x].owner;
+assert forall x <- m1.m.Keys, oo <- x.AMFO :: m1.m[oo] in m1.m[x].AMFO;
+    assert m1.calidMap();
 
 //calidSheepKV
     reveal m0.AreWeNotMen();
@@ -1846,8 +1852,8 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
     && AllMapEntriesAreUnique(m)
     && klonVMapOK(m) // potentiall should expand this out?
     && (forall x <- m.Keys :: (not(inside(x,o)) ==> (m[x] == x)))
-    //&& (forall x <- m.Keys, oo <- x.owner :: m[oo] in m[x].owner) //KJXOWNERS
-    && (forall x <- m.Keys, oo <- x.AMFO :: m[oo] in m[x].AMFO)
+    && (forall x <- m.Keys, oo <- x.owner :: m[oo] in m[x].owner) //KJXOWNERS
+    && (forall x <- m.Keys, oo <- x.AMFO  :: m[oo] in m[x].AMFO)
   }
 
   opaque predicate  calidSheep2()
@@ -2550,9 +2556,8 @@ assert  //James wonders if this shojuldb'e be AFTER the utinside?  ut perhas tha
   && (a.AMFO <= m.m.Keys+{a})                                              
 //  && (mapThruVMapKV(a.AMFO, m.m, a, a) == a.AMFO)
 //  && (a.owner <= a.AMFO)
-//  && (a.owner <= m.m.Keys+{a})  
-//  && (mapThruVMapKV(a.owner, m.m, a, a) == a.owner)//KJXOWNERS
-
+    && (a.owner <= m.m.Keys+{a})  
+  
   && (a.fieldModes == a.fieldModes)
 by {
         reveal m.calid();
@@ -2583,10 +2588,14 @@ assert a.Ready() && a.Valid();
 assert m.o.Ready() && m.o.Valid();
 
 OwnersAreOutsideFuckers(a, m.o);
-assert
-  && forall oo <- a.owner :: outside(oo,m.o)
-  && forall oo <- a.AMFO  :: outside(oo,m.o)
-  && forall oo <- a.allExternalOwners() :: outside(oo,m.o)
+
+assert NIGEL:
+  // && forall oo <- a.owner :: outside(oo,m.o)
+  // && forall oo <- a.AMFO  :: outside(oo,m.o)
+  // && forall oo <- a.allExternalOwners() :: outside(oo,m.o)
+  // && (mapThruVMap(a.owner, m.m) == a.owner)
+  // && (mapThruVMapKV(a.owner, m.m, a, a) == a.owner)//KJXOWNERS
+  && (mapThruVMapKV(a.AMFO, m.m, a, a)  == a.AMFO)
 //  && forall oo <- a.AMFO  :: m.m[oo] == oo
   by {
         reveal m.calid();
@@ -2602,10 +2611,54 @@ assert
 
         assert forall oo <- a.allExternalOwners()  :: oo in m.m.Keys;
         assert forall oo <- a.allExternalOwners()  :: m.m[oo] == oo;
+        assert forall oo <- a.owner :: outside(oo,m.o);
+        assert forall oo <- a.owner :: m.m[oo] == oo;
+        assert (set oo <- a.owner :: m.m[oo]) == a.owner;
+        assert mapThruVMap(a.owner, m.m) == a.owner;
+
+        assert forall oo <- a.AMFO :: (oo == a) || outside(oo,m.o);
+        assert forall oo <- a.AMFO :: (oo == a) || m.m[oo] == oo;
+        assert (set x <- {a} :: x) == {a};
+        assert (set x <- (a.AMFO - {a}) :: m.m[x]) ==  (a.AMFO - {a});
+
+        assert mapThruVMapKV(a.AMFO, m.m, a, a) == a.AMFO;
+
+        assert forall oo <- a.AMFO  :: outside(oo,m.o);
+        assert a.owner <= a.AMFO;
+        assert forall oo <- a.owner :: outside(oo,m.o);
+
+  assert forall oo <- a.owner :: outside(oo,m.o);
+  assert forall oo <- a.AMFO  :: outside(oo,m.o);
+  assert forall oo <- a.allExternalOwners() :: outside(oo,m.o);
+  assert (mapThruVMap(a.owner, m.m) == a.owner);
+  assert a !in a.owner;
+  IfImNotTheExtraKeyTheUnderlyingMapIsFine(a.owner, m.m, a, a);
+  assert (mapThruVMapKV(a.owner, m.m, a, a) == a.owner);
+
+  assert (mapThruVMapKV(a.AMFO, m.m, a, a) == a.AMFO);
+
   }
 
 
-assert klonCanKV(m, a, a);
+
+  assert DEREK: (mapThruVMapKV(a.AMFO, m.m, a, a)  == a.AMFO)
+    by { reveal NIGEL; }
+
+assert klonCanKV(m, a, a) by {
+
+  reveal DEREK;
+  //body of klonCanKN expanded inline
+  assert canVMapKV(m.m, a, a);
+  assert (a in m.oHeap);
+  assert (if (a==a) then (a in m.oHeap) else (a !in m.oHeap));
+  assert (a.owner <= m.m.Keys+{a});
+  assert (mapThruVMapKV(a.owner, m.m, a, a) == a.owner);
+  assert (a.AMFO <= m.m.Keys+{a});
+  assert (mapThruVMapKV(a.AMFO, m.m, a, a) == a.AMFO);
+  assert (a.fieldModes == a.fieldModes);
+
+
+}
 
 {
   reveal m.calidSheep();
@@ -4809,7 +4862,7 @@ assert (mapThruKlonKV(a.owner, rm, a, b) == b.owner);
 assert (mapThruKlonKV(a.owner, rrm, a, b) == b.owner); 
 
 //KJXOWNERS
-//assert (mapThruKlon(a.owner, km) == b.owner); 
+assert (mapThruKlon(a.owner, km) == b.owner); 
 
 assert a.AMFO == flattenAMFOs(a.owner) + {a};
 
@@ -4825,7 +4878,7 @@ assert amxo <= km.m.Keys;
 assert amxo == flattenAMFOs(a.owner);
 assert AllTheseOwnersAreFlatOK(amxo);
 assert other == mapThruKlon(a.owner, km);
-//assert other == b.owner;  //KJXOWNERS...
+assert other == b.owner;  //KJXOWNERS...
 assert  omxo == mapThruKlon(amxo, km);
 
 //  // //assume false;
@@ -4894,8 +4947,8 @@ assert mapThruKlonKV(a.AMFO, rrm, a, b) == b.AMFO;
   MapOKFromCalid(xm);
   assert xm.calid();
 
-  //assert mapThruKlonKV(a.owner, xm, a, b) == b.owner;  //KJXOWNERS
-  assert mapThruKlon(a.AMFO, xm) == b.AMFO;
+  assert mapThruKlon(a.owner, xm) == b.owner;  //KJXOWNERS
+  assert mapThruKlon(a.AMFO, xm)  == b.AMFO;
 
   print "Clone_CLone_Clone map updated ", fmtobj(a), ":=", fmtobj(b) ,"\n";
 
@@ -5410,13 +5463,13 @@ print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
 
           assert klonVMapOK(m.m);
           assert m.m[a] == b;
-//          assert (mapThruKlon(a.owner, m) == b.owner);  //KJXOWNERS mapthru KLon.
+          assert (mapThruKlon(a.owner, m) == b.owner);  //KJXOWNERS mapthru KLon.
           assert m.m[ofv] == rfv;
-//          assert mapThruKlon(ofv.owner, m) == rfv.owner;  //KJXOWNERS
+          assert mapThruKlon(ofv.owner, m) == rfv.owner;  //KJXOWNERS
 
-          // assert b.owner == rfv.owner; //WORK THE FOKKA?
+          assert b.owner == rfv.owner; //WORK THE FOKKA?
 
-          assume b.owner == rfv.owner;   //KJXOWNERS
+          //assume b.owner == rfv.owner;   //KJXOWNERS
 
         assert AssignmentCompatible(b, b.fieldModes[n], rfv);
 
@@ -5919,8 +5972,8 @@ lemma  mapThruKlonPreservesAMFO(less: set<Object>, other : set<Object>, m : Klon
   ensures  forall l <- less :: (set oo <- l.AMFO :: m.m[oo]) == m.m[l].AMFO
 
   //KJXOWNERS - need to add to clone map invariants...
-  // ensures  forall l <- less :: l.owner <= m.m.Keys
-  // ensures  forall l <- less :: mapThruKlon(l.owner,m) == m.m[l].owner
+  ensures  forall l <- less :: l.owner <= m.m.Keys
+  ensures  forall l <- less :: mapThruKlon(l.owner,m) == m.m[l].owner
 
   {
   reveal m.calid();
@@ -5942,12 +5995,14 @@ lemma  mapThruKlonPreservesAMFO(less: set<Object>, other : set<Object>, m : Klon
 
 lemma  mapThruKlonPreservesAMFO2(self : Object, other : Object, m : Klon)
   requires m.calid()
-  requires {self}  <= m.m.Keys //picky, picky
+  requires {self}     <= m.m.Keys //picky, picky
+  requires self.owner <= m.m.Keys //ditto
   requires self.AMFO  <= m.m.Keys //should come from the aboce via calid, calidMap, vmapOK, etc
+
 
   requires {other} == mapThruKlon({self}, m)
 
-//  ensures  mapThruKlon(self.owner, m) == other.owner  //KJXOWNERS
+  ensures  mapThruKlon(self.owner, m) == other.owner  //KJXOWNERS
   ensures  mapThruKlon(self.AMFO, m)  == other.AMFO
 
   {
@@ -5967,6 +6022,7 @@ lemma  mapThruKlonPreservesAMFO2(self : Object, other : Object, m : Klon)
 
   assert other == m.m[self];
   mapThruKlonPreservesAMFO({self},{other},m);
+  assert mapThruKlon(self.owner, m) == other.owner;
   assert mapThruKlon(self.AMFO, m)  == other.AMFO;
   }
 
