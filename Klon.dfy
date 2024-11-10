@@ -1064,14 +1064,14 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
       reveal c.calidObjects();
   } else {
       reveal c.calid();
-      assert c.calid();
-      assert 
+      assert  {:contradiction} c.calid();
+      assert {:contradiction}
         && calidObjects()
         && calidOK()
         && calidMap()
         && calidSheep()
         ;
-        assert c.calidObjects();
+        assert  {:contradition} c.calidObjects();
       reveal c.calidObjects();    
   }
 
