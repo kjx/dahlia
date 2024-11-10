@@ -810,7 +810,8 @@ lemma roundTrip1(k : Object, v : Object, m : Klon)
     reveal AreWeNotMen();
     assert (forall x <- m.Keys  :: (not(inside(x,o)) ==> (m[x] == x)));
     assert (forall x <- m.Keys  :: (not(inside(x,o)) ==> (rv.m[x] == x)));
-    assert (forall x <- {k} :: (not(inside(x,o)) ==> (rv.m[x] == x)));
+    //assert (forall x <- {k} ::     (not(inside(x,o)) ==> (rv.m[x] == x)));
+          //above line is contradiction & wrong - we have inside(k,o) && k !in m.Keys ... 
     assert (forall x <- m.Keys+{k} :: (not(inside(x,o)) ==> (rv.m[x] == x)));
     assert rv.m.Keys == m.Keys + {k};
     assert rv.m.Keys == rv.m.Keys;
@@ -967,6 +968,22 @@ lemma roundTrip1(k : Object, v : Object, m : Klon)
     rv
     } //END putInside
   
+//
+//
+//
+
+
+
+lemma foo() {}
+
+
+
+
+
+
+
+
+
 opaque predicate FUKKA(d : Klon)
   reads d.m.Keys`fieldModes
   reads d.m.Values`fieldModes
@@ -1042,17 +1059,25 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
 
   ensures  d.calidObjects()
 {
+  
   if (c.calidObjects()) {
       reveal c.calidObjects();
   } else {
       reveal c.calid();
       assert c.calid();
-      assert c.calidObjects();
+      assert 
+        && calidObjects()
+        && calidOK()
+        && calidMap()
+        && calidSheep()
+        ;
+        assert c.calidObjects();
       reveal c.calidObjects();    
   }
 
   reveal c.calidObjects();
-
+  
+  assert c.calidObjects();
   assert c.o in c.oHeap;
   assert c.m.Keys <= c.oHeap;
   assert c.ns !! c.oHeap;
@@ -6265,7 +6290,8 @@ lemma IHasCalidMap(r : Klon)
   requires AllMapEntriesAreUnique(r.m)
   requires klonVMapOK(r.m)
   requires (forall x <- r.m.Keys :: (not(inside(x,r.o)) ==> (r.m[x] == x)))
-  requires (forall x <- r.m.Keys, oo <- x.AMFO :: r.m[oo] in r.m[x].AMFO)
+  requires (forall x <- r.m.Keys, oo <- x.owner :: r.m[oo] in r.m[x].owner) //KJXOWNERS
+  requires (forall x <- r.m.Keys, oo <- x.AMFO  :: r.m[oo] in r.m[x].AMFO)
 
   ensures  r.calidMap()
   {
@@ -6275,7 +6301,8 @@ lemma IHasCalidMap(r : Klon)
           && AllMapEntriesAreUnique(r.m)
           && klonVMapOK(r.m) // potentiall should expand this out?
           && (forall x <- r.m.Keys :: (not(inside(x,r.o)) ==> (r.m[x] == x)))
-          && (forall x <- r.m.Keys, oo <- x.AMFO :: r.m[oo] in r.m[x].AMFO)
+          && (forall x <- r.m.Keys, oo <- x.owner :: r.m[oo] in r.m[x].owner) //KJXOWNERS
+          && (forall x <- r.m.Keys, oo <- x.AMFO  :: r.m[oo] in r.m[x].AMFO)
           ;
         reveal r.calidMap();
         assert r.calidMap();

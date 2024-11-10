@@ -44,9 +44,47 @@ predicate directlyInside(part : Object, whole : Object) : (rv : bool)
  }
 
 
- 
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// generalised verisons as required by "cut" -- hmm I feel unconvined by this
+////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////
+
+predicate ownerInsideOwner(partO : Owner, wholeO : Owner) 
+{
+  forall p <- partO :: exists w <- wholeO :: inside(p, w)
+}
+
+lemma BLURareCUNTS(partO : Owner, wholeO : Owner) 
+  requires ownerInsideOwner(partO, wholeO) 
+  ensures  not(partO !! wholeO)
+  ensures  flattenAMFOs(partO) >= flattenAMFOs(wholeO) 
+{
+
+}
+
+lemma InsideToOwners(part : Object, whole : Object)
+ ensures inside(part,whole) == ownerInsideOwner({part}, {whole})
+{
+
+}
 
 
+//pretty nice version... {:Mon18Dec} 
+lemma transitiveInsideOwners(a : Owner, b : Owner, c : Owner)
+  // requires a != b
+  // requires b != c
+  // requires c != a
+  //requires a.Valid() && b.Valid() && c.Valid()
+  //requires forall o <- {a, b, c} :: o.region.Heap?
+  //equires a.Ready() && b.Ready() && c.Ready()
+
+  requires forall o <- (a + b + c) :: o.Ready()
+  requires ownerInsideOwner(a,b)
+  requires ownerInsideOwner(b,c)
+  ensures  ownerInsideOwner(a,c)
+{}
 
 ///kjx 1.16 am Mon 27 May 2024
 ///this also says: make world and owner, yesm bvut have ONLY ONE suchobject
@@ -72,7 +110,9 @@ lemma PointingLemma(f : Object, t : Object)
 ///needs to be consistent up the hierarcy 
   
 
-
+lemma MOREreffing(f : Object, t : Object)
+  ensures(refOK(f,t) ==> insideOwner(f, t))
+{}
 
 
 
@@ -160,13 +200,13 @@ lemma insideSomeIndirectOwner(a : Object, b : Object, c : Object)
 {
   if (not(inside(b,c)))   //proof by contradiction...
      {
-      assert not( b.AMFO >= c.AMFO );   //not entirely sure about all this but...
-      assert c !in b.AMFO;
-      assert a.AMFO == b.AMFO + {a};
-      assert c !in a.AMFO;
-      assert not( a.AMFO >= c.AMFO );
-      assert not(inside(a,c));
-      assert false;
+      assert {:contradiction}  not( b.AMFO >= c.AMFO );   //not entirely sure about all this but...
+      assert {:contradiction} c !in b.AMFO;
+      assert {:contradiction} a.AMFO == b.AMFO + {a};
+      assert {:contradiction} c !in a.AMFO;
+      assert {:contradiction} not( a.AMFO >= c.AMFO );
+      assert {:contradiction} not(inside(a,c));
+      assert {:contradiction} false;
      }
    assert inside(b,c);
 }

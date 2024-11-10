@@ -544,7 +544,7 @@ opaque predicate UniqueMapEntry2<K,V(==)>(m : map<K,V>, k : K)
 }
 
 opaque predicate UniqueMapEntry<K,V(==)>(m : map<K,V>, 
-          k : K, v : V := assume k in m.Keys;  m[k])
+          k : K, v : V := assume {:axiom} k in m.Keys;  m[k])
  requires k in m.Keys
 {
   //true
