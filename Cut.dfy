@@ -128,7 +128,7 @@ CutIsCut2(cut : Object, tree : set<Object>, trunk : set<Object>, branch : set<Ob
             // InsideIsHeap(t, cut);
             assert not(ownerInsideOwner(t.owner, {cut})  && t != cut  );
             assert not(ownerInsideOwner(t.owner, {cut})) || t == cut;
-            JimmySavilleIsAPaedo(f,t,cut,tree,trunk,branch);
+    //        JimmySavilleIsAPaedo(f,t,cut,tree,trunk,branch);
             assert t == cut; 
           }
          } 
@@ -184,69 +184,71 @@ CutIsCut2(cut : Object, tree : set<Object>, trunk : set<Object>, branch : set<Ob
 
 //attempt at proof by contradiction
 //1am Sun 17 Dec, this seems to work., and prove waht we want? Kinda?
-lemma JimmySavilleIsAPaedo(f : Object, t : Object, cut : Object, tree : set<Object>, trunk : set<Object>, branch : set<Object>)
-  requires cut in tree
-  // requires branch == set o <- tree |     inside(o,cut)  :: o
-  // requires trunk ==  set o <- tree | not(inside(o,cut)) :: o
-  // requires tree == branch + trunk + {}
-  // requires branch !! trunk
-
-  requires f in tree
-  requires t in tree
-
-  // requires f.owner.Heap?
-  // requires t.owner.Heap?
-  // requires cut.owner.Heap?
-
-  //  requires f.Valid() && t.Valid() && cut.Valid()
-  requires f.Ready() && t.Ready() && cut.Ready()
-  requires inside(t, cut)
-  requires not(ownerInsideOwner(t.owner, {cut}))
-
-  // requires OutgoingReferencesAreInTheseObjects(tree)
-  // requires StandaloneObjectsAreValid(tree)
- 
-  requires f != t //&& f != cut //&& t != cut
-  /// requires OutgoingReferencesAreInTheseObjects(tree)
-  //
- 
-  ensures t == cut
-{
-
-  // assert t.owner.Heap?;
-  // assert inside(t, t.owner); //duh. but not sure ir it really cattures what we most want
-
-  assert ownerInsideOwner({t}, t.owner); //see abnove comment
-
-  if (t == cut)
-   { assert inside(t, cut); return; }
-
-  assert t != cut;
-
-//  if (t.owner == cut)    { assert inside(t, cut); return; }
-
-if (inside(t,cut)) { return; }
-
-
-  assert t != cut;
-//  assert t.owner != {cut};  //ALOBST CERTIAWEON
-
-  if (ownerInsideOwner (t.owner, {cut}))
-        { transitiveInsideOwners({t}, t.owner, {cut});
-           assert inside(t, cut); return; }
-//  else {
-// assert ! (inside(t, cut)); return; }
-   
-
-//deleting all the following linese saves - 3 seconds!   
+// lemma JimmySavilleIsAPaedo(f : Object, t : Object, cut : Object, tree : set<Object>, trunk : set<Object>, branch : set<Object>)
+//   requires cut in tree
+//   requires branch == set o <- tree |     inside(o,cut)  :: o
+//   requires trunk ==  set o <- tree | not(inside(o,cut)) :: o
+//   requires tree == branch + trunk + {}
+//   requires branch !! trunk
+// 
+//   requires f in tree
+//   requires t in tree
+// 
+//   // requires f.owner.Heap?
+//   // requires t.owner.Heap?
+//   // requires cut.owner.Heap?
+// 
+//   //  requires f.Valid() && t.Valid() && cut.Valid()
+//   requires f.Ready() && t.Ready() && cut.Ready()
+//   requires inside(t, cut)
+//   requires not(ownerInsideOwner(t.owner, {cut}))
+// 
+//   // requires OutgoingReferencesAreInTheseObjects(tree)
+//   // requires StandaloneObjectsAreValid(tree)
+//  
+//   requires f != t //&& f != cut //&& t != cut
+//   /// requires OutgoingReferencesAreInTheseObjects(tree)
+//   //
+//  
+//   ensures t == cut
+// {
+// 
+//   // assert t.owner.Heap?;
+//   // assert inside(t, t.owner); //duh. but not sure ir it really cattures what we most want
+// 
+//   assert ownerInsideOwner({t}, t.owner); //see abnove comment
+// 
+//   if (t == cut)
+//    { assert inside(t, cut); return; }
+// 
+//   assert t != cut;
+// 
+// //  if (t.owner == cut)    { assert inside(t, cut); return; }
+// 
+// if (inside(t,cut)) { return; }
+// 
+// 
+//   assert t != cut;
+// //  assert t.owner != {cut};  //ALOBST CERTIAWEON
+// 
+//   if (ownerInsideOwner (t.owner, {cut}))
+//         { transitiveInsideOwners({t}, t.owner, {cut});
+//            assert inside(t, cut); return; }
+// //  else {
+// // assert ! (inside(t, cut)); return; }
+//    
+// 
+// // deleting all the following linese saves - 3 seconds!   
 //  assert t != cut;
-//  assert t.owner != cut;
-//  assert not(inside (t.owner, cut));
-
-// assert ! (inside (t.owner, cut)) && t != cut ==> ! (inside(t, cut));
-
+//  assert flattenAMFOs(t.owner) != cut.AMFO;
+//  assert not(ownerInsideOwner (t.owner, {cut}));
+// 
+// assert ! (ownerInsideOwner (t.owner, {cut})) && t != cut ==> ! (inside(t, cut));
+// 
 // assert ! (inside(t, cut));
-}
+// 
+// 
+// }
 
 lemma {:vcs_split_on_every_assert}
 CuttyOne(cut : Object, tree : set<Object>, trunk : set<Object>, branch : set<Object>)
