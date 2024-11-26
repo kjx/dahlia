@@ -78,15 +78,18 @@ lemma EVILisCompatibleWithAnything(o : Object, v : Object)
 //I know it's perverse, but titlecase "Object" (and "Class") aren't reserved in dafny
 //
 class Object { 
-  var nick : string //nickname
+
   const owner : Owner//actual "dynamic" Owner owner of this object
-     //it's changed to a var now so lots of comoplaints.
-     //fuck should I change it back?  or not? - no point in bheing VAR while AMFO is CONST!
+  const AMFO  : Owner //All MY FUCKING Owner  (aka All My Flat Owner:-)
+
+  const bound : Owner //movement bound - stands in for explcit owner parameters
+  const AMFB  : Owner //flattened bound 
+
   var   fields     : map<string,Object>//field values. uninit fields have no entries
   var   fieldModes : map<string,Mode>//Mode of each field name -  note, static! - would be statically known by any methods
     //probably also has to go to var to get to typestate. GRRR. 
 
-  const AMFO : Owner //All MY FUCKING Owner  (aka All My Flat Owner:-)
+  var nick : string //nickname
 
  
 lemma triceratops(aa : set<Object>, bb : set<Object>, cc : set<Object>) 
@@ -115,7 +118,7 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
 }
 
 
-  constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string) 
+  constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo) 
     requires forall o <- oo :: o.Ready()
     requires CallOK(oo, context)
     requires CallOK(context) //KJX is this redundant Or wouidl it be redundat the other way around???
@@ -127,11 +130,16 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
     //what sgoiuld they be?
 
     requires CallOK(flattenAMFOs(oo), context) //KJX is this right?
+    requires ownerInsideOwner(oo,mb)
 
     ensures owner == oo 
+    ensures AMFO == flattenAMFOs(oo) + {this}
+    ensures bound == mb
+    ensures AMFB == flattenAMFOs(mb) + {this}  //HMM dunno if "this" should be here, but...
+  
     ensures fieldModes == ks
     ensures fields == map[] 
-    ensures AMFO == flattenAMFOs(oo) + {this}
+
     ensures this  in AMFO
     ensures this !in owner
 
@@ -152,11 +160,14 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
 
   { 
     owner := oo;
+    AMFO  := flattenAMFOs(oo) + {this};
+    bound := mb;
+    AMFB  := flattenAMFOs(mb) + {this};
+  
     fieldModes := ks;
     fields := map[];
-    AMFO := flattenAMFOs(oo) + {this};
     nick := name;
-    new;   
+    new; 
 
 
     assert fieldModes == ks;
@@ -243,50 +254,17 @@ assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);
 
 
 
-  constructor fake(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string) 
-//     requires forall o <- oo :: o.Ready()
-//     requires CallOK(oo, context)
-//     requires CallOK(context) //KJX is this redundant Or wouidl it be redundat the other way around???
-//     // requires AllTheseOwnersAreFlatOK(oo)  //hmm? what would this mean?
-//     //requires CallOK({oo}+oo.AMFO, context)
-// 
-//     //KJX shouldn't there be some topological restriction on where or when
-//     //you can create new objects/contexts / regions?
-//     //what sgoiuld they be?
-// 
-//     requires CallOK(flattenAMFOs(oo), context) //KJX is this right?
-// 
-//     ensures owner == oo 
-//     ensures fieldModes == ks
-//     ensures fields == map[] 
-//     ensures AMFO == flattenAMFOs(oo) + {this}
-//     ensures this  in AMFO
-//     ensures this !in owner
-// 
-//     ensures (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO)
-//     ensures (forall o <-  AMFO :: inside(this, o))
-// 
-//     ensures OwnersValid()
-//     ensures Ready()
-// 
-//                                                                                    
-//     ensures COK(this, context+{this})                  
-//     ensures nick == name
-//   
-//     //ensures CallOK({this} + {oo}+oo.AMFO, {this} + context)
-// 
-//     ensures unchanged( context )
-//     ensures fresh(this)
-
+  constructor fake(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo) 
   {
     owner := oo;
+    bound := mb;
+    AMFO := flattenAMFOs(oo) + {this};
     fieldModes := ks;
     fields := map[];
-    AMFO := flattenAMFOs(oo) + {this};
     nick := name;
     new;   
  
- print "Object.fake() just constructed ", fmtobj(this), "\n";
+    print "Object.fake() just constructed ", fmtobj(this), "\n";
   }
 
 
@@ -432,6 +410,9 @@ predicate OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec}
   && (AMFO == flattenAMFOs(owner) + {this})
   && (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
   && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
+
+  && ownerInsideOwner(owner,bound)
+  && AMFB <= AMFO
   }
 
 
@@ -586,7 +567,7 @@ opaque predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object>
     //&& flattenAMFOs(a.AMFO + {a}) <= (a.AMFO + {a}) //or even this?
 
 predicate OrigBigfoot(os : set<Object>, context : set<Object> := os) 
-//os and the AMFO of every o in os are bound by context
+//os and the AMFO of every o in os are inside the context
 //alternative formulation of AllTheseOwnerAreFlatOK 
 {
   && (os <= context)

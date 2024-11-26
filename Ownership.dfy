@@ -33,17 +33,42 @@ predicate strictlyInside(part : Object, whole : Object) : (rv : bool)
 
 predicate directlyInside(part : Object, whole : Object) : (rv : bool)
  {
-   whole.AMFO == part.allExternalOwners()  //?
+   whole.AMFO == part.allExternalOwners()  //?yeah - what if there are stack owners around?
  }
 
  predicate insideOwner(part : Object, whole : Object) : (rv : bool)
  // is part inside whole's *Owners*, i.e. a peer or inside a peer?
- // reads part, whole 
+ // reads part, whole
+  ensures rv <==> (part.AMFO >= whole.allExternalOwners())
+  ensures rv <==> (whole.allExternalOwners() <= part.AMFO)
+  ensures rv <==> (ownerInsideOwner(part.AMFO, whole.allExternalOwners()))
  {
-   whole.allExternalOwners() <= part.AMFO
+  part.AMFO >= whole.allExternalOwners()
+//    whole.allExternalOwners() <= part.AMFO
+ }
+
+ predicate boundInsideOwner(part : Object, whole : Object) : (rv : bool)
+ // is part's bound inside whole's *Owners*?
+ // reads part, whole
+  ensures rv <==> (part.AMFB >= whole.allExternalOwners())
+  ensures rv <==> (whole.allExternalOwners() <= part.AMFB)
+  ensures rv <==> (ownerInsideOwner(part.AMFB, whole.allExternalOwners()))
+ {
+  part.AMFB >= whole.allExternalOwners()
+//    whole.allExternalOwners() <= part.AMFB
  }
 
 
+
+lemma InsideOwnerVsBound(part : Object, whole : Object, context : set<Object>) 
+  requires COK(part, context)
+  requires COK(whole, context)
+  requires boundInsideOwner(part, whole)
+  ensures  insideOwner(part, whole)
+   {
+    reveal COK();
+
+   }
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
@@ -53,7 +78,8 @@ predicate directlyInside(part : Object, whole : Object) : (rv : bool)
 
 predicate ownerInsideOwner(partO : Owner, wholeO : Owner) 
 {
-  forall p <- partO :: exists w <- wholeO :: inside(p, w)
+//  forall p <- partO :: exists w <- wholeO :: inside(p, w)
+ partO >= wholeO
 }
 
 lemma BLURareCUNTS(partO : Owner, wholeO : Owner) 
@@ -65,7 +91,9 @@ lemma BLURareCUNTS(partO : Owner, wholeO : Owner)
 }
 
 lemma InsideToOwners(part : Object, whole : Object)
- ensures inside(part,whole) == ownerInsideOwner({part}, {whole})
+ ensures inside(part,whole) == ownerInsideOwner(part.AMFO, whole.AMFO)
+ ensures insideOwner(part,whole) == ownerInsideOwner(part.AMFO,whole.allExternalOwners())
+ ensures inside(part,whole) ==> insideOwner(part,whole)
 {
 
 }
@@ -91,16 +119,23 @@ lemma transitiveInsideOwners(a : Owner, b : Owner, c : Owner)
 ///put WORLD in every object's ownershiplist (AMFO alongwith itself)
 ///this this is simply t.owner in f.AMFO
 
-///WORLD could be an object 
-lemma PointingLemma(f : Object, t : Object) 
-//  requires t.owner <= (f.AMFO)
-  requires insideOwner(f, t)
+lemma PointingLemmaOld(f : Object, t : Object) 
+  requires t.owner <= (f.AMFB)
+  requires boundInsideOwner(f, t)
   ensures refOK(f,t)            
 {
-  //KJX is this right?
+  //KJX is this right?4
 
-  assert t.allExternalOwners() <= f.AMFO;
+  assert t.allExternalOwners() <= f.AMFB;
   assert refOK(f,t);
+}
+
+
+lemma PointingLemma(f : Object, t : Object) 
+  requires boundInsideOwner(f, t)
+//    requires ownerInsideOwner(t.AMFO,  f.bound) 
+  ensures  refOK(f,t)            
+{
 }
 
 
@@ -111,8 +146,16 @@ lemma PointingLemma(f : Object, t : Object)
   
 
 lemma MOREreffing(f : Object, t : Object)
-  ensures(refOK(f,t) ==> insideOwner(f, t))
+  ensures(refOK(f,t) <==> (boundInsideOwner(f, t) || (f==t)))
 {}
+
+
+predicate OLDrefOK(f : Object, t : Object) : (rv : bool)
+  // requires ownersOK(f,os) //isthere an AMFO verison of this? //this is snow the AMFO version
+  // requires ownersOK(t,os)
+  // reads f, t//, t`region
+  // reads if (t.region.Heap?) then {t.region.owner} else {}
+{  insideOwner(f,t) }
 
 
 
@@ -120,9 +163,14 @@ predicate refOK(f : Object, t : Object) : (rv : bool)
   // requires ownersOK(f,os) //isthere an AMFO verison of this? //this is snow the AMFO version
   // requires ownersOK(t,os)
   // reads f, t//, t`region
-  // reads if (t.region.Heap?) then {t.region.owner} else {}
-{  insideOwner(f,t) }
-
+    // reads if (t.region.Heap?) then {t.region.owner} else {}
+  // ensures rv <==> (boundInsideOwner(f,t) || (f == t))
+{ // && insideOwner(f,t)
+  // ownerInsideOwner(f.AMFO,t.allExternalOwners())
+  //ownerInsideOwner(part.AMFO, whole.allExternalOwners())
+  //  ownerInsideOwner(f.bound,t.allExternalOwners())
+  boundInsideOwner(f,t) || directlyInside(t,f)
+}
 
 lemma WorldCanFuckItself(f : Object, t : Object)
 //we don't really have "world" any more but if we did...

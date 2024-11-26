@@ -216,8 +216,8 @@ method printmappingIsIsomorphic(m: vmap<Object,Object>, o : Object, os : set<Obj
 function fmtnickset(Y: set<Object>) : string
  reads Y`nick
  {
-   "FUCKOFF"
-//    fmtsetstr( set y <- Y :: y.nick )
+  // "FUCKOFF"
+    fmtsetstr( set y <- Y :: y.nick )
  } 
 
 
@@ -303,13 +303,12 @@ function theOneAndOnly(s: set<string>) : string
 
   
 
-// 
-// function fmtsetstr(Y: set<string>) : string
-//  {
-//   if (Y == {}) then ("") else (
-//       var y : string :| y in Y && (forall z <- Y :: strLEQ(y,z) );
-//       y + " " + fmtsetstr( Y - {y} ) )
-//   } 
+function fmtsetstr(Y: set<string>) : string
+ {
+  if (Y == {}) then ("") else (
+      var y : string :| y in Y && (forall z <- Y :: y < z) ;
+      y + " " + fmtsetstr( Y - {y} ) )
+  } 
 
 
 
@@ -411,6 +410,13 @@ lemma MSSFF(s : set<string>, m : string)
 // by method {
 //  m := minsetstr(s);
 // }
+
+
+
+lemma StringLEQ(itself : string)
+ ensures strLEQ(itself,itself)
+{}
+
 
 method minsetstr(s : set<string>) returns (m : string)
   requires |s| > 0
