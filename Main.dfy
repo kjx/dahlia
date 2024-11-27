@@ -11,7 +11,25 @@ const protoTypes : map<string, Mode> :=
          ["fucker" := Evil]
 
 
+method Main(s : seq<string>) 
+{
+  print "Main()\n";
 
+ if ((|s| > 1) && (|s[1]| > 0)) {
+
+  print "xxx", (s[1][0]), "xxx\n";
+
+   match (s[1][0]) {
+     case '1' =>  Main1();
+     case '2' =>  Main2();
+     case '3' =>  Main3();
+     case '4' =>  Main4();     
+     case _ => {}
+ }
+
+  print "Exit, pursued by a bear\n";
+ }
+}
 
 method {:verify false} Main1() {
 
@@ -169,7 +187,7 @@ print "\nDone\n";
 
 
 
-method {:verify false} Main() {
+method {:verify false} Main2() {
 
 print "main showing RefOK etc\n";
   
@@ -516,6 +534,175 @@ print "\nDone\n\n";
 
 
 
+} //end Main3
+
+//by Rustan Leino - 
+  function natToString(n: nat): string {
+    match n
+    case 0 => "0" case 1 => "1" case 2 => "2" case 3 => "3" case 4 => "4"
+    case 5 => "5" case 6 => "6" case 7 => "7" case 8 => "8" case 9 => "9"
+    case _ => natToString(n / 10) + natToString(n % 10)
+  }
+
+method {:verify false} Main4() {
+
+print "long and thin study of bounds\n";
+  
+var t := new Object.make(protoTypes, {}, {}, "t");  //top;
+
+print "   t\n";
+
+var depth  : nat := 5;
+var prev   := t;
+var os := {t};
+var oq := [t];
+
+for i := 0 to depth 
+{
+  var spine := new Object.make(protoTypes, {prev}, os, "o"+natToString(i));
+  var peer  := new Object.make(protoTypes, {prev}, os, "p"+natToString(i));
+  prev := spine;
+
+  os := os + {spine, peer};
+  oq := oq + [spine, peer];
 }
 
+print "Ownership - Directly Inside =========================\n\n";
+
+      for i := 0 to |oq|
+       {
+        print oq[i].nick;
+//         printobj(oq[i]);
+         print " owns ";
+
+         for j := 0 to |oq|
+{
+         print (if (directlyInside(oq[j],oq[i])) then (oq[j].nick+" ") else "");
+}
+         print "\n";
+
+       } 
+  print "\n\n";
+
+
+print "Owners & Bound =========================\n\n";
+
+      for i := 0 to |oq|
+       {
+        print oq[i].nick;
+//         printobj(oq[i]);
+
+         print " owner=";
+         for j := 0 to |oq|
+         {
+         print (if (directlyInside(oq[i],oq[j])) then (oq[j].nick+" ") else "");
+         }
+
+         print " bound=";
+         for j := 0 to |oq|
+         {
+         print (if (directlyBounded(oq[i],oq[j])) then (oq[j].nick+" ") else "");
+         }         
+
+         print "\n";
+
+       } 
+  print "\n\n";
+
+
+
+
+// 
+// 
+// print "Ownership - Directly Inside =========================\n\n";
+// 
+//       for i := 0 to |oq|
+//        {
+//         print oq[i].nick;
+// //         printobj(oq[i]);
+//          print "  ";
+// 
+//          for j := 0 to |oq|
+// {
+//          print (if (directlyInside(oq[i],oq[j])) then (oq[i].nick+"<<"+oq[j].nick) else "      ");
+//          print " ";
+// }
+//          print "\n";
+// 
+//        } 
+//   print "\n\n";
+
+
+print "Ownership - Inside =========================\n\n";
+
+//       for i := 0 to |oq|
+//        {
+//          printobj(oq[i]);
+//          print "  ";
+// 
+//          for j := 0 to |oq|
+// {
+//          print (if (inside(oq[i],oq[j])) then "i" else " ");
+//          print " ";
+// }
+//          print "\n";
+// 
+//        } 
+//   print "\n\n";
+
+      for i := 0 to |oq|
+       {
+        print oq[i].nick;
+//         printobj(oq[i]);
+         print "  ";
+
+         for j := 0 to |oq|
+{
+         print (if (inside(oq[i],oq[j])) then (oq[i].nick+"<="+oq[j].nick) else "      ");
+         print " ";
+}
+         print "\n";
+
+       } 
+  print "\n\n";
+
+
+
+print "\n\nREFERENCE OK refOK =========================\n";
+print "REFERENCE OK refOK =========================\n\n";
+
+      for i := 0 to |oq|
+       {
+         print oq[i].nick;
+         //printobj(oq[i]);
+         print "  ";
+
+         for j := 0 to |oq|
+{
+         print (if (refOK(oq[i],oq[j])) then (oq[i].nick+"->"+oq[j].nick) else "    ");
+         print " ";
+}
+print "\n";
+}
+
+
+
+
+  print "\n[\n";
+
+      for i := 0 to |oq|
+       {
+         print "\"";
+
+         for j := 0 to |oq|
+{
+         print (if (refOK(oq[i],oq[j])) then ("x") else " ");
+}
+         if (i < (|oq|-1))  { print "\",\n";} else { print "\"\n";}
+
+       }
+print "]\n";
+
+
+} //end Main4
 

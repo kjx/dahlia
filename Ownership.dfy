@@ -36,6 +36,11 @@ predicate directlyInside(part : Object, whole : Object) : (rv : bool)
    whole.AMFO == part.allExternalOwners()  //?yeah - what if there are stack owners around?
  }
 
+predicate directlyBounded(part : Object, bound : Object) : (rv : bool)
+ {
+   (part.AMFB - {part})  == bound.AMFO //?yeah - what if there are stack owners around?
+ }
+
  predicate insideOwner(part : Object, whole : Object) : (rv : bool)
  // is part inside whole's *Owners*, i.e. a peer or inside a peer?
  // reads part, whole
@@ -145,9 +150,9 @@ lemma PointingLemma(f : Object, t : Object)
 ///needs to be consistent up the hierarcy 
   
 
-lemma MOREreffing(f : Object, t : Object)
-  ensures(refOK(f,t) <==> (boundInsideOwner(f, t) || (f==t)))
-{}
+// lemma MOREreffing(f : Object, t : Object)
+//   ensures(refOK(f,t) <==> (boundInsideOwner(f, t) || (f==t)))
+// {}
 
 
 predicate OLDrefOK(f : Object, t : Object) : (rv : bool)
