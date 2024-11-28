@@ -167,12 +167,18 @@ print "original store (os)\n";
 print "+++++++++++++\n";
 printobjectset(os);
 print "+++++++++++++\n";
-print "clones tm.Values - os\n";
+print "clones rm.Values - os\n";
 print "+++++++++++++\n";
 printobjectset(rm.m.Values - os);
 print "+++++++++++++\n";
 printmapping(rm.m);
 
+print "\n\n\n\nwaiting...\\n\n";
+
+var result : bool :=  istEinKlon(a, rm, (os + rm.m.Values + rm.ns));
+print "istEinKlon = ", result;
+
+print "\n\n";
 
 print "\nDone\n";
 } 
