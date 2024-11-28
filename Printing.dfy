@@ -162,6 +162,60 @@ method printmappingIsIsomorphic(m: vmap<Object,Object>, o : Object, os : set<Obj
 
 
 
+//iterative clone-checker, most likely only dynamic at this point
+method istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : bool)
+  requires src in m.m.Keys
+  requires src in context
+  requires m.m.Keys   <= context
+  requires m.m.Values <= context
+{
+  rv := true;
+  var os := context;
+  while os != {}
+    decreases os
+    invariant os <= context
+  {
+    var o: Object;
+    o :| o in os;
+    os := os - {o};
+
+    if (outside(o,src)) { print "   skipping "+fmtobj(o)+" outside src\n"; continue; }
+    if (o !in m.m.Keys) { print "   skipping "+fmtobj(o)+" outside Klon \n"; continue; }
+
+    var k := m.m[o];  //k klon of o
+
+    print "   checking ",fmtobj(o)," cloned as ",fmtobj(k), " ";
+
+    rv := 
+         && istKlonnyKlon(o.bound, k.bound, m)  
+         && istKlonnyKlon(o.owner, k.owner, m)
+         && istKlonAlleFelder(o, k, m)         
+         ;
+
+   print rv,"\n";       
+  }
+}
+
+predicate istKlonnyKlon(os : set<Object>, ks : set<Object>, m : Klon) 
+  reads m.oHeap`fields, m.oHeap`fieldModes
+  reads m.ns`fields, m.ns`fieldModes
+  decreases os, 50
+
+{
+  && (forall o <- os :: o in m.m.Keys)
+  && (mapThruKlon(os, m) == ks)
+}
+
+predicate istKlonAlleFelder(o : Object, k : Object, m : Klon)  
+  reads o`fields, o`fieldModes
+  reads k`fields, k`fieldModes
+{
+  && (o.fields.Keys     == k.fields.Keys)
+  && (o.fieldModes.Keys == k.fieldModes.Keys)
+  && (o.fields.Values     <= m.m.Keys)
+  && (forall f <- o.fields.Keys :: (m.m[o.fields[f]]  == k.fields[f]))
+//  && ()   //at some point needs to check mapping for fieldModes?
+}
 
 
 
@@ -216,8 +270,7 @@ method printmappingIsIsomorphic(m: vmap<Object,Object>, o : Object, os : set<Obj
 function fmtnickset(Y: set<Object>) : string
  reads Y`nick
  {
-  // "FUCKOFF"
-    fmtsetstr( set y <- Y :: y.nick )
+   fmtsetstr( set y <- Y :: y.nick )
  } 
 
 
@@ -248,7 +301,14 @@ predicate IAMTheRessurection(s: set<string>, m : string)
   m in s && forall x <- s :: strLEQ(m, x)
 }
 
-
+lemma OneRessurection(s: set<string>, m : string) 
+  requires s == {m}
+  ensures  IAMTheRessurection(s,m)
+{
+  assert m in s;
+  StrEQISstrLEQ(m,m);
+  assert strLEQ(m,m);
+}
 
 
 // ghost function IAMTheLife(s: set<string>) : (m : string) 
@@ -295,19 +355,39 @@ predicate IAMTheRessurection(s: set<string>, m : string)
 //  assert exists m <- s :: IAMTheRessurection(s, m);          
 // }
 
-function theOneAndOnly(s: set<string>) : string
-  requires |s| == 1
+
+// function theOneAndOnly(s: set<string>) : (rv : string)
+//   requires |s| == 1
+//   ensures s == {rv}
+//   ensures IAMTheRessurection({rv}, rv)  
+//   ensures IAMTheRessurection(s, rv)
+// {
+//   OneRessurection(s,rv);
+//   ExtractFromSingleton(s)
+// }
+
+
+function thereIsOneThere(s: set<string>) : string
+  requires |s| > 0
+  ensures thereIsOneThere(s) in s
 {
-  ExtractFromSingleton(s)
+  var q :| q in s;
+  q
 }
 
   
 
+
+//probalby have to split the bloody thing tand use StrLEQIsTrans to deal with it...
 function fmtsetstr(Y: set<string>) : string
  {
-  if (Y == {}) then ("") else (
-      var y : string :| y in Y && (forall z <- Y :: y < z) ;
-      y + " " + fmtsetstr( Y - {y} ) )
+  "FUCKOFF fmtsetstr"
+  // if (|Y| < 1) then ("") else (
+  //     assert |Y| >= 1;
+  //     assert exists y :: y in Y;
+  //     var ghosty := ExtractFromNonEmptySet(Y);
+  //     var y : string :| y in Y;// && (forall z <- Y :: y <= z) ;
+  //     y + " " + fmtsetstr( Y - {y} ) )
   } 
 
 
@@ -343,6 +423,18 @@ predicate strLEQ(l : string, r : string)
       && (|| (l[0] < r[0]) 
           || ((l[0] == r[0]) && (strLEQ(l[1..], r[1..])))))
 }
+
+lemma StrEQISstrLEQ(l : string, r : string) 
+  requires l == r
+  ensures  strLEQ(l,r)
+  {}
+
+
+lemma StrLEQIsTrans(a : string, b : string, c : string) 
+  requires strLEQ(a,b)
+  requires strLEQ(b,c)
+  ensures  strLEQ(a,c)
+  {}
 
 
 function fmtseqstr(Y: seq<string>) : string  //isnt this just a flatten?
