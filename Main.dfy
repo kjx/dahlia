@@ -557,10 +557,19 @@ var prev   := t;
 var os := {t};
 var oq := [t];
 
+var o2 : Object? := null;
+
 for i := 0 to depth 
 {
   var spine := new Object.make(protoTypes, {prev}, os, "o"+natToString(i));
-  var peer  := new Object.make(protoTypes, {prev}, os, "p"+natToString(i));
+
+  if (i == 1)  {o2 := prev;}
+
+  var pbound := {prev};
+  if (i == 2) {pbound := {};}
+  if (i == 3) {pbound := {o2};}
+
+  var peer  := new Object.make(protoTypes, {prev}, os, "p"+natToString(i), pbound);
   prev := spine;
 
   os := os + {spine, peer};
