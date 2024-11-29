@@ -9,43 +9,51 @@ function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
 //now optional argyment if the v
   requires klonVMapOK(c'.m)
   requires klonCanKV(c', k, v)
-  ensures  klonVMapOK(c.m)
-  ensures  c.ns == c'.ns + nu(k,v)
+  ensures  c == c'.(ns := c'.ns + nu(k,v)).(m:= VMapKV(c'.m,k,v))
+  ensures  klonVMapOK(c.m)  
 //  ensures  c'.calid() ==> c.calid() //presenvation of calidity
   reads c'.m.Values`fieldModes
   reads c'.m.Keys`fieldModes
-  reads k`fieldModes
-  reads v`fieldModes
-    reads c'.oHeap`fields, c'.oHeap`fieldModes
-    reads c'.ns`fields, c'.ns`fieldModes  
+  reads k`fields, k`fieldModes
+  reads v`fields, v`fieldModes
+  reads c'.oHeap`fields, c'.oHeap`fieldModes
+  reads c'.ns`fields, c'.ns`fieldModes  
+
 {
    var c'' := c'.(m:= VMapKV(c'.m,k,v));
    var nsv := (c''.ns + nu(k,v));
    var c   := c''.(ns:= nsv);
-   reveal c.calid();
-   assert c.calid();
+   
+   assert  klonVMapOK(c.m);
+
    c
 }
 
 predicate klonCanKV(c' : Klon, k : Object, v : Object)
 //extending c' with k:=v will be klonVMapOK
+requires klonVMapOK(c'.m)  //should this be here?  if not, in below! 
+reads c'.m.Values`fieldModes
+reads c'.m.Keys`fieldModes
 reads k`fieldModes
 reads v`fieldModes
 {
+  var ks := c'.m.Keys+{k};
+  
   && canVMapKV(c'.m, k, v)
   && (k in c'.oHeap)  //KJX do I want this heresy?
-//  && (v in (if (v==k) then (c'.oHeap) else (c'.ns)) //nope - happens afterwards
   && (if (v==k) then (v in c'.oHeap) else (v !in c'.oHeap)) //nope - happens after  wards
 
-  //&& (k.owner <= k.AMFO)  //HUH?
-  && (k.owner <= c'.m.Keys+{k})  
+  && (forall x <-  c'.m.Keys :: x.bound <= x.owner <= c'.m.Keys) //from klonVMapOK
+  && (k.bound <= k.owner <= ks)
+  && (forall x <- ks :: x.bound <= x.owner <= ks)
+
   && (mapThruVMapKV(k.owner, c'.m, k, v) == v.owner) //KJXOWNERS  
-  && (k.AMFO <= c'.m.Keys+{k})  
+  && (k.AMFO <= ks)  
   && (mapThruVMapKV(k.AMFO, c'.m, k, v) == v.AMFO)  
 
-  && (k.bound <= c'.m.Keys+{k})  
+  && (k.bound <= ks)  
   && (mapThruVMapKV(k.bound, c'.m, k, v) == v.bound) //KJXOWNERS  
-  && (k.AMFB <= c'.m.Keys+{k})  
+  && (k.AMFB <= ks)  
   && (mapThruVMapKV(k.AMFB, c'.m, k, v) == v.AMFB)  
 
   && (k.fieldModes == v.fieldModes)
@@ -122,7 +130,7 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
 //KJXOWNERS
 //region & owners?
 //  && (forall x <- ks :: x.owner <= x.AMFO)//KJXOWNERS
-  && (forall x <- ks :: x.bound <= x.owner <= m.Keys)
+  && (forall x <- ks :: x.bound <= x.owner <= m.Keys) //should that bound be ks?
   && (forall k <- ks :: mapThruVMap(k.owner, m) == m[k].owner)  
   && (forall k <- ks :: mapThruVMap(k.bound, m) == m[k].bound)  
 
