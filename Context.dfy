@@ -144,7 +144,9 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
 //extraOK   && a.extra == {}  //extra not yet cloned
 
     && (a in context) 
-    && (a.AMFO <= context)
+    //&& (a.AMFO <= context)
+    //&& (a.AMFB <= context) //sgould be derivable, AMFB <= AMFO
+    && (a.AMFB <= a.AMFO <= context)
     && (forall oo <- a.AMFO :: oo.Ready())
   //  && (a.TRUMP()||(a.Ready() && a.Valid()))
     && (a.Ready())

@@ -83,9 +83,16 @@ lemma InsideOwnerVsBound(part : Object, whole : Object, context : set<Object>)
 
 predicate ownerInsideOwner(partO : Owner, wholeO : Owner) 
 {
-//  forall p <- partO :: exists w <- wholeO :: inside(p, w)
  partO >= wholeO
 }
+
+
+predicate ownerInsideOwnerInsideOwner(partO : Owner, midO : Owner, wholeO : Owner) 
+{
+//  forall p <- partO :: exists w <- wholeO :: inside(p, w)
+ partO >= midO >= wholeO
+}
+
 
 lemma BLURareCUNTS(partO : Owner, wholeO : Owner) 
   requires ownerInsideOwner(partO, wholeO) 

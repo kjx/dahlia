@@ -313,6 +313,11 @@ function allExternalOwners() : set<Object>
  //all o's owners except o itself
  {  AMFO - {this} }
 
+function allExternalBounds() : set<Object>
+ //all o's owners except o itself
+ {  AMFB - {this} }
+
+
 ///*opaque*/ 
 predicate Valid()
   decreases |AMFO|
@@ -375,7 +380,7 @@ lemma NoFieldsAreGoodFields(context : set<Object>)
     // reads this, fields.Values, this, os//semi-evil
     requires Ready() //requires forall n <- fields :: ownersOK(fields[n],os)
     {
-       allExternalOwners() <= os
+       (allExternalOwners() + allExternalBounds()) <= os
     }
 
   function outgoing() : set<Object> reads this`fields { fields.Values }
@@ -413,6 +418,7 @@ predicate OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec}
 
   && ownerInsideOwner(owner,bound)
   && AMFB <= AMFO
+  && (AMFB == flattenAMFOs(bound) + {this})
   }
 
 
@@ -572,7 +578,7 @@ predicate OrigBigfoot(os : set<Object>, context : set<Object> := os)
 {
   && (os <= context)
   && (forall o <- os :: o.AMFO <=  context)
-}
+} 
 
 predicate Bigfoot(os : set<Object>, context : set<Object> := os) : ( r : bool )
     ensures r ==> AllTheseOwnersAreFlatOK(os,context)
