@@ -367,7 +367,7 @@ lemma OneRessurection(s: set<string>, m : string)
 // }
 
 
-function thereIsOneThere(s: set<string>) : string
+ghost function thereIsOneThere(s: set<string>) : string
   requires |s| > 0
   ensures thereIsOneThere(s) in s
 {
