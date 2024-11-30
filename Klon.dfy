@@ -7,7 +7,7 @@
 function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
 //extends klon mapping with k:=ii4
 //now optional argyment if the v
-  requires klonVMapOK(c'.m)
+//  requires klonVMapOK(c'.m) 
   requires klonCanKV(c', k, v)
   ensures  c == c'.(ns := c'.ns + nu(k,v)).(m:= VMapKV(c'.m,k,v))
   ensures  klonVMapOK(c.m)  
@@ -31,13 +31,15 @@ function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
 
 predicate klonCanKV(c' : Klon, k : Object, v : Object)
 //extending c' with k:=v will be klonVMapOK
-requires klonVMapOK(c'.m)  //should this be here?  if not, in below! 
+// requires klonVMapOK(c'.m)  //should this be here?  if not, in below!  //BOWIE
 reads c'.m.Values`fieldModes
 reads c'.m.Keys`fieldModes
 reads k`fieldModes
 reads v`fieldModes
 {
   var ks := c'.m.Keys+{k};
+
+  && klonVMapOK(c'.m) //BOWIE
   
   && canVMapKV(c'.m, k, v)
   && (k in c'.oHeap)  //KJX do I want this heresy?
