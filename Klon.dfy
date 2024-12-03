@@ -9,17 +9,6 @@ function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
 //  requires klonVMapOK(c'.m) 
   requires klonCanKV(c', k, v)
 
-  //SATAN!!
-  requires 
-    (
-     var c'' := c'.(m:= VMapKV(c'.m,k,v));
-     var nsv := (c''.ns + nu(k,v));
-     var c   := c''.(ns:= nsv);
- 
-     klonVMapOK(c.m)
-    )
-  //SATAN!!
-
   ensures  c == c'.(ns := c'.ns + nu(k,v)).(m:= VMapKV(c'.m,k,v))
   ensures  klonVMapOK(c.m)  
 //  ensures  c'.calid() ==> c.calid() //presenvation of calidity
@@ -40,13 +29,42 @@ function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
    c
 }
 
+predicate klonSatanKV(c' : Klon, k : Object, v : Object)
+//extending c' with k:=v will be klonVMapOK
+// requires klonVMapOK(c'.m)  //should this be here?  if not, in below!  //BOWIE
+reads c'.m.Values`fieldModes
+reads c'.m.Keys`fieldModes
+reads k`fieldModes, v`fieldModes
+reads c'.oHeap`fields, c'.oHeap`fieldModes
+reads c'.ns`fields, c'.ns`fieldModes
+reads k`fields, v`fields
+{
+  //SATAN!!
+  //DO NOT DO THIS EVAL.  IT'S HORRIBLE
+  //YUCK YUCK YUCK - 202 errors is that a good idea NO!!
+  //should this even be HERE?
+//   requires 
+//
+    && canVMapKV(c'.m, k, v)
+    && (
+     var c'' := c'.(m:= VMapKV(c'.m,k,v));
+     var nsv := (c''.ns + nu(k,v));
+     var c   := c''.(ns:= nsv);
+ 
+     klonVMapOK(c.m)
+    )
+//   //SATAN!!
+}
+
 predicate klonCanKV(c' : Klon, k : Object, v : Object)
 //extending c' with k:=v will be klonVMapOK
 // requires klonVMapOK(c'.m)  //should this be here?  if not, in below!  //BOWIE
 reads c'.m.Values`fieldModes
 reads c'.m.Keys`fieldModes
-reads k`fieldModes
-reads v`fieldModes
+reads k`fieldModes, v`fieldModes
+reads c'.oHeap`fields, c'.oHeap`fieldModes
+reads c'.ns`fields, c'.ns`fieldModes
+reads k`fields, v`fields
 {
   var ks := c'.m.Keys+{k};
 
@@ -55,6 +73,11 @@ reads v`fieldModes
   && canVMapKV(c'.m, k, v)
   && (k in c'.oHeap)  //KJX do I want this here?
   && (if (v==k) then (v in c'.oHeap) else (v !in c'.oHeap)) //nope - happens after  wards
+
+  && c'.boundsNestingOK(k, c'.oHeap)
+  && c'.boundsNestingOK(v, c'.oHeap+c'.ns)
+
+
 // // START DOOUBLE BOWIE
 //   && (forall x <-  c'.m.Keys :: x.bound <= x.owner <= c'.m.Keys) //from klonVMapOK
 //   && (k.bound <= k.owner <= ks)
@@ -69,7 +92,7 @@ reads v`fieldModes
 //   && (k.AMFB <= ks)  
 //   && (mapThruVMapKV(k.AMFB, c'.m, k, v) == v.AMFB)  
 // 
-//   && (k.fieldModes == v.fieldModes)
+  && (k.fieldModes == v.fieldModes)
 //END DOOUBLE BOWIE
 }
 
@@ -158,7 +181,6 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
 
 //field values? //KJX
   && (forall k <- ks :: k.fieldModes == m[k].fieldModes)
-
 } 
 
 lemma KlonKVVMapOK(m0 : Klon, k : Object, v : Object, m1 : Klon)
@@ -167,7 +189,7 @@ lemma KlonKVVMapOK(m0 : Klon, k : Object, v : Object, m1 : Klon)
   requires m1 == klonKV(m0, k, v)
   ensures klonVMapOK(m1.m)
   {
-        reveal m0.calid(), m0.calidObjects(), m0.calidOK(), m0.calidMap(), m0.calidSheep();
+    reveal m0.calid(), m0.calidObjects(), m0.calidOK(), m0.calidMap(), m0.calidSheep();
   }
 
 
@@ -1935,8 +1957,16 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
   {
     reveal calidObjects(); assert calidObjects();
     reveal calidOK(); assert calidOK();
+    reveal CallOK();
+
+
     && AllMapEntriesAreUnique(m)
     && klonVMapOK(m) // potentiall should expand this out?
+
+    && (forall x <- m.Keys :: 
+        && boundsNestingOK(x, oHeap)
+        && boundsNestingOK(m[x], oHeap+ns))
+
     && (forall x <- m.Keys :: (not(inside(x,o)) ==> (m[x] == x)))
     && (forall x <- m.Keys, oo <- x.owner :: m[oo] in m[x].owner) //KJXOWNERS
     && (forall x <- m.Keys, oo <- x.bound :: m[oo] in m[x].bound) //KJXOWNERS
@@ -2045,19 +2075,39 @@ lemma calidOKFromCalid()
   reveal calidOK();
 }
 
-lemma boundsNestingFromCalid(k : Object, context : set<Object>)
-  requires calid()
-  requires COK(k, context)
+predicate boundsNestingOK(o : Object, context : set<Object>)
+  reads oHeap`fields, oHeap`fieldModes
+  reads ns`fields, ns`fieldModes
+  reads o`fields, o`fieldModes
+  //requires COK(o, context)
+  {
+  && COK(o, context)
+  && ownerInsideOwner(o.owner, o.bound)
+  && ownerInsideOwner(o.AMFO, o.AMFB)
+  && ownerInsideOwner(o.AMFB, o.bound)
+  && ownerInsideOwner(o.AMFO, o.bound)
+  && ownerInsideOwnerInsideOwner(context, o.owner, o.bound)
+  && ownerInsideOwnerInsideOwner(context, o.AMFO, o.AMFB)
+  && ownerInsideOwner(o.allExternalOwners(),o.allExternalBounds())
+  && ownerInsideOwner(o.AMFO,o.allExternalOwners())
+  && ownerInsideOwner(o.AMFB,o.allExternalBounds())
+  }
 
-  ensures  ownerInsideOwner(k.owner, k.bound)
-  ensures  ownerInsideOwner(k.AMFO, k.AMFB)
-  ensures  ownerInsideOwner(k.AMFB, k.bound)
-  ensures  ownerInsideOwner(k.AMFO, k.bound)
-  ensures  ownerInsideOwnerInsideOwner(context, k.owner, k.bound)
-  ensures  ownerInsideOwnerInsideOwner(context, k.AMFO, k.AMFB)
-  ensures  ownerInsideOwner(k.allExternalOwners(),k.allExternalBounds())
-  ensures  ownerInsideOwner(k.AMFO,k.allExternalOwners())
-  ensures  ownerInsideOwner(k.AMFB,k.allExternalBounds())
+lemma boundsNestingFromCalid(o : Object, context : set<Object>)
+  requires calid()
+  requires COK(o, context)
+
+  ensures  boundsNestingOK(o, context)
+
+  ensures  ownerInsideOwner(o.owner, o.bound)
+  ensures  ownerInsideOwner(o.AMFO, o.AMFB)
+  ensures  ownerInsideOwner(o.AMFB, o.bound)
+  ensures  ownerInsideOwner(o.AMFO, o.bound)
+  ensures  ownerInsideOwnerInsideOwner(context, o.owner, o.bound)
+  ensures  ownerInsideOwnerInsideOwner(context, o.AMFO, o.AMFB)
+  ensures  ownerInsideOwner(o.allExternalOwners(),o.allExternalBounds())
+  ensures  ownerInsideOwner(o.AMFO,o.allExternalOwners())
+  ensures  ownerInsideOwner(o.AMFB,o.allExternalBounds())
   {
     reveal calid(); assert calid();
     reveal calidObjects(); assert calidObjects();
@@ -2067,14 +2117,15 @@ lemma boundsNestingFromCalid(k : Object, context : set<Object>)
     assert calidSheep();
     reveal COK();
 
-    assert  ownerInsideOwner(k.owner, k.bound);
-    assert  ownerInsideOwner(k.AMFO, k.AMFB);
-    assert  ownerInsideOwner(k.AMFB, k.bound);
-    assert  ownerInsideOwner(k.AMFO, k.bound);
-    assert  ownerInsideOwnerInsideOwner(context, k.owner, k.bound);
-    assert  ownerInsideOwnerInsideOwner(context, k.AMFO, k.AMFB);
-    assert  ownerInsideOwner(k.allExternalOwners(),k.allExternalBounds());
-
+    assert  ownerInsideOwner(o.owner, o.bound);
+    assert  ownerInsideOwner(o.AMFO, o.AMFB);
+    assert  ownerInsideOwner(o.AMFB, o.bound);
+    assert  ownerInsideOwner(o.AMFO, o.bound);
+    assert  ownerInsideOwnerInsideOwner(context, o.owner, o.bound);
+    assert  ownerInsideOwnerInsideOwner(context, o.AMFO, o.AMFB);
+    assert  ownerInsideOwner(o.allExternalOwners(),o.allExternalBounds());
+    assert  ownerInsideOwner(o.AMFO,o.allExternalOwners());
+    assert  ownerInsideOwner(o.AMFB,o.allExternalBounds());
   }
 
 
@@ -4188,7 +4239,7 @@ assert b.AMFO <= m'.m.Values;
 
 
 
-  method Clone_Clone_Clone(a : Object, m' : Klon)
+  method  {:timeLimit 60} Clone_Clone_Clone(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //actually does the clone....
   // was the old Clone_Inside_Heap
@@ -4199,7 +4250,7 @@ assert b.AMFO <= m'.m.Values;
   requires inside(a,m'.o)
   requires a !in m'.m.Keys
 
-  //all Clone_
+  //all Clone
   requires m'.calid()
   requires a in m'.oHeap
   requires COK(a, m'.oHeap)
