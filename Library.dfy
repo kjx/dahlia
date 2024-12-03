@@ -651,7 +651,7 @@ predicate canVMapKV<K(==),V(==)>(m' : vmap<K,V>, k : K, v : V)
 lemma VMapKVcanVMapKV<K,V>(m' : vmap<K,V>, k : K, v : V)
     requires canVMapKV(m', k, v)
     ensures  VMapKV(m', k, v) == m'[k:=v]
-   {}
+  {}
 
 function mapThruVMap<K,V>(ks : set<K>, m : vmap<K,V>) : set<V>
     requires ks <= m.Keys
@@ -667,15 +667,15 @@ function mapThruVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V) : (m : se
       (set x <- ks :: m'[k:=v][x]) 
   }
 
-  lemma MapThruVMapKVVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
+lemma MapThruVMapKVVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
     requires ks <= m'.Keys+{k}
     requires canVMapKV(m', k, v)  
     ensures  mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, VMapKV(m', k, v))
-      {
+  {
          assert mapThruVMapKV(ks, m', k, v) == (set x <- ks :: m'[k:=v][x]);
          assert mapThruVMapKV(ks, m', k, v) == (set x <- ks :: (VMapKV(m', k, v)[x]));
          assert mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, (VMapKV(m', k, v)) );
-      }
+  }
 
 
 
@@ -684,17 +684,16 @@ lemma IfImNotTheExtraKeyTheUnderlyingMapIsFine<K,V>(ks : set<K>, m' : vmap<K,V>,
     requires k !in m'.Keys
     requires canVMapKV(m', k, v)    
     ensures  mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, m')
-    {}
+  {}
 
 
 lemma MapThruVMapExtensionality<K,V>(k0 : set<K>, k1 : set<K>, r : set<V>, m : vmap<K,V>)
     requires k0 <= m.Keys
     requires k1 <= m.Keys
-  ensures  (mapThruVMap(k0,m) + mapThruVMap(k1,m)) == mapThruVMap(k0+k1, m)
+    ensures  (mapThruVMap(k0,m) + mapThruVMap(k1,m)) == mapThruVMap(k0+k1, m)
   {}
 
-
-  lemma MapThruVMapKVExtensionality<K,V>(k0 : set<K>, k1 : set<K>, v0 : set<V>, v1 : set<V>, m : vmap<K,V>,  k : K, v : V)
+lemma MapThruVMapKVExtensionality<K,V>(k0 : set<K>, k1 : set<K>, v0 : set<V>, v1 : set<V>, m : vmap<K,V>,  k : K, v : V)
     requires k0 <= m.Keys
     requires k1 <= m.Keys
     requires v0 <= m.Values

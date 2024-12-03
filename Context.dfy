@@ -158,7 +158,7 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
     && AllTheseOwnersAreFlatOK(a.AMFO - {a})   //point here is we don't want a loop  in the definitoin of the COK predicate I think()
 //KJX redo to be a.AllExternalOwners() (or AMXO?)
 //now surfaced by COKowner :-)
-//should it be within the context?? (or owners are within this heap doe sthat!) 
+//should it be within the context?? (or owners are within this heap doe sthat!)
  }  
 
 method COKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
