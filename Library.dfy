@@ -702,6 +702,22 @@ lemma MapThruVMapKVExtensionality<K,V>(k0 : set<K>, k1 : set<K>, v0 : set<V>, v1
     requires v0 !! v1
     requires mapThruVMap(k0,m) == v0
     requires mapThruVMap(k1,m) == v1
-
-  ensures  (mapThruVMap(k0,m) + mapThruVMap(k1,m)) == mapThruVMap(k0+k1, m) == (v0+v1)
+    ensures  (mapThruVMap(k0,m) + mapThruVMap(k1,m)) == mapThruVMap(k0+k1, m) == (v0+v1)
   {}
+
+
+lemma MapThruIdentity<K>(k0 : set<K>, m : vmap<K,K>)
+    requires k0 <= m.Keys
+    requires (forall k <- k0 :: m[k]  == k)
+    ensures  (set    k <- k0 :: m[k]) == k0
+ {}
+
+
+lemma IdentityExtensionality<K>(k0 : set<K>, m : vmap<K,K>, kz : K)
+    requires k0 <= m.Keys
+    requires kz !in m.Keys
+    requires kz !in m.Values
+    requires (forall k <- k0     :: m[k]  == k)
+    ensures  (forall k <- k0+{kz} :: VMapKV(m,kz,kz)[k]  == k)
+ {}
+
