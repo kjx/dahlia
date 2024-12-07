@@ -2856,8 +2856,13 @@ assert NIGEL:
         assert forall oo <- a.AMFO :: (oo == a) || outside(oo,m.o);
         assert forall oo <- a.AMFO :: (oo == a) || m.m[oo] == oo;
         assert (set x <- {a} :: x) == {a};
+
+        MapThruIdentity((a.AMFO - {a}), m.m);
         assert (set x <- (a.AMFO - {a}) :: m.m[x]) ==  (a.AMFO - {a});
 
+        IdentityExtensionality(a.AMFO - {a}, m.m, a);
+        assert (a.AMFO - {a})+{a} == (a.AMFO);
+        MapThruIdentity(a.AMFO, VMapKV(m.m,a,a));
         assert mapThruVMapKV(a.AMFO, m.m, a, a) == a.AMFO;
 
         assert forall oo <- a.AMFO  :: outside(oo,m.o);
