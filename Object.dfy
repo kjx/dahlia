@@ -264,7 +264,7 @@ assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);
     nick := name;
     new;   
  
-    print "Object.fake() just constructed ", fmtobj(this), "\n";
+   // print "Object.fake() just constructed ", fmtobj(this), "\n";
   }
 
 
