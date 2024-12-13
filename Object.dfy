@@ -129,7 +129,9 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
     //you can create new objects/contexts / regions?
     //what sgoiuld they be?
 
-    requires CallOK(flattenAMFOs(oo), context) //KJX is this right?
+//    requires CallOK(flattenAMFOs(oo), context) //KJX is this right?
+    requires CallOK(oo, context) //KJX is this right?
+  
     requires ownerInsideOwner(oo,mb)
 
     ensures owner == oo 
@@ -230,6 +232,7 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
  
   assert CallOK({this}, {this}+context);
 
+  COKAMFO(oo, context);
 assert CallOK(flattenAMFOs(oo), context);
 CallOKWiderContext(flattenAMFOs(oo), context, {this});
 assert context + {this}  == {this} + context;
@@ -571,6 +574,17 @@ opaque predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object>
     //&& flattenAMFOs(a.AMFO - {a}) <= a.AMFO  //should it be this?
     //&& flattenAMFOs(a.AMFO - {a}) <= (a.AMFO - {a}) //or should it be this instead?
     //&& flattenAMFOs(a.AMFO + {a}) <= (a.AMFO + {a}) //or even this?
+
+
+lemma FlatAMFOsAreFlat(os : set<Object>, of : set<Object>, context : set<Object>)
+  requires of == flattenAMFOs(os)
+  requires of <= context
+  ensures  AllTheseOwnersAreFlatOK(os, context)
+{
+  reveal AllTheseOwnersAreFlatOK();
+}
+
+
 
 predicate OrigBigfoot(os : set<Object>, context : set<Object> := os) 
 //os and the AMFO of every o in os are inside the context

@@ -10,11 +10,11 @@
 ///COK / CallOK  (not yet in the right order)
 ///Probablu should go off to another file?
 
-lemma COKAMFO(a : Object, context : set<Object>) 
-  decreases a.AMFO
-  requires COK(a, context)
+lemma COKAMFO(oo : Owner, context : set<Object>) 
+  decreases oo
+  requires CallOK(oo, context)
   requires CallOK(context)
-  ensures  CallOK(a.AMFO, context)
+  ensures  CallOK(flattenAMFOs(oo), context)
 { 
   reveal COK();
   reveal CallOK();
@@ -124,6 +124,7 @@ lemma CallOKWiderFocus2(less: set<Object>, more : set<Object>, context : set<Obj
   assert forall a <- (more - less) :: COK(a,context);
   assert forall a <- (more)        :: COK(a,context);
 }
+
 
 
 ///IF owners OK were also bounded by a (sub)heap, then 
