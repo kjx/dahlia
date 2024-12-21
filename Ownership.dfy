@@ -193,7 +193,7 @@ lemma WorldCanFuckItself(f : Object, t : Object)
   if (t.allExternalOwners() == {f})  { assert refOK(f,t); return;}
 }
 
-//pretty nice version... {:Mon18Dec} 
+//pretty nice version... {:Mon18Dec 2023} 
 lemma transitiveInside(a : Object, b : Object, c : Object)
   // requires a != b
   // requires b != c
