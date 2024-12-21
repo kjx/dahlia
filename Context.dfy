@@ -131,6 +131,7 @@ lemma CallOKWiderFocus2(less: set<Object>, more : set<Object>, context : set<Obj
 ///the reads clauses could just look over that whole subheap...
 ///that way lies... seplogic?
 opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
+//NOTE Pulled fields from COK - owners etc in context
 //  reads context`fields, context`fieldModes
   reads a`fields, a`fieldModes
 
@@ -153,7 +154,7 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
     && (a.Ready())
     && (a.Valid())
     && (a.AllOutgoingReferencesAreOwnership(context))  
-    && (a.AllOutgoingReferencesWithinThisHeap(context))
+//    && (a.AllOutgoingReferencesWithinThisHeap(context))
     && (a.AllOwnersAreWithinThisHeap(context))
 
     && AllTheseOwnersAreFlatOK(a.AMFO - {a})   //point here is we don't want a loop  in the definitoin of the COK predicate I think()
@@ -166,6 +167,10 @@ method COKat(a : Object, n : string, context : set<Object>) returns ( r : Object
   requires COK(a,context)
   requires CallOK(context)
   requires n in a.fields
+  requires a.Ready()  //comes from COK?
+  requires a.AllOutgoingReferencesWithinThisHeap(context)
+  requires forall x <- context :: x.Ready() && x.AllOutgoingReferencesWithinThisHeap(context)
+
   ensures r == a.fields[n]
   ensures COK(r,context)  
   modifies {}
@@ -227,6 +232,17 @@ lemma CallOKNarrowFocus(nn : set<Object>, aa : set<Object>, context : set<Object
     assert forall a <- nn :: COK(a,context);
   }
 
+
+lemma COKNarrowContext(a : Object, less : set<Object>, more : set<Object>)
+  requires less <= more
+  requires COK(a, more)
+  requires a.AMFO <= less
+  requires a.Ready()
+//  requires a.AllOutgoingReferencesWithinThisHeap(less)
+  ensures  COK(a, less)
+{
+  reveal COK();
+}
 
 lemma COKfromCallOK(a : Object, focus : set<Object>, context : set<Object>  := focus) 
   requires CallOK(focus, context)
