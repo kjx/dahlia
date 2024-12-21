@@ -137,7 +137,7 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
     ensures owner == oo 
     ensures AMFO == flattenAMFOs(oo) + {this}
     ensures bound == mb
-    ensures AMFB == flattenAMFOs(mb) + {this}  //HMM dunno if "this" should be here, but...
+    ensures AMFB == flattenAMFOs(mb) // + {this}  //HMM dunno if "this" should be here, but... --- ABSOLUTELY NOT!
   
     ensures fieldModes == ks
     ensures fields == map[] 
@@ -164,7 +164,7 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
     owner := oo;
     AMFO  := flattenAMFOs(oo) + {this};
     bound := mb;
-    AMFB  := flattenAMFOs(mb) + {this};
+    AMFB  := flattenAMFOs(mb);// + {this}; -- see above
   
     fieldModes := ks;
     fields := map[];
@@ -353,7 +353,7 @@ predicate Valid()
     { 
       forall n <- fields :: AssignmentCompatible(this, fieldModes[n], fields[n])
     }
- 
+  
   predicate AllOutgoingReferencesAreOwnership(os : set<Object>)
     reads this`fields//, fields.Values,  os//semi-evil
     requires Ready() // ||  TRUMP()
@@ -410,18 +410,20 @@ assert OwnersValid();
 //KJX should refactor all these invariants
 predicate OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec}
   decreases AMFO, 0
-  //requires Ready()
+  ensures rv ==> (AMFO >= AMFB)
   {  
   && (this  in AMFO)
   && (this !in owner)
   && (owner <= AMFO)
   && (AMFO == flattenAMFOs(owner) + {this})
-  && (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
-  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
+  && (AMFB == flattenAMFOs(bound))
 
+  && (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
+  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))  
   && ownerInsideOwner(owner,bound)
   && AMFB <= AMFO
-  && (AMFB == flattenAMFOs(bound) + {this})
+//  && (AMFB == flattenAMFOs(bound) + {this}) //WTFFF - how is thatPOSSIBLE - 20Dec2024
+// 
   }
 
 
