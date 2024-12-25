@@ -233,6 +233,7 @@ lemma KlonKVVMapOK(m0 : Klon, k : Object, v : Object, m1 : Klon)
 
 
 lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
+  requires klonAllRefsOK(m0)
   requires m0.calid()
   requires MFUCKING: m0.calid()
   requires klonVMapOK(m0.m)  
@@ -252,6 +253,7 @@ lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
   requires (v!=k) ==> (v.fields == map[]) //KJX FRI20DEC - new objects being added need to be empty?
 
   ensures klonVMapOK(m1.m)
+  ensures klonAllRefsOK(m1)
   ensures m1.calid()
   {
         reveal m0.calid(), m0.calidObjects(), m0.calidOK(), m0.calidMap(), m0.calidSheep();
@@ -320,12 +322,24 @@ if (v == k)  {
    CallOKWiderFocus(m0.m.Values,{v},m1.oHeap+m1.ns);
    assert CallOK(m0.m.Values+{v}, m1.oHeap+m1.ns); 
    assert m1.m.Values == m0.m.Values + {v};
-   assert CallOK(m1.m.Values, m1.oHeap+m1.ns);   
+   assert CallOK(m1.m.Values, m1.oHeap+m1.ns);
 
-    assert klonAllOwnersAreCompatible(m0);
+    // assert klonAllOwnersAreCompatible(m0);
+    // klonOldOwnersAreStillCompatible(m0,m1);
+
+    klonSameOwnersAreCompatible(k,v,m1);
+
     assert klonAllOwnersAreCompatible(m1);
     assert klonAllRefsOK(m0);
+
+assert wexford(m0);
+wexfordKV(k,v,m0,m1);
+assert wexford(m1);
+
+    klonAllRefsKVOK(k,v,m0,m1);
+
     assert klonAllRefsOK(m1);
+
 
 
 } else {
@@ -377,19 +391,25 @@ assert forall o <- m0.m.Keys :: m1.m[o] == m0.m[o];
 assert m0.m.Keys == m1.m.Keys - {k};
 assert forall o <- m0.m.Keys :: klonOwnersAreCompatible(o,m1.m[o],m0);
 
-assert forall o <-(m1.m.Keys - {k}):: klonOwnersAreCompatible(o,m1.m[o],m1);
+assert forall o <-(m1.m.Keys - {k}):: klonOwnersAreCompatible(o,m1.m[o],m0);
 
 
-
+//TODO  -  NEED EXISTENTIONALITY for both k==v and k!=v
+//can't do it this way cos of CALIDituty
 
     assert m1.m == m0.m[k:=v];
 
-    assert klonAllOwnersAreCompatible(m1);
+    //assert klonAllOwnersAreCompatible(m1);
 
     assert klonAllRefsOK(m0);
 
+assert wexford(m0);
+wexfordKV(k,v,m0,m1);
+assert wexford(m1);
 
 
+
+    klonAllRefsKVOK(k,v,m0,m1);
     
     assert klonAllRefsOK(m1);
 
@@ -807,6 +827,7 @@ lemma roundTrip1(k : Object, v : Object, m : Klon)
     // requires (mapThruKlonKV(k.AMFO, this, k, v) == v.AMFO)
 
     requires inside(k, o)
+    requires v.fields == map[] //KJX hmm means something...
     requires v.fieldModes == k.fieldModes
 
     ensures  r == klonKV(this,k,v)
@@ -2139,7 +2160,7 @@ klonCalidKVCalid(this, k, k, r);
 
     && klonAllOwnersAreCompatible(this)
 
-    && klonAllRefsOK(this)
+  //  && klonAllRefsOK(this)
 
     && (forall x <- m.Keys :: (not(inside(x,o)) ==> (m[x] == x)))
     // && (forall x <- m.Keys, oo <- x.owner :: m[oo] in m[x].owner) //KJXOWNERS
@@ -2534,7 +2555,7 @@ assert
   {
     var rv := Klon(VMapKV(m,k,k), o, oHeap, ns);
     rv
-    } //END putin
+    } //END putout
 
 
 
@@ -4753,7 +4774,7 @@ assert ((m'.oHeap - m'.m.Keys),10 decreases to (m.oHeap - m.m.Keys),5);
   var rm := Clone_All_Owners(a, m);
 /////////////////////////////////////////////////////////////////////////////////
 
-//note that BOUNDS are subtypes of OWNERS BOWIE TODO KJXBOUNDS
+//note that BOUNDS are subtypes of OWNERS BOWIE  KJXBOUNDS
 
   assert rm.from(m);
   assert rm.calid();
@@ -5275,6 +5296,7 @@ print "CALLING MAKE...";
 
   b := new Object.make(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rbound);
 print "BACK FROM MAKE with ",fmtobj(b),"\n";
+  assert b.fields == map[];
 
 print "WTF\n";
 //////////////////////////////////////////////////////////////////////////
@@ -7149,7 +7171,7 @@ lemma mapThruKlonPreservesInsideOwner(part: Object, whole : Object,
 
 lemma klonFieldsAreCompatible(of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
   //can of->ot clone to cf-ct
-  requires m.calid()
+  requires m.calid()///doesnt work cos this is kinda pointless...
   requires {of,ot} <= m.m.Keys
   requires cf == m.m[of]
   requires ct == m.m[ot]
@@ -7180,8 +7202,8 @@ lemma  klonOwnersAreCompatibleWider(o : Object, c : Object, m' : Klon, m : Klon)
   requires o in m'.m.Keys
   requires c == m'.m[o]
   requires klonOwnersAreCompatible(o, c, m')
-  requires m'.calid()
-  requires m.from(m') 
+  //requires m'.calid()
+  //requires m.from(m') 
   requires mapGEQ(m.m, m'.m)
   requires m.o     == m'.o
   requires m.oHeap == m'.oHeap
@@ -7222,21 +7244,121 @@ lemma  klonOwnersAreCompatibleWider(o : Object, c : Object, m' : Klon, m : Klon)
   && (c.AMFO >= c.AMFB >= o.AMFB)
 }
 
-predicate  klonAllOwnersAreCompatible(m : Klon)
+ lemma  klonSameOwnersAreCompatible(o : Object, c : Object, m : Klon)
+  requires o in m.m.Keys
+  requires c == m.m[o]
+  requires o == c
+  requires COK(o, m.oHeap)
+  ensures  klonOwnersAreCompatible(o,c,m)
+  ensures  klonOwnersAreCompatible(o,o,m)
+  ensures  klonOwnersAreCompatible(c,c,m)
+  ensures  klonOwnersAreCompatible(c,o,m)
+  {
+     reveal COK();
+  }
+
+
+predicate klonAllOwnersAreCompatible(m : Klon, ks : set<Object> := m.m.Keys)
  // 
+  requires ks <= m.m.Keys
   reads m.oHeap`fields,    m.oHeap`fieldModes
   reads m.ns`fields,       m.ns`fieldModes
   reads m.m.Keys`fields,   m.m.Keys`fieldModes
   reads m.m.Values`fields, m.m.Values`fieldModes 
   {
-  forall o <- m.m.Keys :: (
-     var c := m.m[o];
-     klonOwnersAreCompatible(o,c,m)
-  )
-     
- }
+    forall o <- ks :: klonOwnersAreCompatible(o,m.m[o],m)
+  }
 
-predicate  klonAllRefsOK(m : Klon)
+
+lemma klonOldOwnersAreStillCompatible(m' : Klon, m : Klon)
+   requires klonAllOwnersAreCompatible(m', m'.m.Keys)
+   requires mapGEQ(m.m, m'.m)
+  //  requires m'.calid()
+  //  requires m.calid() 
+  //  requires m.from(m')  
+   ///doesn't workj - cant call FROM if the thing isn't CALID.
+   ///grrrr
+
+    requires mapGEQ(m.m, m'.m)
+    requires m.o     == m'.o
+    requires m.oHeap == m'.oHeap
+    requires m.ns    >= m'.ns
+
+   ensures  klonAllOwnersAreCompatible(m,  m'.m.Keys)
+  {
+    assert forall o <- m'.m.Keys :: klonOwnersAreCompatible(o,m'.m[o],m');
+
+    assert forall o <- m'.m.Keys :: m.m[o] == m'.m[o];
+
+          assert m.oHeap == m'.oHeap;
+
+    forall o <- m'.m.Keys ensures 
+       (klonOwnersAreCompatible(o,m.m[o],m) ==  klonOwnersAreCompatible(o,m'.m[o],m'))
+       {
+
+      assert m.m[o] == m'.m[o];
+      klonOwnersAreCompatibleWider(o, m.m[o], m', m);
+       }
+
+
+
+    assert forall o <- m'.m.Keys :: klonOwnersAreCompatible(o,m.m[o],m);
+  }
+
+
+//refOK(t,f)
+//  boundInsideOwner(f,t) || directlyInside(t,f)
+
+// boundInsideOwner(f,t) 
+
+//directlyInside(t,f)
+
+predicate vaxBI(f : Object, t : Object) {f.AMFB >= t.allExternalOwners()}
+predicate vaxDI(f : Object, t : Object) {f.AMFO == t.allExternalOwners()}
+predicate vaxOK(f : Object, t : Object) {(f==t) || vaxBI(f,t) || vaxDI(f,t)}
+
+
+lemma vaxOUT(f : Object, t : Object, mo : Object)
+ requires f  in f.AMFO
+ requires t  in t.AMFO
+ requires f !in f.AMFB
+ requires t !in t.AMFB
+
+ requires f.AMFO > f.AMFB
+ requires t.AMFO > t.AMFB
+
+ requires vaxOK(f,t)
+ requires outside(f,mo)
+
+ ensures outside(t,mo)
+{
+  vaxWEX(f,t); 
+  
+}
+
+lemma vaxWEX(f : Object, t : Object)
+
+ requires f  in f.AMFO
+ requires t  in t.AMFO
+ requires f !in f.AMFB
+ requires t !in t.AMFB
+
+ requires f.AMFO >= f.AMFB
+ requires t.AMFO >= t.AMFB
+
+//  requires boundsNestingOK(f, {f,t})
+//  requires boundsNestingOK(t, {f,t})
+
+ ensures vaxBI(f,t) <==> boundInsideOwner(f,t) 
+ ensures vaxDI(f,t) <==> directlyInside(t,f)
+ ensures vaxOK(f,t) <==> refOK(f,t)
+
+//  ensures vaxBI(f,f)
+//  ensures vaxDI(f,f)
+ ensures vaxOK(f,f)
+{}
+
+predicate klonAllRefsOK(m : Klon)
 //  requires m.calid()  BUT WONT THAT
  {
   forall of <- m.m.Keys, ot <- m.m.Keys :: (
@@ -7244,17 +7366,351 @@ predicate  klonAllRefsOK(m : Klon)
      var ct := m.m[ot];
      klonRefOK(of,ot,cf,ct,m)
   )
-     
  }
+
+
+lemma wexOKreflexive(o : Object)
+  ensures refOK(o,o)
+{}
+
+
+
+lemma wexOKout(f : Object, t : Object, m : Klon)
+  requires m.calid()
+  requires f in m.m.Keys
+  requires t in m.m.Keys
+  requires outside(f, m.o)
+  //requires refOK(f,t)
+  ensures m.m[f] == f
+  ensures refOK(f,t) == refOK(m.m[f], t)
+{
+      reveal m.calid(),   m.calidObjects(),   m.calidOK(),   m.calidMap(),   m.calidSheep();
+      assert m.calid() && m.calidObjects() && m.calidOK() && m.calidMap() && m.calidSheep();
+}
+
+
+lemma wexOKsame(f : Object, t : Object, m : Klon)
+  requires f in m.m.Keys
+  requires t in m.m.Keys
+  requires outside(f, m.o)
+  requires refOK(f,t)
+
+  ensures  (refOK(f,t) ==> refOK(m.m[f],m.m[t]))
+{
+  assert outside(f,m.o);
+  assert (f==t) || vaxDI(f,t) || vaxBI(f,t);
+
+  assert (f==t) ==> outside(t, m.o);
+  assert vaxDI(f,t) ==>  (f.AMFO == t.allExternalOwners());
+  assert (t == m.o) ==>  (outside(f, m.o));
+  assert outside(t, m.o) ==>  (outside(f, m.o));
+
+  assert vaxBI(f,t) ==> (outside(t, m.o));
+}
+
+lemma wexfordKlon(k : Object, v : Object, m' : Klon, m : Klon)
+   requires {k,v} <= m.m.Keys
+   ensures klonAllRefsOK(m) <==> wexford(m)
+   ensures klonRefOK(k,v,m.m[k],m.m[v],m) <==> (refOK(k,v) ==> refOK(m.m[k],m.m[v]))
+{}
+
+
+predicate wexford(m : Klon)
+{
+    forall i <- m.m.Keys, j <- m.m.Keys :: refOK(i,j) ==> refOK(m.m[i],m.m[j])
+}
+
+lemma wexfordKV(k : Object, v : Object, m' : Klon, m : Klon)
+  requires wexford(m') 
+  requires klonCanKV(m',k,v)
+  requires k !in m'.m.Keys  
+  requires v !in m'.m.Values
+//  requires m.m == m'.m[k:=v]
+
+  requires m == klonKV(m',k,v)
+  requires 
+    var i := k;
+    forall  j <- m'.m.Keys :: refOK(i,j) ==> refOK(v,m.m[j]) 
+
+  requires 
+    var j := k;
+    forall  i <- m'.m.Keys :: refOK(i,j) ==> refOK(m.m[i],v)  
+
+  requires refOK(k,k) ==> refOK(v,v)
+
+  ensures m.m[k] == v
+
+  ensures wexford(m)
+{
+  assert m.m.Keys   == m'.m.Keys + {k};
+  assert m.m.Values == m'.m.Values + {v};
+  
+  forall i <- m.m.Keys, j <- m.m.Keys 
+    ensures ( refOK(i,j) ==> refOK(m.m[i],m.m[j]) )
+    {  
+      if ((i in m'.m.Keys) && (j in m'.m.Keys)) 
+        {
+          assert refOK(i,j) ==> refOK(m'.m[i],m'.m[j]);
+
+          assert m.m[i] ==  m'.m[i];
+          assert m.m[j] ==  m'.m[j];
+
+          assert refOK(i,j) ==> refOK(m.m[i],m.m[j]);
+        }
+      else if ((i !in m'.m.Keys)) { // && (j in m'.m.Keys)) {
+          assert i == k;  
+          assert m.m[i] == m.m[k] == v;
+  //        assert forall j <- m'.m.Keys :: refOK(i,j) ==> refOK(m.m[i],m.m[j]);
+          assert refOK(i,j) ==> refOK(m.m[i],m.m[j]);
+
+      } else { if (j !in m'.m.Keys) {
+          assert j == k;
+          assert m.m[j] == m.m[k] == v;          
+//          assert forall i <- m'.m.Keys :: refOK(i,j) ==> refOK(m.m[i],m.m[j]);
+          assert refOK(i,j) ==> refOK(m.m[i],m.m[j]);
+      }}
+
+       assert ( refOK(i,j) ==> refOK(m.m[i],m.m[j]) );
+    }    
+}
+
+
+
+
+
+
+
+
+// 
+// 
+// 
+// predicate dublin(m : vmap<nat,nat>) 
+// {
+//     forall i <- m.Keys, j <- m.Keys  ::
+//       if (i > j) then (m[i] > m [j] )
+//         else if (i < j) then (m[i] < m[j]) 
+//         else (
+//             assert i == j;
+//             m[i] == m[j]
+//         )
+// }
+// 
+// 
+// lemma dublinKV(k : nat, v : nat, m' : vmap<nat,nat>, m : vmap<nat,nat>)
+//   requires dublin(m')
+//   requires k !in m'.Keys
+//   requires v !in m'.Values
+//   requires m == m'[k:=v]
+// 
+//   requires 
+//     var i := k;
+//     forall  j <- m.Keys  ::
+//       if (i > j) then (m[i] > m [j] )
+//         else if (i < j) then (m[i] < m[j]) 
+//         else (
+//             assert i == j;
+//             m[i] == m[j]
+//         )
+// 
+//   ensures m[k] == v
+// 
+//   ensures dublin(m)
+// {}
+// 
+// 
+// 
+// 
+// 
+
+predicate sligo(m : vmap<nat,nat>) 
+{
+    forall i <- m.Keys, j <- m.Keys :: (i > j) ==> (m[i] > m[j])
+    
+}
+
+lemma sligoKV(k : nat, v : nat, m' : vmap<nat,nat>, m : vmap<nat,nat>)
+  requires sligo(m') 
+  requires k !in m'.Keys
+  requires v !in m'.Values
+  requires m == m'[k:=v]
+
+  requires 
+    var i := k;
+    forall  j <- m'.Keys :: (i > j) ==> (v > m'[j])
+
+  requires 
+    var j := k;
+    forall  i <- m'.Keys :: (i > j) ==> (m'[i] > v)
+
+  ensures m[k] == v
+
+  ensures sligo(m)
+{}
+
+
+// 
+// 
+// 
+// 
+// predicate wexford(m : vmap<Object,Object>) 
+// {
+//     forall i <- m.Keys, j <- m.Keys :: refOK(i,j) ==> refOK(m[i],m[j])
+//     
+// }
+// 
+// lemma wexfordKV(k : Object, v : Object, m' : vmap<Object,Object>, m : vmap<Object,Object>)
+//   requires wexford(m') 
+//   requires k !in m'.Keys
+//   requires v !in m'.Values
+//   requires m == m'[k:=v]
+// 
+//   requires 
+//     var i := k;
+//     forall  j <- m.Keys :: refOK(i,j) ==> refOK(m[i],m[j]) 
+// 
+//   requires 
+//     var j := k;
+//     forall  i <- m.Keys :: refOK(i,j) ==> refOK(m[i],m[j]) 
+// 
+//   ensures m[k] == v
+// 
+//   ensures wexford(m)
+// {}
+// 
+// 
+// 
+// 
+// 
+// 
+// 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 lemma klonAllRefsKVOK(k : Object, v : Object, m' : Klon, m : Klon)
   requires klonAllRefsOK(m')
+  //requires m'.calid()
   requires klonCanKV(m',k,v)
   requires m == klonKV(m',k,v)
   requires m.m.Keys == m'.m.Keys+{k}
-
+  requires m.m.Values == m'.m.Values+{v}
+  requires m.m[k] == v
+  requires m.m == m'.m[k:=v]
+  
+  //this one of course...
   requires forall ot <- (m'.m.Keys + {k}) ::  klonRefOK(k,ot,v,m.m[ot],m)
-
 
   ensures   klonAllRefsOK(m)
 {
@@ -7267,20 +7723,30 @@ lemma klonAllRefsKVOK(k : Object, v : Object, m' : Klon, m : Klon)
      var ct := m'.m[ot];
      klonRefOK(of,ot,cf,ct,m');
 
-  assert  forall of <- m'.m.Keys, ot <- m'.m.Keys ::
+  assert forall of <- m'.m.Keys, ot <- m'.m.Keys ::
      var cf := m'.m[of];  assert cf == m.m[of];
      var ct := m'.m[ot];  assert ct == m.m[ot];
      klonRefOK(of,ot,cf,ct,m) == klonRefOK(of,ot,cf,ct,m');
 
-//NEED EXISTENTIONALITY HERE
+//NEED EXISTENTIONALITY HERE   TODO
+//very much so!
 
 
-  assert  forall of <- m.m.Keys, ot <- m.m.Keys ::
-     var cf := m.m[of];
-     var ct := m.m[ot];
-     klonRefOK(of,ot,cf,ct,m);
-
-
+// 
+//   assert forall of <- m.m.Keys, ot <- m.m.Keys ::
+//      var cf := m.m[of];
+//      var ct := m.m[ot];
+// 
+//     if ((of in m'.m.Keys) && (ot in m'.m.Keys))
+//        then  (klonRefOK(of,ot,cf,ct,m'))
+//        else  (false);
+// 
+// 
+// 
+//   assert forall of <- m.m.Keys, ot <- m.m.Keys ::
+//      var cf := m.m[of];
+//      var ct := m.m[ot];
+//      klonRefOK(of,ot,cf,ct,m);
 }
 
 predicate  klonRefOK(of: Object, ot : Object, cf: Object, ct : Object, m : Klon)
@@ -7290,7 +7756,77 @@ predicate  klonRefOK(of: Object, ot : Object, cf: Object, ct : Object, m : Klon)
       {
         refOK(of,ot) ==> refOK(cf,ct)
       }
+
+lemma klonCompatibleRefOK(of: Object, ot : Object, cf: Object, ct : Object, m : Klon)
+  requires {of,ot} <= m.m.Keys
+  requires m.m[of] == cf
+  requires m.m[ot] == ct
+  requires klonOwnersAreCompatible(of, cf, m)
+  requires klonOwnersAreCompatible(ot, ct, m)
+  requires of.OwnersValid()
+  requires ot.OwnersValid()
+  requires cf.OwnersValid()
+  requires ct.OwnersValid()  
+  ensures  klonRefOK(of, ot, cf, ct, m)
+  {
+//HERE THERE EVERYWHERE KJX22DEC2024  //TODO
+
+assert (cf.AMFO >= cf.AMFB >= of.AMFB);
+assert (ct.AMFO >= ct.AMFB >= ot.AMFB);
+
+assert (cf.AMFO > cf.AMFB >= of.AMFB);
+assert (ct.AMFO > ct.AMFB >= ot.AMFB);
+
+assert (cf.AMFB >= of.AMFB);
+assert (ct.AMFB >= ot.AMFB);
+
+// //  // if (boundInsideOwner(of,ot)) {
+// //  //    
+// //  //   assert (of.AMFB >= ot.allExternalOwners());
+// //  //   assert (of.AMFB >= (ot.AMFO - {ot}));
+// //  // 
+// //  //   assert (of.AMFB >= ot.AMFB);
+// //  // 
+// //  //   assert ot.allExternalOwners()  >= ot.AMFB; 
+// //  //   assert (ot.AMFO - {ot})  >= ot.AMFB; 
+// //  //   assert ot in ot.AMFO;
+// //  //   assert ot !in ot.AMFB;
+// //  //   assert (ot.AMFO) >= ot.AMFB + {ot};     
+// //  //   assert (ot.AMFO > ot.AMFB);  //DUH
+// //  // 
+// //  //   // assert cf.AMFB > of.AMFB;
+// //  // 
+// //  //   assert cf.AMFB >= of.AMFB >= ot.AMFB;
+// //  //   assert           (ct.AMFB >= ot.AMFB);
+// //  // 
+// //  // 
+// //  //   assert (cf.AMFB >= (ct.AMFO - {ct}));
+// //  // 
+// //  //   assert cf.AMFB >= ct.AMFB;
+// //  // 
+// //  //   }//end (boundInsideOwner(of,ot)) 
+
+// 
+//   (cf.AMFB >= ct.allExternalOwners())
+// 
+ if (directlyInside(ot,of)) {
   
+  
+    assert of.AMFO == ot.allExternalOwners();
+
+//TODO this is BROKEN
+    assert cf.AMFO == ct.allExternalOwners();
+
+
+  }
+
+
+
+assume  klonRefOK(of, ot, cf, ct, m);
+
+}
+
+
 
 lemma {:verify false}  klonRefBoundOK(of: Object, ot : Object, cf: Object, ct : Object, m : Klon)
   requires m.calid()
