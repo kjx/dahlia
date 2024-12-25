@@ -1,0 +1,276 @@
+
+type Owner = set<Object>
+
+
+
+class Object { 
+
+  const bound : Owner //movement bound - stands in for explcit owner parameters
+  const AMFB  : Owner //flattened bound 
+
+  const xtrnl : Owner//actual "dynamic" Owner owner of this object --- *XTERNAL*
+  const AMFX :  Owner//flattened owner  /// aka all externeal owners 
+
+  const ntrnl : Owner //internal owners - i.e. Self-ownership - i.e. includers THIS 
+  const AMFO  : Owner //All MY FUCKING Owner  (aka All My Flat Owner:-)
+
+
+constructor bake(oo : Owner, mb : Owner) 
+  requires oo >= mb
+  //requires flattenBound(mb) >= flattenBound(oo)
+  //requires forall o <- (oo + mb) :: o.Valid()
+
+  ensures fresh(this)
+  ensures this.Valid() 
+  {
+    bound := mb;
+    xtrnl := oo;
+    ntrnl := oo + {this};
+    AMFB  := flatten(mb);
+    AMFX  := flatten(oo);
+    AMFO  := flatten(oo) + {this};
+  }  
+
+
+predicate Valid() {
+    && (AMFB == flatten(bound)) //hmm...
+    && (AMFX == flatten(xtrnl))
+    && (AMFO == flatten(ntrnl) +  {this})
+
+    && (this !in AMFB)
+    && (this !in AMFX)
+
+    && (AMFO > AMFX >= AMFB) 
+    }
+
+
+}
+
+// lemma flatflatflat(os : Owner) ensures flatten(flatten(os)) == flatten(os) {}
+function flatten (os : Owner) : Owner {set o <- os, oo <- o.AMFO :: oo}
+function flattenBound(os : Owner) : Owner {set o <- os, oo <- o.AMFB :: oo}
+
+predicate vaxBI(f : Object, t : Object) {f.AMFB >= t.AMFX}
+predicate vaxDI(f : Object, t : Object) {f.AMFO == t.AMFX}
+predicate vaxOK(f : Object, t : Object) {(f==t) || vaxBI(f,t) || vaxDI(f,t)}
+
+predicate vaxVX(f : Object, t : Object) {
+ false
+}
+
+
+lemma MoreValidThanValid(o : Object)
+  requires o.Valid()
+  ensures  o !in o.AMFB
+  ensures  o !in o.AMFX
+  ensures  o  in o.AMFO
+{}
+
+
+
+
+
+
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+datatype SubKlon = SubKlon
+(
+  m : vmap<Object,Object>,
+  c : set<Object>,
+  o_amfo : Owner,
+  c_amfo : Owner
+)
+
+type Klon = m : SubKlon | wexford2(m)  witness  SubKlon(map[], {}, {}, {}) 
+
+
+
+lemma bixy(a : Object, b : Object, c : Object, m : Klon)
+  requires a.Valid()
+  requires b.Valid()
+  requires c.Valid()
+
+//  requires forall o <- {a, b, c} :: o.Valid()  //doesn't wwork!
+
+  requires vaxBI(a,b)
+
+  ensures  (a.AMFO > a.AMFX >= a.AMFB) 
+  ensures  (b.AMFO > b.AMFX >= b.AMFB) 
+  ensures  a.AMFB >= b.AMFX
+  ensures  (a.AMFO > a.AMFX >= a.AMFB >= b.AMFX >= b.AMFB) 
+  ensures  a.AMFB >= b.AMFB
+
+  //  Inside3(a,b,c);
+{}
+
+lemma trexy(a : Object, b : Object, c : Object, m : Klon)
+  requires a.Valid()
+  requires b.Valid()
+  requires c.Valid()
+
+  requires vaxBI(a,b)
+  requires vaxBI(b,c)
+  ensures  vaxBI(a,c)
+{}
+
+predicate wexy(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( rv : bool )
+//note doesnt requrie Valid???
+//  requires wexford3(m)
+  requires {of, ot} <= m.m.Keys
+  requires m.m[of] == cf
+  requires m.m[ot] == ct
+
+  requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))  
+
+
+  requires (of != cf) ==> (cf.AMFO >= m.c_amfo)
+  requires (ot != ct) ==> (ct.AMFO >= m.c_amfo)
+
+
+  ensures rv == (vaxOK(of,ot) ==> vaxOK(cf,ct)) 
+{
+
+  // 25DEC 2024 - starting on the 2x2 version inside/outside of ,ot cases
+  // 
+  if (not(of.AMFO >= m.o_amfo))
+    then //from outside
+      (if (not(ot.AMFO >= m.o_amfo)) then (
+        //both outside
+        assert (not(of.AMFO >= m.o_amfo)) && (not(ot.AMFO >= m.o_amfo));
+        assert of == cf;
+        assert ot == ct;
+        vaxOK(of,ot) ==> vaxOK(cf,ct)
+      ) else (
+        //from outside to inside...
+        assert (not(of.AMFO >= m.o_amfo)) && (ot.AMFO >= m.o_amfo); 
+        assert of == cf;
+        assert ct.AMFO >= m.c_amfo;
+        vaxOK(of,ot) ==> vaxOK(cf,ct)))
+    else //from inside
+      (if (not(ot.AMFO >= m.o_amfo)) then (
+        //from inside to outside
+        assert (of.AMFO >= m.o_amfo) && (not(ot.AMFO >= m.o_amfo));
+        assert cf.AMFO >= m.c_amfo;
+        assert ot == ct;
+        vaxOK(of,ot) ==> vaxOK(cf,ct)
+      ) else (
+        //both inside
+        assert (of.AMFO >= m.o_amfo) && (ot.AMFO >= m.o_amfo); 
+        assert cf.AMFO >= m.c_amfo;
+        assert ct.AMFO >= m.c_amfo;
+        vaxOK(of,ot) ==> vaxOK(cf,ct)))  
+}
+
+predicate dexy(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( rv : bool )
+//  requires wexford3(m)
+/// HMM doesit still work?
+// agan doesn't need Valid??
+  requires {of, ot} <= m.m.Keys
+  requires m.m[of] == cf
+  requires m.m[ot] == ct
+
+  requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))  
+
+  ensures rv == (vaxOK(of,ot) ==> vaxOK(cf,ct)) 
+{
+
+  // 25DEC 2024 - version done by case analysis of the vaxOK(of,ot)
+  // 
+
+  if (of == ot) then (
+    assert vaxOK(of,ot);
+    vaxOK(cf,ct)) else (
+  if (vaxDI(of,ot)) then (
+    assert vaxOK(of,ot);
+    vaxOK(cf,ct)) else (
+  if (vaxBI(of,ot)) then (
+    assert vaxOK(of,ot);
+    vaxOK(cf,ct)
+  ) else (
+    assert not(vaxOK(of,ot));
+    true)))
+}
+    
+
+
+
+
+
+predicate wexford4(m : Klon)
+  requires wexford3(m)
+{
+  && (forall i <- m.m.Keys, j <- m.m.Keys :: wexy(i,j,m.m[i],m.m[j],m))
+}
+
+predicate wexford3(m : Klon)
+{
+  && (m.m.Keys   <= m.c)
+  && (m.m.Values <= m.c)
+  && (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) ==> (m.m[x] == x)))  
+
+
+  && (forall x <- m.m.Keys ::
+      (if (x.AMFO >= m.o_amfo) 
+        then ((m.m[x] != x) && (m.m[x].AMFO >= m.c_amfo))
+        else ((m.m[x] == x))))
+
+//  && (forall i <- m.m.Keys, j <- m.m.Keys :: wexy(i,j,m.m[i],m.m[j],m))
+
+}
+
+
+predicate wexford2(m : SubKlon)
+{
+  && (m.m.Keys   <= m.c)
+  && (m.m.Values <= m.c)
+  && (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) ==> (m.m[x] == x)))  
+  && (forall i <- m.m.Keys, j <- m.m.Keys :: vaxOK(i,j) ==> vaxOK(m.m[i],m.m[j]))   
+}
+
+
+
+predicate wexford(m : Klon)
+{
+    forall i <- m.m.Keys, j <- m.m.Keys :: vaxOK(i,j) ==> vaxOK(m.m[i],m.m[j])
+
+}
+
+predicate waterford(m : Klon)
+{
+    forall i <- m.m.Keys, j <- m.m.Keys | vaxOK(i,j) :: vaxOK(m.m[i],m.m[j])
+
+}
+
+lemma wexwater(m : Klon)
+  ensures wexford(m) == waterford(m)
+{}
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+
+predicate inside(part : Object, whole : Object) : (rv : bool)  { part.AMFO >= whole.AMFO }
+
+predicate outside(part : Object, whole : Object) : (rv : bool) { not(inside(part,whole)) }
+
+lemma Inside3(a : Object, b : Object, c : Object)
+  requires inside(a,b)
+  requires inside(b,c)
+  ensures  inside(a,c)
+{}
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+type vmap<K,V> = u : map<K,V> | AllMapEntriesAreUnique(u) 
+
+
+predicate AllMapEntriesAreUnique<K,V(==)>(m : map<K,V>)
+{
+    forall i <- m.Keys, j <- m.Keys :: (m[i] == m[j]) ==> (i == j)
+}
+
+predicate not(x : bool) { !x } 
