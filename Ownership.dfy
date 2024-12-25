@@ -162,7 +162,7 @@ lemma PointingLemma(f : Object, t : Object)
 // {}
 
 
-predicate OLDrefOK(f : Object, t : Object) : (rv : bool)
+predicate OLDERrefOK(f : Object, t : Object) : (rv : bool)
   // requires ownersOK(f,os) //isthere an AMFO verison of this? //this is snow the AMFO version
   // requires ownersOK(t,os)
   // reads f, t//, t`region
@@ -170,8 +170,10 @@ predicate OLDrefOK(f : Object, t : Object) : (rv : bool)
 {  insideOwner(f,t) }
 
 
+predicate oldishRefOK(f : Object, t : Object) : (rv : bool) //moved 23Dec2024
+  { boundInsideOwner(f,t) || directlyInside(t,f) }
 
-predicate refOK(f : Object, t : Object) : (rv : bool)
+predicate   refOK(f : Object, t : Object) : (rv : bool)
   // requires ownersOK(f,os) //isthere an AMFO verison of this? //this is snow the AMFO version
   // requires ownersOK(t,os)
   // reads f, t//, t`region
@@ -181,6 +183,7 @@ predicate refOK(f : Object, t : Object) : (rv : bool)
   // ownerInsideOwner(f.AMFO,t.allExternalOwners())
   //ownerInsideOwner(part.AMFO, whole.allExternalOwners())
   //  ownerInsideOwner(f.bound,t.allExternalOwners())
+  (f==t) || 
   boundInsideOwner(f,t) || directlyInside(t,f)
 }
 
