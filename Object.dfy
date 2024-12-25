@@ -317,8 +317,8 @@ function allExternalOwners() : set<Object>
  {  AMFO - {this} }
 
 function allExternalBounds() : set<Object>
- //all o's owners except o itself
- {  AMFB - {this} }
+ //all o's
+ {  AMFB  } //AMFB can't have "this" in it...
 
 
 ///*opaque*/ 
