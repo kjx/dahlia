@@ -15,12 +15,17 @@ function owners(o : Object) : set<Object>
 ///inside or equal to
 predicate inside(part : Object, whole : Object) : (rv : bool)
  // reads part, whole 
+  ensures rv <==> (whole.AMFO <= part.AMFO)
  {
-   whole.AMFO <= part.AMFO
+   part.AMFO >= whole.AMFO
  }
 
 predicate outside(part : Object, whole : Object) : (rv : bool)
-  { not(inside(part,whole)) }
+  ensures rv <==> (not(inside(part,whole))) 
+  ensures rv <==> (not(part.AMFO >= whole.AMFO))
+  { 
+    not(inside(part,whole))
+  }
 
 ///inside BUT NOT equal to
 predicate strictlyInside(part : Object, whole : Object) : (rv : bool)
