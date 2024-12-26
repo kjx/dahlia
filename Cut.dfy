@@ -113,9 +113,9 @@ CutIsCut2(cut : Object, tree : set<Object>, trunk : set<Object>, branch : set<Ob
 
           if (ownerInsideOwner(t.owner, {cut}) && t != cut) {        
             assert refOK(f,t);
-            assert ownerInsideOwner({f},t.owner);
+            assert {:contradiction} ownerInsideOwner({f},t.owner);
             transitiveInsideOwners({f}, t.owner, {cut});
-            assert inside(f,cut);
+            assert {:contradiction} inside(f,cut);
             assert false;
           } else {
             assert f in trunk;
