@@ -79,11 +79,14 @@ lemma EVILisCompatibleWithAnything(o : Object, v : Object)
 //
 class Object { 
 
-  const owner : Owner//actual "dynamic" Owner owner of this object
-  const AMFO  : Owner //All MY FUCKING Owner  (aka All My Flat Owner:-)
-
   const bound : Owner //movement bound - stands in for explcit owner parameters
-  const AMFB  : Owner //flattened bound 
+  const AMFB  : Owner //flattened bound
+
+  const owner : Owner//actual "dynamic" Owner owner of this object --- *XTERNAL*
+  const AMFX :  Owner//flattened owner  /// aka all externeal owners 
+
+  const ntrnl : Owner//actual "dynamic" internal region onwned by this object 
+  const AMFO  : Owner //All MY FUCKING Owner  (aka All My Flat Owner:-)
 
   var   fields     : map<string,Object>//field values. uninit fields have no entries
   var   fieldModes : map<string,Mode>//Mode of each field name -  note, static! - would be statically known by any methods
@@ -91,35 +94,9 @@ class Object {
 
   var nick : string //nickname
 
- 
-lemma triceratops(aa : set<Object>, bb : set<Object>, cc : set<Object>) 
-  ensures (aa + bb + cc) == ((aa + bb) + cc) == (aa + (bb + cc))
-{}
-
-lemma noFieldsAreAlwaysGoodFields() 
- requires fields == map[]
- ensures  AllFieldsAreDeclared()
- ensures  AllFieldsContentsConsistentWithTheirDeclaration()
-{}
-
-lemma flatOwnersConvariantOK1(xx : set<Object>, yy : set<Object>)
-  requires AllTheseOwnersAreFlatOK(xx,xx+yy)
-  ensures  flattenAMFOs(xx) <= yy + xx 
-{
-  reveal AllTheseOwnersAreFlatOK();
-  assert AllTheseOwnersAreFlatOK(xx,xx+yy);
-}
-
-lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
-  ensures AllTheseOwnersAreFlatOK(xx,xx+yy) == ( flattenAMFOs(xx) <= yy + xx )
-{
-  reveal AllTheseOwnersAreFlatOK();
-  assert AllTheseOwnersAreFlatOK(xx,xx+yy) == ( flattenAMFOs(xx) <= yy + xx );
-}
-
-
   constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo) 
-    requires forall o <- oo :: o.Ready()
+    requires forall o <- oo :: o.Ready()  //hmmm
+    requires oo >= mb
     requires CallOK(oo, context)
     requires CallOK(context) //KJX is this redundant Or wouidl it be redundat the other way around???
     // requires AllTheseOwnersAreFlatOK(oo)  //hmm? what would this mean?
@@ -134,7 +111,7 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
   
     requires ownerInsideOwner(oo,mb)
 
-    ensures owner == oo 
+    ensures owner == oo
     ensures AMFO == flattenAMFOs(oo) + {this}
     ensures bound == mb
     ensures AMFB == flattenAMFOs(mb) // + {this}  //HMM dunno if "this" should be here, but... --- ABSOLUTELY NOT!
@@ -161,16 +138,21 @@ lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
     ensures fresh(this)
 
   { 
-    owner := oo;
-    AMFO  := flattenAMFOs(oo) + {this};
     bound := mb;
     AMFB  := flattenAMFOs(mb);// + {this}; -- see above
-  
+
+    owner := oo;   ///should be xtrnl for
+    AMFX  := flattenAMFOs(oo);
+
+    ntrnl := oo + {this};
+    AMFO  := flattenAMFOs(oo) + {this};
+
     fieldModes := ks;
     fields := map[];
     nick := name;
     new; 
 
+    assert AMFX == AMFO - {this};
 
     assert fieldModes == ks;
     assert fields == map[];
@@ -241,7 +223,8 @@ assert CallOK(flattenAMFOs(oo),  {this} + context);
   CallOKWiderFocus({this}, flattenAMFOs(oo), {this} + context);
 
 
-assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);      
+
+assert (forall os <- allExternalOwners() :: AMFO >= os.AMFO);      
 
   assert CallOK({this} + flattenAMFOs(oo), {this} + context);
 
@@ -252,6 +235,10 @@ assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);
   assert COK(this, context+{this}) by { reveal COKOK; }
 
 //print "Object.make() just constructed ", fmtobj(this), "\n";
+
+
+   assert OwnersValid();
+
   }
 
 
@@ -283,6 +270,35 @@ assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);
 
 
 
+lemma triceratops(aa : set<Object>, bb : set<Object>, cc : set<Object>) 
+  ensures (aa + bb + cc) == ((aa + bb) + cc) == (aa + (bb + cc))
+{}
+
+lemma noFieldsAreAlwaysGoodFields() 
+ requires fields == map[]
+ ensures  AllFieldsAreDeclared()
+ ensures  AllFieldsContentsConsistentWithTheirDeclaration()
+{}
+
+lemma flatOwnersConvariantOK1(xx : set<Object>, yy : set<Object>)
+  requires AllTheseOwnersAreFlatOK(xx,xx+yy)
+  ensures  flattenAMFOs(xx) <= yy + xx 
+{
+  reveal AllTheseOwnersAreFlatOK();
+  assert AllTheseOwnersAreFlatOK(xx,xx+yy);
+}
+
+lemma flatOwnersConvariantOK2(xx : set<Object>, yy : set<Object>)
+  ensures AllTheseOwnersAreFlatOK(xx,xx+yy) == ( flattenAMFOs(xx) <= yy + xx )
+{
+  reveal AllTheseOwnersAreFlatOK();
+  assert AllTheseOwnersAreFlatOK(xx,xx+yy) == ( flattenAMFOs(xx) <= yy + xx );
+}
+
+
+
+
+
 
 
 
@@ -299,22 +315,13 @@ assert (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO);
 
 //it's important: this has *no*  readsclausew
    decreases AMFO, 1  
-{
-  && (AMFO == (flattenAMFOs(owner) + {this}))
-  && (allExternalOwners() == flattenAMFOs(owner))  //KJX hmmm again 
-  && (AMFO == (allExternalOwners() + {this}))      //KJX hmmm indeed
-  && (forall oo <- owner :: AMFO > oo.AMFO)
-  && (forall oo <- owner :: oo.Ready())
-  // && (flattenAMFOs(allExternalOwners()) <= AMFO)
-  //KJX hmmma
-  && OwnersValid()
-  }
+{ OwnersValid() }
 
 
-
-function allExternalOwners() : set<Object>
+function allExternalOwners() : (rv : set<Object>)
  //all o's owners except o itself
- {  AMFO - {this} }
+   ///ensures rv == AMFX 
+   { AMFO - {this} }
 
 function allExternalBounds() : set<Object>
  //all o's
@@ -407,21 +414,33 @@ assert OwnersValid();
 }
 
 
+
+
 //KJX should refactor all these invariants
 predicate OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec}
   decreases AMFO, 0
   ensures rv ==> (AMFO >= AMFB)
-  {  
-  && (this  in AMFO)
-  && (this !in owner)
-  && (owner <= AMFO)
-  && (AMFO == flattenAMFOs(owner) + {this})
+  {
   && (AMFB == flattenAMFOs(bound))
+  && (AMFX == flattenAMFOs(owner))
+  && (AMFO == flattenAMFOs(owner) + {this})
 
+  && (this !in bound)
+  && (this !in owner)
+  && (this !in AMFB)
+  && (this !in AMFX)
+  && (this  in AMFO)
+
+  && (AMFO > AMFX >= AMFB)
+
+  && (forall oo <- owner :: AMFO > oo.AMFO)
+  && (forall oo <- owner :: oo.Ready())
   && (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
   && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))  
   && ownerInsideOwner(owner,bound)
-  && AMFB <= AMFO
+  && (allExternalOwners() == flattenAMFOs(owner) == AMFX)  //KJX hmmm again 
+  && (AMFX == AMFO - {this})
+
 //  && (AMFB == flattenAMFOs(bound) + {this}) //WTFFF - how is thatPOSSIBLE - 20Dec2024
 // 
   }
