@@ -1,5 +1,5 @@
- 
-const protoTypes : map<string, Mode> := 
+
+const protoTypes : map<string, Mode> :=
       map["jat":= Evil]
          ["dat":= Evil]
          ["cat":= Evil]
@@ -11,7 +11,7 @@ const protoTypes : map<string, Mode> :=
          ["fucker" := Evil]
 
 
-method Main(s : seq<string>) 
+method Main(s : seq<string>)
 {
   print "Main()\n";
 
@@ -23,7 +23,7 @@ method Main(s : seq<string>)
      case '1' =>  Main1();
      case '2' =>  Main2();
      case '3' =>  Main3();
-     case '4' =>  Main4();     
+     case '4' =>  Main4();
      case _ => {}
  }
 
@@ -34,19 +34,19 @@ method Main(s : seq<string>)
 method {:verify false} Main1() {
 
   print "Main Test for loopback\n";
-  
+
 var t := new Object.make(protoTypes, {}, {}, "t");
 
 //   t
-//   a      b c 
+//   a      b c
 //   d
-//   e f g h 
+//   e f g h
 
 assert t.Ready();
 assert COK(t, {t});
 
-// protoTypes 8-)  
-// cat dat eye fucker jat kye lat nxt rat 
+// protoTypes 8-)
+// cat dat eye fucker jat kye lat nxt rat
 
 var a := new Object.make(protoTypes, {t}, {t}, "a");
 
@@ -54,7 +54,7 @@ var b := new Object.make(protoTypes, {t}, {t}, "b");
 
 var c := new Object.make(protoTypes, {t}, {t}, "c");
 
-var d := new Object.make(protoTypes, {a}, {t,a}, "d");  
+var d := new Object.make(protoTypes, {a}, {t,a}, "d");
 
 var e := new Object.make(protoTypes, {d}, {t,a,d}, "e"); //we're gonna clone this one..?
 
@@ -115,7 +115,7 @@ assert forall o <- os :: o.Ready();
 // printobj(d); printobjfields(d);
 // printobj(e); printobjfields(e);
 
-// print d.region,"\n"; 
+// print d.region,"\n";
 // print e.region,"\n";
 
 // assert !d.region.World?;
@@ -150,17 +150,17 @@ assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
 
 print "about to clone a\n";
 
-var m := Klon(map[], a, os, {} );
+var m := Klon(map[], a, a.AMFO, a.AMFO, os, {} );
 
 var ra, rm := Clone_Via_Map(a, m);
 
-// // 
-// //     m : Mapping,  //m : Mapping 
+// //
+// //     m : Mapping,  //m : Mapping
 // //     ks : set<Object>, //ks - set, keys of the mapping   (must be m.Keys, subset of oHeap)
 // //     vs : set<Object>, //vs - set, values or the mapping (must be m.Values, subset of oHeap + ns)
 // //     o : Object,  //o - Owner within which the clone is being performaed, in oHeap
-// //     oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts 
-// //     ns : set<Object>) 
+// //     oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts
+// //     ns : set<Object>)
 
 print "+++++++++++++\n";
 print "original store (os)\n";
@@ -181,7 +181,7 @@ print "istEinKlon = ", result;
 print "\n\n";
 
 print "\nDone\n";
-} 
+}
 // end
 
 
@@ -196,13 +196,13 @@ print "\nDone\n";
 method {:verify false} Main2() {
 
 print "main showing RefOK etc\n";
-  
+
 var t := new Object.make(protoTypes, {}, {}, "t");
 
 //   t
 //   a       b       c
-//   d  e            f 
-//  ij kl            g 
+//   d  e            f
+//  ij kl            g
 //                   h
 
 var a := new Object.make(protoTypes, {t}, {t},         "a");
@@ -227,12 +227,12 @@ assert forall o <- oq :: o.Ready();
 //   for i := 0 to |oq|
 //     {
 //       var o : Object := oq[i];
-// 
+//
 //       assert o.Ready();
-// 
+//
 //       print "\n=============================================================\n";
 //       print "=============================================================\n";
-// 
+//
 //       printobject(o);
 //     }
 //    print "\n\n";
@@ -245,15 +245,15 @@ print "Ownership - Inside =========================\n\n";
 //        {
 //          printobj(oq[i]);
 //          print "  ";
-// 
+//
 //          for j := 0 to |oq|
 // {
 //          print (if (inside(oq[i],oq[j])) then "i" else " ");
 //          print " ";
 // }
 //          print "\n";
-// 
-//        } 
+//
+//        }
 //   print "\n\n";
 
       for i := 0 to |oq|
@@ -269,7 +269,7 @@ print "Ownership - Inside =========================\n\n";
 }
          print "\n";
 
-       } 
+       }
   print "\n\n";
   print "\n[\n";
 
@@ -363,25 +363,25 @@ print "\n";
 }
 
 //uncomment to print out a new "matrix"
-// 
-// 
+//
+//
 //   print "\n[\n";
-// 
+//
 //       for i := 0 to |oq|
 //        {
 //          print "\"";
-// 
+//
 //          for j := 0 to |oq|
 // {
 //          print (if (refOK(oq[i],oq[j])) then ("x") else " ");
 // }
 //          if (i < (|oq|-1))  { print "\",\n";} else { print "\"\n";}
-// 
+//
 //        }
 // print "]\n";
 
 
-var keanu := 
+var keanu :=
 [
 "xxxx         ",
 "xxxxxx       ",
@@ -433,13 +433,13 @@ method {:verify false} Main3() {
 
 print "main poking at bound etc\n";
 print "Object G has bound at object t\n";
-  
+
 var t := new Object.make(protoTypes, {}, {}, "t");
 
 //   t
 //   a       b       c
-//   d  e            f  
-//  ij kl            g 
+//   d  e            f
+//  ij kl            g
 //                   h
 
 var a := new Object.make(protoTypes, {t}, {t},         "a");
@@ -499,7 +499,7 @@ print "\n";
 print "]\n";
 
 
-var keanu := 
+var keanu :=
 [
 "xxxx         ",
 "xxxxxx       ",
@@ -542,7 +542,7 @@ print "\nDone\n\n";
 
 } //end Main3
 
-//by Rustan Leino - 
+//by Rustan Leino -
   function natToString(n: nat): string {
     match n
     case 0 => "0" case 1 => "1" case 2 => "2" case 3 => "3" case 4 => "4"
@@ -553,7 +553,7 @@ print "\nDone\n\n";
 method {:verify false} Main4() {
 
 print "long and thin study of bounds\n";
-  
+
 var t := new Object.make(protoTypes, {}, {}, "t");  //top;
 
 print "   t\n";
@@ -565,7 +565,7 @@ var oq := [t];
 
 var o2 : Object? := null;
 
-for i := 0 to depth 
+for i := 0 to depth
 {
   var spine := new Object.make(protoTypes, {prev}, os, "o"+natToString(i));
 
@@ -596,7 +596,7 @@ print "Ownership - Directly Inside =========================\n\n";
 }
          print "\n";
 
-       } 
+       }
   print "\n\n";
 
 
@@ -617,34 +617,34 @@ print "Owners & Bound =========================\n\n";
          for j := 0 to |oq|
          {
          print (if (directlyBounded(oq[i],oq[j])) then (oq[j].nick+" ") else "");
-         }         
+         }
 
          print "\n";
 
-       } 
+       }
   print "\n\n";
 
 
 
 
-// 
-// 
+//
+//
 // print "Ownership - Directly Inside =========================\n\n";
-// 
+//
 //       for i := 0 to |oq|
 //        {
 //         print oq[i].nick;
 // //         printobj(oq[i]);
 //          print "  ";
-// 
+//
 //          for j := 0 to |oq|
 // {
 //          print (if (directlyInside(oq[i],oq[j])) then (oq[i].nick+"<<"+oq[j].nick) else "      ");
 //          print " ";
 // }
 //          print "\n";
-// 
-//        } 
+//
+//        }
 //   print "\n\n";
 
 
@@ -654,15 +654,15 @@ print "Ownership - Inside =========================\n\n";
 //        {
 //          printobj(oq[i]);
 //          print "  ";
-// 
+//
 //          for j := 0 to |oq|
 // {
 //          print (if (inside(oq[i],oq[j])) then "i" else " ");
 //          print " ";
 // }
 //          print "\n";
-// 
-//        } 
+//
+//        }
 //   print "\n\n";
 
       for i := 0 to |oq|
@@ -678,7 +678,7 @@ print "Ownership - Inside =========================\n\n";
 }
          print "\n";
 
-       } 
+       }
   print "\n\n";
 
 
@@ -720,4 +720,3 @@ print "]\n";
 
 
 } //end Main4
-
