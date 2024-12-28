@@ -392,31 +392,3 @@ lemma reallyRefOK(f : Object, t : Object)
   ensures refBI(f,t) == boundInsideOwner(f,t)
   ensures refDI(f,t) == directlyInside(t,f)
 {}
-
-lemma bixy(a : Object, b : Object, c : Object, m : Klon)
-  requires a.Ready()
-  requires b.Ready()
-  requires c.Ready()
-
-//  requires forall o <- {a, b, c} :: o.Ready()  //doesn't wwork!
-
-  requires refBI(a,b)
-
-  ensures  (a.AMFO > a.AMFX >= a.AMFB)
-  ensures  (b.AMFO > b.AMFX >= b.AMFB)
-  ensures  a.AMFB >= b.AMFX
-  ensures  (a.AMFO > a.AMFX >= a.AMFB >= b.AMFX >= b.AMFB)
-  ensures  a.AMFB >= b.AMFB
-
-  //  Inside3(a,b,c);
-{}
-
-lemma trexy(a : Object, b : Object, c : Object, m : Klon)
-  requires a.Ready()
-  requires b.Ready()
-  requires c.Ready()
-
-  requires refBI(a,b)
-  requires refBI(b,c)
-  ensures  refBI(a,c)
-{}

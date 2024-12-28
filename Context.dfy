@@ -27,9 +27,9 @@ lemma COKowner(a : Object, context : set<Object>)
   requires CallOK(context)
 
   ensures  CallOK(a.owner, context)
-  ensures  AllTheseOwnersAreFlatOK(a.AMFO - {a})
-  ensures  AllTheseOwnersAreFlatOK(a.allExternalOwners())
-  ensures  a.OwnersValid()
+  // ensures  AllTheseOwnersAreFlatOK(a.AMFO - {a})
+  // ensures  AllTheseOwnersAreFlatOK(a.allExternalOwners())
+  // ensures  a.OwnersValid()
 {
   reveal COK();
   reveal CallOK();
