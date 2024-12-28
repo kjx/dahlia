@@ -8795,54 +8795,6 @@ assert mapThruVMap(ks, m'.m) == mapThruKlon(ks, m');
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 lemma TargetOwnersReallyAreOK(b : Object, m : Klon)
   requires m.calid()
 //  requires COK(b, m.m.Values)
