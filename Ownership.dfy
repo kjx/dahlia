@@ -297,6 +297,7 @@ function ownersBetween(part : Object, whole : Object) : (rv : set<Object>)
  requires part.Ready()
  requires whole.Ready()
  requires inside(part,whole)
+ requires forall p <- part.AMFO :: inside(part, p)//KJX WATCH OUT FOR THIS 31 DEC 2024
  reads part.ValidReadSet() + whole.ValidReadSet()
  ensures inside(part, whole)
  ensures forall r <- rv :: inside(part, r)
@@ -369,7 +370,21 @@ lemma IAmInsideMyOwnersAndAMFO(a : Object, o : Object)
 
 
 
+function AllMyConcievableOwners(a : Object) : Owner
+  decreases a.AMFO
+  requires a.Ready()
+  {
+    assert a.OwnersValid();
+    assert forall oo <- a.AMFX :: a.AMFO > oo.AMFO;
+    assert forall oo <- a.AMFX :: oo.Ready();
+    set oo <- a.AMFX, ooo <- AllMyConcievableOwners(oo) :: ooo
+  }
 
+lemma AllMyConcievableOwnersAreFUCKINGFlat(a : Object)
+  decreases a.AMFO
+  requires a.Ready()
+  ensures AllMyConcievableOwners(a) <= a.AMFO
+  {}
 
 
 
