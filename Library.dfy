@@ -88,7 +88,7 @@ datatype Status =
   lemma SingletonIsSingleton<T>(s: set<T>)
    ensures IsSingleton(s) <==> GroundSingleton(s)
    {}
-  
+
   /* A set has exactly one element, if and only if, it has at least one element and any two elements are equal. */
   lemma LemmaIsSingleton<T>(s: set<T>)
     ensures |s| == 1 <==> IsSingleton(s)
@@ -114,8 +114,8 @@ datatype Status =
     x
   }
 
-  /* Deterministically extracts the unique element from a singleton set. In contrast to 
-     `ExtractFromNonEmptySet`, this implementation compiles, as the uniqueness of the element 
+  /* Deterministically extracts the unique element from a singleton set. In contrast to
+     `ExtractFromNonEmptySet`, this implementation compiles, as the uniqueness of the element
      being picked can be proven. */
   function ExtractFromSingleton<T>(s: set<T>): (x: T)
     requires |s| == 1
@@ -160,9 +160,9 @@ datatype Status =
     }
   }
 
-lemma LemmaSetXsPlusSeperateSingleton<X>(xs : set<X>, x : X, xsPlusX : set<X>) 
+lemma LemmaSetXsPlusSeperateSingleton<X>(xs : set<X>, x : X, xsPlusX : set<X>)
   requires x !in xs
-  requires xs + {x} == xsPlusX 
+  requires xs + {x} == xsPlusX
   ensures  forall t <- xs :: t in xsPlusX
   ensures  x in xsPlusX
   ensures  xs <= xsPlusX
@@ -172,7 +172,7 @@ lemma LemmaSetXsPlusSeperateSingleton<X>(xs : set<X>, x : X, xsPlusX : set<X>)
   ensures  xsPlusX - {x} == xs
   ensures  xsPlusX - xs  == {x}
 {}
-  
+
 
 lemma SubsetOfMapLEQKeys<K,V>(subset : set<K>, left : map<K,V>, right : map<K,V>)
   requires subset <= left.Keys
@@ -183,18 +183,24 @@ lemma SubsetOfMapLEQKeys<K,V>(subset : set<K>, left : map<K,V>, right : map<K,V>
 
 
 
-lemma AddToEmptySet<T>(t : T) 
+lemma AddToEmptySet<T>(t : T)
   ensures {} + {t} == {t}
   ensures {t} + {} == {t}
 {}
 
+lemma AddToDisjointSet<T>(t : T, u : set<T>, v : set<T>)
+// adding t into u makes u, remains disjoint from v if u' and b are disjoint
+  requires u !! v
+  requires t !in u
+  requires t !in v
+  ensures  (u+{t}) !! v
+{}
 
 
-
-lemma SetGEQisGTorEQ<T>(left : set<T>, right : set<T>) 
+lemma SetGEQisGTorEQ<T>(left : set<T>, right : set<T>)
     requires  left >= right
     ensures  (left > right) != (left == right)
-{} 
+{}
 
 
 
@@ -233,21 +239,21 @@ lemma FewerIsLess<T>(aa : set<T>, bb : set<T>)
 
 
 
-//library version 
-lemma IAmTheOne<T>( t : T,  ts : set<T>) 
+//library version
+lemma IAmTheOne<T>( t : T,  ts : set<T>)
    requires ((t in ts) && (|ts| == 1))
    ensures ts == {t}
-{ 
+{
 forall a <- ts, b <- ts
  ensures a == b
  { LemmaSingletonEquality(ts,a,b); }
 }
 
 //james version, edited down.
-lemma IAmTheOnlyOne<T>( t : T,  ts : set<T>) 
+lemma IAmTheOnlyOne<T>( t : T,  ts : set<T>)
    requires ((t in ts) && (|ts| == 1))
    ensures ts == {t}
-{  
+{
   if (ts != {t}) {
     if (ts == {}) { return; }
     var u : T :| u in ts && u != t;
@@ -255,20 +261,20 @@ lemma IAmTheOnlyOne<T>( t : T,  ts : set<T>)
     return;
    }
 }
-  
+
 //james' attempt at the full verVMapn with all the working
-lemma IAmTheContradictoryOne<T>( t : T,  ts : set<T>) 
+lemma IAmTheContradictoryOne<T>( t : T,  ts : set<T>)
    requires ((t in ts) && (|ts| == 1))
      ensures ts == {t}
-{  
-  if (ts != {t}) 
+{
+  if (ts != {t})
   {
     if (ts == {}) { assert {:contradiction} |ts| == 0; assert {:contradiction} false; return; }
 
     var u : T :| u in ts && u != t;
 
-    if (t in ts) { 
-        assert t in ts; 
+    if (t in ts) {
+        assert t in ts;
         assert u in ts;
         assert u != t;
         assert ts >= {t,u};
@@ -276,13 +282,13 @@ lemma IAmTheContradictoryOne<T>( t : T,  ts : set<T>)
         assert {:contradiction} (|ts| >= 2);
         assert {:contradiction} false; return;
       }
-     else 
+     else
       {
         assert {:contradiction} t !in ts;
         assert {:contradiction} false; return;
-      }  
+      }
       assert {:contradiction} false; //not reached
-    } 
+    }
     assert ts == {t};
     }
 
@@ -311,8 +317,8 @@ ghost function gset2seq<T>(X: set<T>) : (S: seq<T>)
   if (Y == {}) then [] else (
       var y : T :| y in Y;
      [y] + gset2seq( Y - {y} ) )
-  } 
-//  by method { S := set2seq(X); 
+  }
+//  by method { S := set2seq(X);
 //   assert forall x <- X :: x in S;
 //   assert forall s <- S :: s in X;
 //   assert |X| == |S|;
@@ -337,9 +343,9 @@ method set2seq<T>(X: set<T>) returns (S: seq<T>)
   // ensures S == gset2seq(X)
   modifies { }
 {
-  S := []; 
+  S := [];
   // var Z := {}; //enshittified the code to do something impossible...
-  var Y := X; 
+  var Y := X;
   //  assert S == fset2seq(Z);
   while Y != {}
     decreases Y
@@ -363,7 +369,7 @@ method set2seq<T>(X: set<T>) returns (S: seq<T>)
   }
 }
 
-predicate oneWayJesus<T>(X: set<T>, S: seq<T>) //really should be set2seqOK 
+predicate oneWayJesus<T>(X: set<T>, S: seq<T>) //really should be set2seqOK
 {
   && (forall x <- X :: x in S)
   && (forall s <- S :: s in X)
@@ -392,12 +398,12 @@ assert forall i | (0 <= i < |S|) && (i != n) :: (S[i] != S[n]);
 
  }
 
-  
+
 lemma MappingPlusKeysValues<K,V>(am : map<K,V>, bm : map<K,V>, sm : map<K,V>)
   requires sm == am + bm
-  ensures  sm.Keys == am.Keys + bm.Keys 
+  ensures  sm.Keys == am.Keys + bm.Keys
   ensures  sm.Values <= am.Values + bm.Values
-{ 
+{
   assert forall k <- am.Keys + bm.Keys :: k in sm.Keys;
   assert am.Keys + bm.Keys <= sm.Keys;
   assert forall k <- sm.Keys :: k in am.Keys || k in bm.Keys;
@@ -413,14 +419,14 @@ lemma MappingPlusKeysValues<K,V>(am : map<K,V>, bm : map<K,V>, sm : map<K,V>)
 /*opaque*/ function MappingPlusOneKeyValue<K(==),V(==)>(m' : map<K,V>, k' : K, v' : V) : (m : map<K,V>)
   requires AllMapEntriesAreUnique(m')
   ensures  AllMapEntriesAreUnique(m)
-  requires k' !in m'.Keys 
+  requires k' !in m'.Keys
   requires v' !in m'.Values
   ensures  m == m'[k':=v']
   ensures  m[k'] == v'
   ensures  m.Keys == m'.Keys + {k'}
   ensures  m.Values == m'.Values + {v'}
   ensures  mapLEQ(m',m)
-{      
+{
    reveal UniqueMapEntry();
 
     m'[k':=v']
@@ -429,7 +435,7 @@ lemma MappingPlusKeysValues<K,V>(am : map<K,V>, bm : map<K,V>, sm : map<K,V>)
 
 lemma MapLEQKeysValues<K,V>(am : map<K,V>, bm : map<K,V>)
   requires mapLEQ(am,bm)
-  ensures  am.Keys <= bm.Keys 
+  ensures  am.Keys <= bm.Keys
   ensures  am.Values <= bm.Values
 { }
 
@@ -488,7 +494,7 @@ method set2constMap<K(==),V(==)>(X : set<K>, v : V) returns (S: map<K,V>)
 
 function seq2set<T>(q : seq<T>) : set<T> { set x <- q } //Hard to verify??
 
-function seq2set2<T>(q : seq<T>) : set<T> { 
+function seq2set2<T>(q : seq<T>) : set<T> {
      if |q| == 0 then {} else {q[0]} + seq2set(q[1..]) }
 
 
@@ -536,14 +542,14 @@ lemma InversionLove<K,V>(m : map<K,V>, n : map<V,K>)
   assert forall k <- n.Keys :: m[n[k]] == k;
 }
 
-opaque predicate UniqueMapEntry2<K,V(==)>(m : map<K,V>, k : K) 
+opaque predicate UniqueMapEntry2<K,V(==)>(m : map<K,V>, k : K)
  requires k in m
 {
   //true
   m[k] !in  (m - {k}).Values  //dodgy UniqueMapEntry //AreWeNotMen
 }
 
-opaque predicate UniqueMapEntry<K,V(==)>(m : map<K,V>, 
+opaque predicate UniqueMapEntry<K,V(==)>(m : map<K,V>,
           k : K, v : V := assume {:axiom} k in m.Keys;  m[k])
  requires k in m.Keys
 {
@@ -565,7 +571,7 @@ lemma UME1<K,V>(m : map<K,V>, k : K)
    assert forall i <- mmk.Keys :: i != k && m[i] != m[k];
  }
 
-lemma  UME2<K,V>(m : map<K,V>, k : K) 
+lemma  UME2<K,V>(m : map<K,V>, k : K)
  requires k in m
  requires UniqueMapEntry(m,k)
  ensures  UniqueMapEntry2(m,k)
@@ -583,9 +589,9 @@ lemma  AValueNeedsAKey<K,V>(v : V, m : map<K,V>)
 lemma BothSidesNow<K,V>(m : map<K,V>)
   requires AllMapEntriesAreUnique(m)
   ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] != m[k]) ==> (i != k)
-  ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] == m[k]) ==> (i == k) 
+  ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] == m[k]) ==> (i == k)
   ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] != m[k]) <== (i != k)
-  ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] == m[k]) <== (i == k) 
+  ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] == m[k]) <== (i == k)
 
 {
     reveal UniqueMapEntry();
@@ -600,14 +606,14 @@ lemma BothSidesNow<K,V>(m : map<K,V>)
 lemma InjectiveIsUnique<K,V>(m : map<K,V>)
   requires Injective(m)
   ensures  AllMapEntriesAreUnique(m)
-{  
+{
     reveal Injective();
     reveal UniqueMapEntry();
 }
 
 lemma UniqueIsInjective<K,V>(m : map<K,V>)
   requires AllMapEntriesAreUnique(m)
-  ensures  Injective(m) 
+  ensures  Injective(m)
 {
     reveal Injective();
     reveal UniqueMapEntry();
@@ -619,8 +625,8 @@ lemma UniqueIsInjective<K,V>(m : map<K,V>)
 /////     /////     /////     /////     /////     /////     /////
     /////     /////     /////     /////     /////     /////     /////
 
-  
-type vmap<K,V> = u : map<K,V> | AllMapEntriesAreUnique(u) 
+
+type vmap<K,V> = u : map<K,V> | AllMapEntriesAreUnique(u)
 //intertible map
 
 // method shouldFail() returns (m : vmap<int,int>)
@@ -644,7 +650,7 @@ function VMapKV<K(==),V(==)>(m' : vmap<K,V>, k : K, v : V) : (m : vmap<K,V>)
 
 predicate canVMapKV<K(==),V(==)>(m' : vmap<K,V>, k : K, v : V)
   {
-     (k !in m'.Keys) && (v !in m'.Values) 
+     (k !in m'.Keys) && (v !in m'.Values)
  //  (forall k' <- m'.Keys :: (k != k') && (v != m'[k']))
   }
 
@@ -656,20 +662,20 @@ lemma VMapKVcanVMapKV<K,V>(m' : vmap<K,V>, k : K, v : V)
 function mapThruVMap<K,V>(ks : set<K>, m : vmap<K,V>) : set<V>
     requires ks <= m.Keys
   {
-      (set k <- ks :: m[k]) 
+      (set k <- ks :: m[k])
   }
 
 
 function mapThruVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V) : (m : set<V>)
     requires ks <= m'.Keys+{k}
-    requires canVMapKV(m', k, v)    
+    requires canVMapKV(m', k, v)
   {
-      (set x <- ks :: m'[k:=v][x]) 
+      (set x <- ks :: m'[k:=v][x])
   }
 
 lemma MapThruVMapKVVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
     requires ks <= m'.Keys+{k}
-    requires canVMapKV(m', k, v)  
+    requires canVMapKV(m', k, v)
     ensures  mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, VMapKV(m', k, v))
   {
          assert mapThruVMapKV(ks, m', k, v) == (set x <- ks :: m'[k:=v][x]);
@@ -682,7 +688,7 @@ lemma MapThruVMapKVVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
 lemma IfImNotTheExtraKeyTheUnderlyingMapIsFine<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
     requires ks <= m'.Keys
     requires k !in m'.Keys
-    requires canVMapKV(m', k, v)    
+    requires canVMapKV(m', k, v)
     ensures  mapThruVMapKV(ks, m', k, v) == mapThruVMap(ks, m')
   {}
 
@@ -720,4 +726,3 @@ lemma IdentityExtensionality<K>(k0 : set<K>, m : vmap<K,K>, kz : K)
     requires (forall k <- k0     :: m[k]  == k)
     ensures  (forall k <- k0+{kz} :: VMapKV(m,kz,kz)[k]  == k)
  {}
-
