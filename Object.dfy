@@ -125,7 +125,7 @@ class Object {
     ensures OwnersValid()
     ensures Ready()
 
-    ensures (forall oo <- allExternalOwners() :: AMFO >= oo.AMFO)
+    ensures (forall oo <- allExternalOwners() :: AMFO > oo.AMFO)
     ensures (forall o <-  AMFO :: inside(this, o))
 
 
@@ -242,6 +242,16 @@ assert CallOK(flattenAMFOs(oo),  {this} + context);
 
 //print "Object.make() just constructed ", fmtobj(this), "\n";
 
+
+assert
+  && (forall oo <- AMFX :: AMFO > oo.AMFO)
+  && (forall oo <- AMFX :: oo.Ready())
+  && (forall x <- AMFX, oo <- x.AMFO ::  AMFO > oo.AMFO)
+  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
+  by {
+    reveal COKOK;
+    reveal COK(), CallOK();
+  }
 
    assert OwnersValid();
 
@@ -449,11 +459,21 @@ predicate  OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec2024}
   && (this !in AMFX)
   && (this  in AMFO)
 
-  && (forall x <- AMFO, oo <- x.AMFO ::  AMFO >= oo.AMFO)
-  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
-
   && (AMFO > AMFX >= AMFB)
   && (owner >= bound)
+
+
+
+  && (forall o <- bound :: o.Ready())
+  && (forall o <- owner :: o.Ready())
+
+
+  && (forall oo <- AMFX :: AMFO > oo.AMFO)
+  && (forall oo <- AMFX :: oo.Ready())
+  && (forall x <- AMFX, oo <- x.AMFO ::  AMFO > oo.AMFO)
+  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
+
+
 
 //  && (AMFB == flattenAMFOs(bound) + {this}) //WTFFF - how is thatPOSSIBLE - 20Dec2024
 //
@@ -646,6 +666,7 @@ lemma FlatAMFOsAreFlat(os : set<Object>, of : set<Object>, context : set<Object>
 
 
 
+
 predicate OrigBigfoot(os : set<Object>, context : set<Object> := os)
 //os and the AMFO of every o in os are inside the context
 //alternative formulation of AllTheseOwnerAreFlatOK
@@ -699,12 +720,13 @@ function flattenAMFOs(os : set<Object>) : (of : set<Object>)
 
 lemma AMFOisBigger(o : Object)
   requires o.Ready()
-  ensures  (forall oo <- o.allExternalOwners() :: o.AMFO >= oo.AMFO)
+  ensures  (forall oo <- o.allExternalOwners() :: o.AMFO > oo.AMFO)
+  ensures  (forall oo <- o.AMFX                :: o.AMFO > oo.AMFO)
  {
    assert o.AMFO == flattenAMFOs(o.owner) + {o};
    assert o.AMFO == flattenAMFOs(o.owner + {o});
 
-   assert (forall oo <- o.allExternalOwners() :: o.AMFO >= oo.AMFO);
+   assert (forall oo <- o.allExternalOwners() :: o.AMFO > oo.AMFO);
  }
 
 //GRRRR
