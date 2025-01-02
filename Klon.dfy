@@ -234,6 +234,7 @@ lemma KlonKVVMapOK(m0 : Klon, k : Object, v : Object, m1 : Klon)
 
 lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
   requires klonAllRefsOK(m0)
+  requires klonAllOwnersAreCompatible(m0)
   requires m0.calid()
   requires MFUCKING: m0.calid()
   requires klonVMapOK(m0.m)
@@ -327,7 +328,9 @@ if (v == k)  {
     // assert klonAllOwnersAreCompatible(m0);
     // klonOldOwnersAreStillCompatible(m0,m1);
 
-    klonSameOwnersAreCompatible(k,v,m1);
+    //klonSameOwnersAreCompatible(k,v,m1);
+
+ klonOwnersAreCompatibleKV(k,v,m0,m1);
 
     assert klonAllOwnersAreCompatible(m1);
     assert klonAllRefsOK(m0);
@@ -336,7 +339,7 @@ assert wexford(m0);
 // wexfordKV(k,v,m0,m1);
 assert wexford(m1);
 
-//    klonAllRefsKVOK(k,v,m0,m1);
+//    klonAllRefsKVOK(k,v,m0,m1);i
 
     assert klonAllRefsOK(m1);
 
@@ -906,7 +909,7 @@ assert (forall x <- oHeap :: (x.Ready() && x.AllOutgoingReferencesWithinThisHeap
     assert rv.calidObjects() by {
       reveal rv.calidObjects();
 
-      assert rv.o in rv.oHeap by {
+                                                                                                                                                                                       assert rv.o in rv.oHeap by {
         assert calid(); reveal calid();
         assert calidObjects(); reveal calidObjects();
         assert o in oHeap;
@@ -917,14 +920,17 @@ assert (forall x <- oHeap :: (x.Ready() && x.AllOutgoingReferencesWithinThisHeap
       }
       assert rv.m.Keys <= rv.oHeap;
       assert rv.ns !! rv.oHeap by {
-        assert ns !! oHeap by { reveal oXn; }
-        assert v !in oHeap;
-        assume {v} !! oHeap;   //why do we need this given the above? - answer: to speed veriication?
-        assert (ns + {v}) !! oHeap;
-        assert rv.oHeap == oHeap;
-        assert (ns + {v}) !! rv.oHeap;
-        assert rv.ns == ns+{v};
-        assert rv.ns !! rv.oHeap;
+      assert ns !! oHeap by { reveal oXn; }
+      assert v !in oHeap;
+      AddToDisjointSet(v,ns,oHeap);
+
+
+        // assume {v} !! oHeap;   //why do we need this given the above? - answer: to speed veriication?
+        // assert (ns + {v}) !! oHeap;
+        // assert rv.oHeap == oHeap;
+        // assert (ns + {v}) !! rv.oHeap;
+        // assert rv.ns == ns+{v};
+        // assert rv.ns !! rv.oHeap;
       }
       assert m.Values <= ns + oHeap by {
                   assert calid(); reveal calid();
@@ -1123,9 +1129,8 @@ klonCalidKVCalid(this, k, v, rv);
   //  IHasCalidMap(rv);
     assert  rv.calidMap() by { reveal calid(); }
 
-    // assert rv.calidMap() by {
-    //     reveal rv.calidObjects(); assert rv.calidObjects();
-    //     reveal rv.calidOK(); assert rv.calidOK();
+    // assert rv.calidMap() by {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       bb
+    //     reveal rv.calidObjects(); assert rv.calidObjects();bbbbbbbbbbbbbbbbbb
     //     assert
     //       && AllMapEntriesAreUnique(rv.m)
     //       && klonVMapOK(rv.m) // potentiall should expand this out?
@@ -1259,7 +1264,6 @@ klonCalidKVCalid(this, k, v, rv);
 
 
 lemma foo() {}
-
 
 
 
@@ -5663,6 +5667,7 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   requires MPRIME: m'.calid()
   requires COK(a, m'.oHeap)
   requires COK(b, m'.oHeap+m'.ns)
+  requires COKbm': COK(b, m'.oHeap+m'.ns)
 
   requires n  in a.fields.Keys
   requires n !in b.fields.Keys
@@ -6066,7 +6071,7 @@ assert COKB4: COK(b, rm.oHeap+rm.ns);
 
   assert COK(rfv, m.oHeap+m.ns) by { reveal RFVCOK; }
   m.COKput(b, m.oHeap+m.ns, n, rfv);
-  assert b.fields == b.fields[n := rfv];
+  assert b.fields == old(b.fields)[n := rfv];
   assert COK(b, m.oHeap+m.ns);
 
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -6195,7 +6200,7 @@ assert COKB4: COK(b, rm.oHeap+rm.ns);
     assert CallOK(m.ns, m.oHeap+m.ns);
   }
 
-  //OLDCALID assert m'.calid() by { reveal MPRIME; }
+  //OLDCALID assert m'.calid()g{ reveal MPRIME; }
 
   assert  m.calidOK()
   by {
@@ -6377,8 +6382,8 @@ lemma KlonVMapOKfromCalid(m : Klon)
 
 
  predicate  klonOwnersAreCompatible(o : Object, c : Object, m : Klon)
-  requires o in m.m.Keys
-  requires c == m.m[o]
+//  requires o in m.m.Keys
+//  requires c == m.m[o]
   //the
   reads m.oHeap`fields, m.oHeap`fieldModes
   reads m.ns`fields,    m.ns`fieldModes
@@ -6435,10 +6440,47 @@ lemma  klonOwnersAreCompatibleWider(o : Object, c : Object, m' : Klon, m : Klon)
   assert klonOwnersAreCompatible(o, c, m);
 }
 
+
+
+
+
+lemma  klonOwnersAreCompatibleKV(o : Object, c : Object, m' : Klon, m : Klon)
+  requires o !in m'.m.Keys
+  requires klonOwnersAreCompatible(o, c, m')
+  //requires m'.calid()
+  //requires m.from(m')
+  requires mapGEQ(m.m, m'.m)
+  requires m.o     == m'.o
+  requires m.oHeap == m'.oHeap
+  requires m.ns    >= m'.ns
+  ensures  klonOwnersAreCompatible(o, c, m)
+{
+  assert
+      && m.boundsNestingOK(o, m'.oHeap)
+      && m.boundsNestingOK(c, m'.oHeap+m'.ns)
+      && (c.AMFO >= c.AMFB >= o.AMFB)
+      ;
+
+    m.widerBoundsNest(o, m'.oHeap, m.oHeap);
+    m.widerBoundsNest(c, m'.oHeap+m'.ns, m.oHeap+m.ns);
+
+  assert
+      && m.boundsNestingOK(o, m.oHeap)
+      && m.boundsNestingOK(c, m.oHeap+m.ns)
+      && (c.AMFO >= c.AMFB >= o.AMFB)
+      ;
+
+  assert klonOwnersAreCompatible(o, c, m);
+}
+
+
+
+
 lemma klonFieldsAreCompatible(of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 {}
 
 lemma klonSameOwnersAreCompatible(k : Object, v : Object, m1 : Klon)
+
 {}
 
 
@@ -6978,7 +7020,7 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
     }
 
 
-    assert xm.m.Keys >= m'.m.Keys;
+    assert xm.m.Keys > m'.m.Keys;
     assert a !in xm.m.Keys;
 
     assert ((m'.oHeap - m'.m.Keys)) >= (xm.oHeap - xm.m.Keys);
@@ -6988,7 +7030,7 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
     assert ((m'.oHeap - m'.m.Keys),
             (a.AMFO),
             (a.fields.Keys),
-            (15)
+            (12)
             decreases to
             xm.oHeap - xm.m.Keys,
             xo.AMFO,
@@ -7006,7 +7048,7 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
 
     if (a in rm.m.Keys) {
       m := rm;
-      assert m.calidObjects() by {  reveal m.calid(); assert  m.calid();  }
+       assert m.calidObjects() by {  reveal m.calid(); assert  m.calid();  }
       assert  a in m.m.Keys by { reveal m.calidObjects(); assert m.calidObjects(); }
       assert  a in m.m.Keys by { reveal m.calidObjects(); assert m.calidObjects(); }
       b := m.m[a];
