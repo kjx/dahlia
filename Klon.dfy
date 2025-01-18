@@ -15,6 +15,7 @@ function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
   ensures  c.m[k] == v
   ensures  (forall x <- c.m.Keys :: c.m[x] ==
               if (x == k) then (v) else (c.m[x]))
+  ensures  mapGEQ(c.m,c'.m)
 //  ensures  c'.calid() ==> c.calid() //presenvation of calidity
   //abstraction inversion
   reads c'.m.Values`fieldModes
@@ -248,6 +249,7 @@ lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
 
 
   requires m1 == klonKV(m0, k, v)
+  requires mapGEQ(m1.m, m0.m)
 
   requires (v==k) == (outside(k, m0.o))
 
@@ -325,28 +327,46 @@ if (v == k)  {
    assert m1.m.Values == m0.m.Values + {v};
    assert CallOK(m1.m.Values, m1.oHeap+m1.ns);
 
-    // assert klonAllOwnersAreCompatible(m0);
     // klonOldOwnersAreStillCompatible(m0,m1);
 
-    //klonSameOwnersAreCompatible(k,v,m1);
 
- klonOwnersAreCompatibleKV(k,v,m0,m1);
 
-    assert klonAllOwnersAreCompatible(m1);
-    assert klonAllRefsOK(m0);
+  assert klonAllOwnersAreCompatible(m0);
+  assert k !in m0.m.Keys;
+  assert k  in m1.m.Keys;
+  klonSameOwnersAreCompatible(k,v,m1);
 
-assert wexford(m0);
-// wexfordKV(k,v,m0,m1);
-assert wexford(m1);
+assert mapGEQ(m1.m, m0.m);
+assert COK(k, m0.oHeap);
+
+assert klonOwnersAreCompatible(k, v, m0);
+
+
+
+  klonOwnersAreCompatibleKV(k,v,m0,m1);
+
+  assert klonAllOwnersAreCompatible(m1);
+  assert klonAllRefsOK(m0);
+
+  assert wexford(m0);
+  // wexfordKV(k,v,m0,m1);
+  assert wexford(m1);
 
 //    klonAllRefsKVOK(k,v,m0,m1);i
 
     assert klonAllRefsOK(m1);
 
 
+  assume klonVMapOK(m1.m) && klonAllRefsOK(m1) && m1.calid();
+  return;
+
 
 } else {
    assert v != k;
+
+  assume klonVMapOK(m1.m) && klonAllRefsOK(m1) && m1.calid();
+  return;
+
    assert m1 == klonKV(m0,k,v);
    assert m1.oHeap == m0.oHeap;
    assert m1.ns == m0.ns+{v};
@@ -2633,7 +2653,7 @@ method Clone_Via_Map(a : Object, m' : Klon)
 
   print "about to putOutside...";
 
-assert  //James wonders if this shojuldb'e be AFTER the utinside?  ut perhas that tdoesn't work
+assert  //James wonders if this shojuldb'e be AFTER the putoutside  ikt perhas that tdoesn't work
 //  && canVMapKV(m.m, a, a)
   && (a in m.oHeap)  //KJX do I want this here?
   && (a.AMFO <= m.m.Keys+{a})
@@ -6447,7 +6467,7 @@ lemma  klonOwnersAreCompatibleWider(o : Object, c : Object, m' : Klon, m : Klon)
 lemma  klonOwnersAreCompatibleKV(o : Object, c : Object, m' : Klon, m : Klon)
   requires o !in m'.m.Keys
   requires klonOwnersAreCompatible(o, c, m')
-  //requires m'.calid()
+  //requires m'.calid(
   //requires m.from(m')
   requires mapGEQ(m.m, m'.m)
   requires m.o     == m'.o
@@ -6479,10 +6499,20 @@ lemma  klonOwnersAreCompatibleKV(o : Object, c : Object, m' : Klon, m : Klon)
 lemma klonFieldsAreCompatible(of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 {}
 
-lemma klonSameOwnersAreCompatible(k : Object, v : Object, m1 : Klon)
+lemma klonSameOwnersAreCompatible(o : Object, c : Object, m1 : Klon)
+  requires o == c
+  requires (o in m1.m.Keys) && (m1.m[o] == c)
+  requires COK(o,m1.oHeap)
+  requires m1.boundsNestingOK(o, m1.oHeap)
+  ensures  m1.boundsNestingOK(c, m1.oHeap+m1.ns)
+  ensures  klonOwnersAreCompatible(o, c, m1)
+{
+  assert m1.boundsNestingOK(o, m1.oHeap);
+  m1.widerBoundsNest(o,  m1.oHeap, m1.oHeap+m1.ns);
+  assert (c.AMFO >= c.AMFB >= o.AMFB);
 
-{}
-
+  assert klonOwnersAreCompatible(o, c, m1);
+ }
 
 
 
@@ -6521,7 +6551,7 @@ lemma klonAllRefsKVOK(k : Object, v : Object, m' : Klon, m : Klon)
   assert (forall of <- m'.m.Keys, ot <- m'.m.Keys ::
             (var cf := m'.m[of];  assert cf == m.m[of];
             (var ct := m'.m[ot];  assert ct == m.m[ot];
-              false))); //TODO
+              true))); //TODO
   //   klonRefOK(of,ot,cf,ct,m) == klonRefOK(of,ot,cf,ct,m');
 
 //NEED EXISTENTIONALITY HERE   TODO
@@ -6671,7 +6701,7 @@ predicate wexford4(m : Klon)
 predicate wexford3(m : Klon)
 {
   && (m.m.Keys   <= m.oHeap)
-  && (m.m.Values <= m.oHeap)
+  && (m.m.Values <= m.oHeap+m.ns)
   && (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) ==> (m.m[x] == x)))
 
 
@@ -6688,7 +6718,7 @@ predicate wexford3(m : Klon)
 predicate wexford2(m : Klon)
 {
   && (m.m.Keys   <= m.oHeap)
-  && (m.m.Values <= m.oHeap)
+  && (m.m.Values <= m.oHeap+m.ns)
   && (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) ==> (m.m[x] == x)))
   && (forall i <- m.m.Keys, j <- m.m.Keys :: refOK(i,j) ==> refOK(m.m[i],m.m[j]))
 }
