@@ -94,9 +94,18 @@ class Object {
 
   var nick : string //nickname
 
+
+
+
   constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
     requires forall o <- oo :: o.Ready()  //hmmm
     requires oo >= mb
+//for OvenReady()
+  requires forall o <- mb :: o.Ready()
+  requires forall o <- oo :: o.Ready()
+  requires forall o <- oo, ooo <- o.AMFO :: o.AMFO > ooo.AMFO
+
+//end OverReady()
     requires CallOK(oo, context)
     requires CallOK(context) //KJX is this redundant Or wouidl it be redundat the other way around???
     // requires AllTheseOwnersAreFlatOK(oo)  //hmm? what would this mean?
@@ -115,6 +124,7 @@ class Object {
     ensures AMFO == flattenAMFOs(oo) + {this}
     ensures bound == mb
     ensures AMFB == flattenAMFOs(mb) // + {this}  //HMM dunno if "this" should be here, but... --- ABSOLUTELY NOT!
+    ensures ntrnl > owner >= bound
 
     ensures fieldModes == ks
     ensures fields == map[]
@@ -123,6 +133,7 @@ class Object {
     ensures this !in owner
 
     ensures OwnersValid()
+    ensures OvenReady()
     ensures Ready()
 
     ensures (forall oo <- allExternalOwners() :: AMFO > oo.AMFO)
@@ -143,7 +154,7 @@ class Object {
     bound := mb;
     AMFB  := flattenAMFOs(mb);// + {this}; -- see above
 
-    owner := oo;   ///should be xtrnl for
+    owner := oo;   ///should be owner for
     AMFX  := flattenAMFOs(oo);
 
     ntrnl := oo + {this};
@@ -253,11 +264,45 @@ assert
     reveal COK(), CallOK();
   }
 
-   assert OwnersValid();
 
+assert forall o <- owner, ooo <- o.AMFO :: o.AMFO > ooo.AMFO;
+assert forall o <- AMFO :: AMFO >= o.AMFO;
+
+
+//HACKETU HACKETY HACK - wnat to prove
+///assert forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO;
+
+
+assert forall            ooo <- this.AMFO :: AMFO >= this.AMFO >= ooo.AMFO;
+assert forall oo <- (AMFO - {this}) :: (AMFO > oo.AMFO) && oo.Ready();
+assert forall oo <- (AMFO - {this}), ooo <- oo.AMFO :: oo.Ready() && ooo.Ready();
+
+assert forall oo <- (AMFO - {this}), ooo <- oo.AMFO ::
+   && (oo.Ready())
+   && (ooo.Ready())
+   && (AMFO > oo.AMFO);
+
+
+forall oo <- (AMFO - {this}), ooo <- oo.AMFO
+  ensures (oo.AMFO >= ooo.AMFO)
+  {
+    fucked(oo);
+    fucked(ooo);
   }
 
+assert forall oo <- (AMFO - {this}),  ooo <- oo.AMFO :: AMFO >= oo.AMFO >= ooo.AMFO;
 
+   assert OwnersValid();
+   assert OvenReady();
+  }
+
+lemma fucked(o : Object)
+  requires o.Ready()
+  ensures  forall oo <- o.AMFO :: oo.Ready()
+  ensures  forall oo <- o.AMFO :: o.AMFO >= oo.AMFO
+  ensures  forall oo <- o.AMFO, ooo <- oo.AMFO :: ooo.Ready()
+  ensures  forall oo <- o.AMFO, ooo <- oo.AMFO :: oo.AMFO >= ooo.AMFO
+  {}
 
 
   constructor fake(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
@@ -334,7 +379,8 @@ lemma anoyingExternalOwners()
 //it's important: this has *no*  reads clause!
    reads {}
    decreases AMFO, 20
-{ OwnersValid() }
+{ OvenReady() }
+// { OwnersValid() }
 
 
 
@@ -439,10 +485,50 @@ lemma ReadyGetsOwnersValid()
   ensures OwnersValid()
 {
   //////reveal Ready();
+reveal Ready();
 assert OwnersValid();
 }
 
 
+predicate OvenReady()
+   reads {}
+   decreases AMFO, 10
+  {
+    && (AMFB == flattenAMFOs(bound))
+    && (AMFX == flattenAMFOs(owner))
+    && (AMFO == (flattenAMFOs(ntrnl - {this}) + {this}))
+    && (AMFO == (flattenAMFOs(owner) + {this}))
+    && (AMFO == AMFX + {this})
+    && (AMFX == AMFO - {this})
+//from older OwnersValid()
+  && (owner >= bound)
+  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
+//end older OwnersValid()
+    && (this !in AMFB)
+    && (this !in AMFX)
+    && (this  in AMFO)
+
+    && (AMFO > AMFX >= AMFB)
+
+    && (forall oo <- owner :: AMFO > oo.AMFO)
+    && (forall oo <- bound :: AMFO > oo.AMFO)
+    && (forall oo <- owner :: oo.Ready())
+    && (forall oo <- bound :: oo.Ready())
+
+//from older OwnersValid()
+    && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
+//end older OwnersValid()
+    && (forall oo <- (AMFO - {this}) :: (AMFO > oo.AMFO) && oo.Ready())
+
+    && (forall oo <- AMFO :: AMFO >= oo.AMFO)
+    && (forall o <- owner, ooo <- o.AMFO :: AMFO >  o.AMFO >= ooo.AMFO)
+    && (forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+  }
+
+
+lemma  OROV()
+  ensures  OvenReady()  ==> OwnersValid()
+{}
 
 
 predicate  OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec2024}
@@ -461,7 +547,6 @@ predicate  OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec2024}
 
   && (AMFO > AMFX >= AMFB)
   && (owner >= bound)
-
 
 
   && (forall o <- bound :: o.Ready())
@@ -538,17 +623,29 @@ lemma CallMyOwnersWillWitherAway(a : Object, context : set<Object>)
 /*opaque*/ predicate TRUMP() ///*opaque*/ Valid()
     reads this`fields, this`fieldModes
  //  reads ValidReadSet()`fields, ValidReadSet()`fieldModes
-   { Ready() && Valid() }
+   {
+//for OvenReady()
+    OvenReady() &&
+//end OvenReady()
+    Ready() && Valid()
+   }
 
 lemma BIDEN()
   requires TRUMP()
-  ensures Ready() && Valid()
+  ensures OvenReady() && Ready() && Valid()
 {
    //////reveal TRUMP();
 }
 
+lemma VANCE(aa : set<Object>)
+  ensures forall o <- aa ::   o.TRUMP() ==> o.Ready()
+{}
+
+
+
 function deTRUMP(gop : Object) : (dem : Object)
     reads gop.ValidReadSet()`fields, gop.ValidReadSet()`fieldModes
+    reads gop`fields, gop`fieldModes
     requires gop.TRUMP()
     ensures  dem.Ready()
     ensures  dem.Valid()
@@ -561,19 +658,20 @@ lemma AllStandaloneMonotonic(aa : set<Object>, bb : set<Object>)
 ///note that there's *no* constraint saying aa !! bb
 
   requires forall o <- (aa) :: (o.TRUMP())
+  ensures  forall o <- aa ::   o.TRUMP() ==> o.Ready()
   requires forall o <- (aa) :: (deTRUMP(o).AllOutgoingReferencesAreOwnership(aa))
-  requires forall o <- (aa) :: (o.AllOutgoingReferencesWithinThisHeap(aa))
-  requires forall o <- (aa) :: (o.AllOwnersAreWithinThisHeap(aa))
+  requires forall o <- (aa) :: (o.Ready() && o.AllOutgoingReferencesWithinThisHeap(aa))
+  requires forall o <- (aa) :: (o.Ready() && o.AllOwnersAreWithinThisHeap(aa))
 
   requires forall o <- (bb) :: (o.TRUMP())
   requires forall o <- (bb) :: (deTRUMP(o).AllOutgoingReferencesAreOwnership(aa+bb))
-  requires forall o <- (bb) :: (o.AllOutgoingReferencesWithinThisHeap(aa+bb))
-  requires forall o <- (bb) :: (o.AllOwnersAreWithinThisHeap(aa+bb))
+  requires forall o <- (bb) :: (o.Ready() && o.AllOutgoingReferencesWithinThisHeap(aa+bb))
+  requires forall o <- (bb) :: (o.Ready() && o.AllOwnersAreWithinThisHeap(aa+bb))
 
   ensures  forall o <- (aa) :: (o.TRUMP())
-  ensures  forall o <- (aa) :: (o.AllOutgoingReferencesAreOwnership(aa+bb))
-  ensures  forall o <- (aa) :: (o.AllOutgoingReferencesWithinThisHeap(aa+bb))
-  ensures  forall o <- (aa) :: (o.AllOwnersAreWithinThisHeap(aa+bb))
+  ensures  forall o <- (aa) :: (o.Ready() && o.AllOutgoingReferencesAreOwnership(aa+bb))
+  ensures  forall o <- (aa) :: (o.Ready() && o.AllOutgoingReferencesWithinThisHeap(aa+bb))
+  ensures  forall o <- (aa) :: (o.Ready() && o.AllOwnersAreWithinThisHeap(aa+bb))
 {
 }
 
@@ -643,7 +741,7 @@ assert true;
 //why opaqie all of a sudden?
 // thisi  kind of SHITTY.
 // given one arg, yes they are all flat,
-// given TWO args, checks all owners flatten witin context!!!
+// given TWO args, checks all owners flattenAMFOs witin context!!!
 opaque predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
 // true iff all os's AMFOS are inside os
 // probalby need to do - {a} if these are for {a} or else it gets circular...?  //INDEED
@@ -919,6 +1017,9 @@ twostate lemma edgeFUCKINGassignment(os : set<Object>,
   requires forall o <- os :: o.Ready() && o.Valid()
   requires f in os
   requires n !in old(f.fields)
+///for OvenReady() for some reason
+  requires n in old(f.fieldModes)
+///end OvenReady() for some reason
   requires t in os
   requires rs == old(edges(os))
   requires rn ==     edges(os)
@@ -936,7 +1037,10 @@ twostate lemma edgeFUCKINGassignment(os : set<Object>,
              )
   requires n in f.fields
   requires f.fields[n] == t
-  ensures edges(os) == old(edges(os)) + {Edge(f,n,f.fieldModes[n],t)}
+
+  ensures  n in f.fields
+  ensures  f.fields[n] == t
+  ensures  edges(os) == old(edges(os)) + {Edge(f,n,f.fieldModes[n],t)}
         {}
 
 
@@ -980,3 +1084,14 @@ function allFieldValuesExcept(os : set<Object>, xo : Object) : set<Object>
 {
 set o <- os, v <- o.fields.Values | o != xo :: v
 }
+
+
+
+
+lemma EQUALAMFOS(a : Object, b : Object)
+  requires a.Ready()
+  requires b.Ready()
+  ensures  (a == b)  ==> (a.AMFO == b.AMFO)
+  ensures  (a == b) <==  (a.AMFO == b.AMFO)
+  ensures  (a == b) <==> (a.AMFO == b.AMFO)
+  {}
