@@ -374,6 +374,8 @@ function AllMyConcievableOwners(a : Object) : Owner
   decreases a.AMFO
   requires a.Ready()
   {
+    assert a.Ready();
+    a.ReadyGetsOwnersValid();
     assert a.OwnersValid();
     assert forall oo <- a.AMFX :: a.AMFO > oo.AMFO;
     assert forall oo <- a.AMFX :: oo.Ready();
