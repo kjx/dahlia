@@ -54,9 +54,9 @@ lemma COKgetsDeclaredFields(a : Object, context : set<Object>)
   ensures a.AllFieldsAreDeclared()
 {
    reveal COK();
-  //  assert COK(a, context);
-  //  assert a.Valid();
-  //  assert a.AllFieldsAreDeclared();
+   assert COK(a, context);
+   assert a.Valid();
+   assert a.AllFieldsAreDeclared();
 }
 
 
@@ -67,7 +67,41 @@ lemma COKWiderContext2(a : Object, less : set<Object>, more : set<Object>)
   requires less <= more
   ensures COK(a,more)
 {
-  reveal COK();
+  //assert  (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO);
+assert a.allExternalOwners() <= less by {
+   reveal COK();
+   assert COK(a,less);
+   assert a.AllOwnersAreWithinThisHeap(less);
+  //  assert a.allExternalOwners() <= less;
+   }
+assert a.allExternalBounds() <= less by {
+    reveal COK();
+    assert COK(a,less); }
+
+assert COK(a,less);
+reveal COK();
+
+SML(a.allExternalOwners(), less, more);
+SML(a.allExternalBounds(), less, more);
+
+
+var context := more;
+assert
+    && (a in context)
+    //&& (a.AMFO <= context)
+    //&& (a.AMFB <= context) //sgould be derivable, AMFB <= AMFO
+    && (a.AMFB <= a.AMFO <= context)
+    && (forall oo <- a.AMFO :: oo.Ready())
+    && (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO)
+  //  && (a.TRUMP()||(a.Ready() && a.Valid()))
+    && (a.Ready())
+    && (a.Valid())
+    && (a.AllOutgoingReferencesAreOwnership(context))
+//    && (a.AllOutgoingReferencesWithinThisHeap(context))
+    && (a.AllOwnersAreWithinThisHeap(context))
+    && AllTheseOwnersAreFlatOK(a.AMFO - {a})
+    ;
+
 }
 
 
@@ -77,6 +111,26 @@ lemma COKWiderContext(a : Object, context : set<Object>, extra : set<Object>)
   ensures COK(a,context + extra)
 {
   reveal COK();
+  assert COK(a,context);
+//  assert  (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO);
+
+var context := context + extra;
+assert
+    && (a in context)
+    //&& (a.AMFO <= context)
+    //&& (a.AMFB <= context) //sgould be derivable, AMFB <= AMFO
+    && (a.AMFB <= a.AMFO <= context)
+    && (forall oo <- a.AMFO :: oo.Ready())
+    && (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO)
+  //  && (a.TRUMP()||(a.Ready() && a.Valid()))
+    && (a.Ready())
+    && (a.Valid())
+    && (a.AllOutgoingReferencesAreOwnership(context))
+//    && (a.AllOutgoingReferencesWithinThisHeap(context))
+    && (a.AllOwnersAreWithinThisHeap(context))
+
+    && AllTheseOwnersAreFlatOK(a.AMFO - {a})
+    ;
 }
 
 lemma CallOKWiderContext(aa: set<Object>, context : set<Object>, extra : set<Object>)
@@ -150,6 +204,7 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
     //&& (a.AMFB <= context) //sgould be derivable, AMFB <= AMFO
     && (a.AMFB <= a.AMFO <= context)
     && (forall oo <- a.AMFO :: oo.Ready())
+    && (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO)
   //  && (a.TRUMP()||(a.Ready() && a.Valid()))
     && (a.Ready())
     && (a.Valid())

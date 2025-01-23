@@ -1,4 +1,4 @@
-//Incoming depends on Edges 
+//Incoming depends on Edges
 
 type Incoming = map<Object,set<Edge>>
 
@@ -8,7 +8,7 @@ function partitionedIncomingEdges(es : set<Edge>) : (r : map<Object,set<Edge>>)
   reads set e <- es :: e.f
   reads set e <- es :: e.t
 
-  ensures forall k <- r.Keys, e <- r[k] :: e in es && e.t == k 
+  ensures forall k <- r.Keys, e <- r[k] :: e in es && e.t == k
   ensures forall e <- es :: (e.t in r) && (e in r[e.t])
   ensures (set k <- r.Keys, e <- r[k] :: e) == es
   ensures forall k <- r.Keys :: r[k] == incomingEdges(k, es)
@@ -19,11 +19,11 @@ function partitionedIncomingEdges(es : set<Edge>) : (r : map<Object,set<Edge>>)
 
 
 
-predicate {:opnly} partitionedLessEQ(lesp : Incoming, morp : Incoming)  
+predicate {:opnly} partitionedLessEQ(lesp : Incoming, morp : Incoming)
 {
    && lesp.Keys <= morp.Keys
    && (forall l <- lesp.Keys :: lesp[l]   <= morp[l])
-   && (forall l <- lesp.Keys :: |lesp[l]| <= |morp[l]|) 
+   && (forall l <- lesp.Keys :: |lesp[l]| <= |morp[l]|)
 }
 
 lemma  partitionedIncomingEdgesMonotonic(
@@ -41,7 +41,7 @@ lemma  partitionedIncomingEdgesMonotonic(
 
    ensures partitionedLessEQ(lesp, morp)
 {
-  forall l <- lesp.Keys 
+  forall l <- lesp.Keys
      ensures |lesp[l]| <= |morp[l]|
      {
         FewerIsLess(lesp[l],morp[l]);
@@ -50,7 +50,7 @@ lemma  partitionedIncomingEdgesMonotonic(
 }
 
 
-predicate uniqueIncoming( o : Object, osgp : Incoming) 
+predicate uniqueIncoming( o : Object, osgp : Incoming)
 {
   (o in osgp) && (|osgp[o]| == 1)
 }
@@ -67,7 +67,7 @@ lemma IncomingEdgesAreIncoming(es : set<Edge>, ins : Incoming )
    ensures  forall o <- ins.Keys :: ins[o] == incomingEdges(o,es)
 {
   // assert ObjectsToEdges(os,es);
-  // assert ObjectsToIncoming(os,ins);  
+  // assert ObjectsToIncoming(os,ins);
 }
 
 
@@ -79,7 +79,7 @@ lemma {:timeLimit 30} {:isolate_assertions} FewerPartitionedIncomingEdgesValid(
     requires less <= more
     requires lesp == partitionedIncomingEdges(less)
     requires morp == partitionedIncomingEdges(more)
- 
+
     requires edgesAreConsistentWithDafnyHeap(less)
     requires edgesAreConsistentWithDafnyHeap(more)
 
@@ -88,7 +88,7 @@ lemma {:timeLimit 30} {:isolate_assertions} FewerPartitionedIncomingEdgesValid(
     requires BorrowedNotOwnedIncoming(morp)
     requires BorrowsLoansConsistentPermissionIncoming(morp)
     requires OnlyOneWriterIncoming(morp)
- 
+
     requires IncomingReferencesConstraintsOK(more)
 
     ensures OnlyOneOwnedOrLoanedIncoming(lesp)
@@ -119,12 +119,12 @@ function partitionUnion(m: Incoming, m': Incoming): (r: Incoming)
 
 function IncomingReadSet(ins : Incoming) : set<Object>
 {
-  set es : set<Edge> <- ins.Values, e : Edge <- es, 
+  set es : set<Edge> <- ins.Values, e : Edge <- es,
     o : Object <- ({e.f} + {e.t}) :: o
 }
 
 
-predicate ObjectsToIncoming(os : set<Object>, ins : Incoming) 
+predicate ObjectsToIncoming(os : set<Object>, ins : Incoming)
 //  requires IncomingReadSet(ins) <= o
   //reads (set es <- ins.Values, e <- es, o <- {e.f}:: o)`fields
   reads (set es <- ins.Values, e <- es :: e.f)`fields
@@ -135,6 +135,7 @@ predicate ObjectsToIncoming(os : set<Object>, ins : Incoming)
   reads IncomingReadSet(ins)`fields
   requires forall o <- os :: o.Ready() && o.Valid() //DO I want this or not? or a separate lemma
 {
+  && (forall o <- os :: o.AllFieldsAreDeclared())
   && (forall es <- ins.Values, e <- es :: e.n in e.f.fields && e.f.fields[e.n] == e.t)
   && ((os == {}) ==> ((IncomingReadSet(ins)) + ins.Keys) == {})   //but not the other way cos of solitary nodes (incoming & outgoing = 0)
   && (var es := edges(os); forall e <- es :: (e.t in ins.Keys && e in ins[e.t]))
@@ -142,8 +143,8 @@ predicate ObjectsToIncoming(os : set<Object>, ins : Incoming)
   && (forall es <- ins.Values, e <- es :: (e.f in os) && (e.n in e.f.fields) && (e.m == e.f.fieldModes[e.n]) && (e.t == e.f.fields[e.n]))
 }
 //note that this doesn't require e.t to be in os, i.e. we don't require os is "ClosedHeap"
-//or whatever we call it. 
-//perhaps we need more invairants or something to handle that case. grrr. 
+//or whatever we call it.
+//perhaps we need more invairants or something to handle that case. grrr.
 //how much should be explicit!!! how much implicit??
 
 
@@ -164,6 +165,3 @@ lemma {:timeLimit 120}
 
   assert ObjectsToIncoming(os,ins);
 }
-
-
-

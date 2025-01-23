@@ -675,9 +675,12 @@ datatype Klon = Klon
     requires CallOK({}, {k})
     requires CallOK({k})
     requires AllTheseOwnersAreFlatOK({k})
+    requires forall ooo <- k.AMFO :: k.AMFO > ooo.AMFO
+
   {
     reveal CallOK(), COK();
-    assert k.Ready();
+    assert k.Ready();  assert k.Valid();
+
 
     var jd := new Object.make( map[], {k}, {k}, "hello");
     assert jd !in oHeap;
@@ -2656,7 +2659,11 @@ method Clone_Via_Map(a : Object, m' : Klon)
 assert  //James wonders if this shojuldb'e be AFTER the putoutside  ikt perhas that tdoesn't work
 //  && canVMapKV(m.m, a, a)
   && (a in m.oHeap)  //KJX do I want this here?
-  && (a.AMFO <= m.m.Keys+{a})
+  && (a.allExternalOwners() <= m.m.Keys)   //merging in objectage Spike
+  && (a.AMFX <= m.m.Keys)                  //merging in objectage Spike
+  && (a.OvenReady())                       //merging in objectage Spike
+  && (a.AMFO == a.AMFX + {a})              //merging in objectage Spike
+  && (a.AMFO <= m.m.Keys+{a})              //merging in objectage Spike
 //  && (mapThruVMapKV(a.AMFO, m.m, a, a) == a.AMFO)
 //  && (a.owner <= a.AMFO)
     && (a.owner <= m.m.Keys+{a})
@@ -2770,10 +2777,12 @@ assert (a == b);
 
 assert m.boundsNestingOK(a, m.oHeap);
 m.widerBoundsNest(a, m.oHeap, m.oHeap+m.ns+{a});
+
 assert m.boundsNestingOK(a, m.oHeap+m.ns+{a});
 
 assert a.allExternalOwners() <= m.m.Keys ;
-InTHeBox(a,m);
+assert a.allExternalBounds() <= m.m.Keys ;
+InTheBox(a,m);
 assert m.boundsNestingOK(a, m.m.Keys+{a});
 
   //this is cloneOUTSIDE -= so a == b?  riugbht??
@@ -4367,11 +4376,17 @@ method Clone_Clone_Clone(a : Object, m' : Klon)
   //assert CallOK(a.extra,m.oHeap);
 
 assert AllTheseOwnersAreFlatOK(a.allExternalOwners()) by {
-    //assert COK(a, m.oHeap);
+    assert COK(a, m.oHeap);
+    RVfromCOK(a, m.oHeap);
+    assert a.Ready();
+    assert a.OvenReady();
     m.calidOKFromCalid();
-    //assert CallOK(m.oHeap);
+    assert CallOK(m.oHeap);
     COKowner(a, m.oHeap);
-    //assert AllTheseOwnersAreFlatOK(a.allExternalOwners());
+    assert (a.AMFB <= a.AMFO <= m.oHeap);
+    assert a.AllOwnersAreWithinThisHeap(m.oHeap);
+    reveal AllTheseOwnersAreFlatOK();
+    assert AllTheseOwnersAreFlatOK(a.allExternalOwners());
   }
 
 //   assert (flattenAMFOs(a.owner) < a.AMFO) by {

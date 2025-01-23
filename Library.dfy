@@ -238,6 +238,18 @@ lemma FewerIsLess<T>(aa : set<T>, bb : set<T>)
 }
 
 
+lemma InSmallerInBigger<T>(smaller : set<T>, bigger : set<T>)
+  requires smaller <= bigger
+  ensures  forall x <- smaller :: x in bigger
+{}
+
+lemma SML<T>(smaller : set<T>, middle : set <T>, bigger : set<T>)
+  requires smaller <= middle
+  requires middle  <= bigger
+  ensures  smaller <= bigger
+  ensures  forall x <- smaller :: x in middle
+  ensures  forall x <- smaller :: x in bigger
+{}
 
 //library version
 lemma IAmTheOne<T>( t : T,  ts : set<T>)

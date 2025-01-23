@@ -33,7 +33,7 @@ datatype Edge = Edge(f : Object, n : string, m : Mode, t : Object)
 
   /*opaque*/ function edge(o : Object, n : string) : (e : Edge)   //set or singleton?
    reads o
-   requires n in o.fieldModes &&  n in o.fields
+   requires n in o.fieldModes && n in o.fields
    ensures  e == Edge(o, n, o.fieldModes[n], o.fields[n])
   {
     Edge(o, n, o.fieldModes[n], o.fields[n])
@@ -177,7 +177,8 @@ lemma fieldEdgesAreOutgoing(os : set<Object>)
         edges(aa + bb) == edges(aa) + edges(bb)
 {}
 
-
+//NOTe  this seems to be correct a far as I can tell -
+//verifies fine on the command line but not in the IDE!
  lemma edgesFromWholeSetOfSetsOfDisjointObjects(ooo : set<set<Object>>)
       requires forall oo <- ooo, o <- oo :: o.Ready() && o.Valid()
       requires forall aa <- ooo, bb <- ooo :: aa !! bb

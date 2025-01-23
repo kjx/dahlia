@@ -465,7 +465,9 @@ lemma NoFieldsAreGoodFields(context : set<Object>)
     // reads this, fields.Values, this, os//semi-evil
     requires Ready() //requires forall n <- fields :: ownersOK(fields[n],os)
     {
-       (allExternalOwners() + allExternalBounds()) <= os
+    //   (allExternalOwners() + allExternalBounds()) <= os
+    &&  (allExternalOwners() <= os)
+    &&  (allExternalBounds() <= os)
     }
 
   function outgoing() : set<Object> reads this`fields { fields.Values }
@@ -851,13 +853,19 @@ lemma Splurge(o : Object, context : set<Object>)
   ensures  AllTheseOwnersAreFlatOK(o.allExternalOwners())
 {
   reveal COK();
+  assert COK(o, context);
+  RVfromCOK(o, context);
+  assert o.Ready();
+  assert o.OvenReady();
 
-  // assert o in o.AMFO;
-//  assert forall oo <- (o.AMFO - {o}) :: oo in oo.AMFO;
-  // assert forall oo <- (o.AMFO - {o}) :: o !in oo.AMFO;
-  // assert forall oo <- (o.AMFO - {o}) :: o.AMFO > oo.AMFO;
+  assert o in o.AMFO;
+  assert forall oo <- (o.AMFO - {o}) :: oo.Ready();
+  assert forall oo <- (o.AMFO - {o}) :: oo.OvenReady();
+  assert forall oo <- (o.AMFO - {o}) :: oo in oo.AMFO;
+  assert forall oo <- (o.AMFO - {o}) :: o !in oo.AMFO;
+  assert forall oo <- (o.AMFO - {o}) :: o.AMFO > oo.AMFO;
 
-//  assert flattenAMFOs(o.AMFO) <= o.AMFO;
+ assert flattenAMFOs(o.AMFO) <= o.AMFO;
 }
 
 
