@@ -738,3 +738,13 @@ lemma IdentityExtensionality<K>(k0 : set<K>, m : vmap<K,K>, kz : K)
     requires (forall k <- k0     :: m[k]  == k)
     ensures  (forall k <- k0+{kz} :: VMapKV(m,kz,kz)[k]  == k)
  {}
+
+
+
+
+
+
+
+
+
+lemma skip() {}
