@@ -84,8 +84,14 @@ lemma InsideOwnerVsBound(part : Object, whole : Object, context : set<Object>)
   ensures  insideOwner(part, whole)
    {
     reveal COK();
-
    }
+
+lemma Inside3(a : Object, b : Object, c : Object)
+  requires inside(a,b)
+  requires inside(b,c)
+  ensures  inside(a,c)
+{}
+
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
@@ -400,6 +406,7 @@ predicate refBI(f : Object, t : Object) {f.AMFB >= t.AMFX}
 predicate refDI(f : Object, t : Object) {f.AMFO == t.AMFX}
 predicate refOK(f : Object, t : Object) {(f==t) || refBI(f,t) || refDI(f,t)}
 
+predicate fefBI(f : Object, t : Object) {flatten(f.bound) >= flatten(t.owner)}
 
 
 ///// lemmata

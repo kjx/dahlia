@@ -4,7 +4,31 @@
 // o -> ?? nuOwner
 // shoiuld klon(c') functions become fgunctiosn on Klon?
 
-function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
+
+predicate klonEQ(c' : Klon, c : Klon)
+{
+  && (c'.m == c.m)
+  && (c'.o == c.o)
+  && (c'.o_amfo  == c.o_amfo)
+  && (c'.c_owner  == c.c_owner)
+  && (c'.c_amfx  == c.c_amfx)
+  && (c'.oHeap == c.oHeap)
+  && (c'.ns == c.ns)
+}
+
+predicate klonLEQ(c' : Klon, c : Klon)
+{
+  && (mapLEQ(c'.m, c.m))
+  && (c'.o == c.o)
+  && (c'.o_amfo  == c.o_amfo)
+  && (c'.c_owner  == c.c_owner)
+  && (c'.c_amfx  == c.c_amfx)
+  && (c'.oHeap == c.oHeap)
+  && (c'.ns <= c.ns)
+}
+
+
+function  klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
 //extends klon mapping with k:=v
 //  requires klonVMapOK(c'.m)
   requires klonCanKV(c', k, v) //klonSatanKV(c', k, v)zz
@@ -15,7 +39,18 @@ function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
   ensures  c.m[k] == v
   ensures  (forall x <- c.m.Keys :: c.m[x] ==
               if (x == k) then (v) else (c.m[x]))
-  ensures  mapGEQ(c.m,c'.m)
+
+  ensures  klonLEQ(c',c)
+  ensures  mapLEQ(c'.m,c.m)
+  ensures  c.o == c'.o
+  ensures  c.o_amfo  == c'.o_amfo
+  ensures  c.c_owner == c'.c_owner
+  ensures  c.c_amfx  == c'.c_amfx
+  ensures  mapLEQ(c'.m,c.m)
+  ensures  c.ns == c'.ns + nu(k,v)
+
+
+
 //  ensures  c'.calid() ==> c.calid() //presenvation of calidity
   //abstraction inversion
   reads c'.m.Values`fieldModes
@@ -25,7 +60,6 @@ function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
   reads c'.oHeap`fields, c'.oHeap`fieldModes
   reads c'.ns`fields, c'.ns`fieldModes
   //reads c'.o`fields, c'.o`fieldModes
-
 {
 
    assert  klonVMapOK(c'.m);
@@ -198,7 +232,7 @@ predicate   klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
 //
 // IDEALLY the "mapThru" features shouldn't be part of
 // the invariuant itself (klonOK) NOR the extension test (klonCanKV)
-// no the extension (klonKC)
+// no the extension (klonKV)
 // rather mapThru etc should be post-derivable efrom calid, not wired in...
 //  which hopefully is ONE clause per "field" of Dahlia's "Object" and no more?
     reads m.Values`fieldModes
@@ -584,16 +618,18 @@ datatype Klon = Klon
 //  m.Keys : set<Object>, //m.Keys - set, keys of the mapping   (must be m.Keys, subset of oHeap)
 //  m.Values : set<Object>, //m.Values - set, values or the mapping (must be m.Values, subset of oHeap + ns)
   o : Object,  //o - Owner within which the clone is being performaed, in oHeap  // "pivot"
+      // or rather is the fucking OBJECT to be CLONED???
   //    p : Object,  // Owner of the new (target) clone.  needs to be inside the source object's movement
 
-  o_amfo : Owner,             //was o. so the AMFO of o
-  c_amfo : Owner,            //epected ownershio of the clone..
+  o_amfo  : Owner,             //was o. so the AMFO of o
+  c_owner : Owner,             //prooposed owner of c
+  c_amfx  : Owner,             //amfx of clone... - can't have AMFO cos c likely hasn't been created yet.
 
   oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts
   ns : set<Object> //ns - new objects  (must be !! oHeap,   m.Values <= oHeap + ns
-  // fixedflat ; Bool // true - caopy all ther iretxt=       jnj                    i
   )
 {
+  predicate OK() { wexford2(this) }
 
   predicate from(prev : Klon)
     // should this be unique or not?
@@ -616,6 +652,9 @@ datatype Klon = Klon
     reveal calid(), calidObjects(), calidOK(), calidMap(), calidSheep();
     && mapGEQ(m, prev.m)
     && o     == prev.o
+    && o_amfo == prev.o_amfo
+    && c_owner == prev.c_owner
+    && c_amfx == prev.c_amfx
     && oHeap == prev.oHeap
     && ns    >= prev.ns
     && calid()         //should these be requirements?
@@ -825,8 +864,78 @@ lemma roundTrip1(k : Object, v : Object, m : Klon)
 
 
 
-
   opaque function putInside(k : Object, v : Object) : (r : Klon)
+    reads oHeap`fields, oHeap`fieldModes
+    reads k`fields, k`fieldModes
+    reads v`fields, v`fieldModes
+    reads ns`fields, ns`fieldModes
+    reads m.Values`fieldModes
+    reads m.Keys`fieldModes
+
+    requires canVMapKV(m,k,v)
+    requires calid()
+
+
+////////////////
+//// List from oldPutInside
+///////////////
+
+    requires calid()
+    requires klonAllRefsOK(this) //lemma should be able to derive from calid()
+    requires klonVMapOK(m) //lemma can derive from calid()
+
+    requires canVMapKV(m,k,v)
+    requires klonCanKV(this,k,v)
+    requires AreWeNotMen(k, klonKV(this,k,v))
+
+    requires k  in oHeap
+    requires k !in m.Keys
+    requires v !in oHeap
+    requires v !in ns
+    requires v !in m.Values
+    requires COK(k, oHeap)
+    requires COK(v, oHeap+ns+{v})
+    requires m.Keys <= oHeap
+    requires k.allExternalOwners() <= m.Keys
+    requires v.allExternalOwners() <= oHeap+ns //need to hae proceessed all owners first
+
+    requires (k.owner <= m.Keys)
+    // requires (mapThruKlon(k.owner, this) == v.owner)
+    // requires (mapThruKlonKV(k.AMFO, this, k, v) == v.AMFO)
+
+    requires inside(k, o)
+    requires v.fields == map[] //KJX hmm means something...
+    requires v.fieldModes == k.fieldModes
+///////////////
+
+
+    ensures  klonEQ(r,klonKV(this,k,v))
+    ensures  klonLEQ(this, r)
+    ensures  klonVMapOK(r.m)
+    ensures  klonVMapOK(m)
+    //ensures  r == Klon(VMapKV(m,k,v), o, oHeap, ns+{v})
+
+    ensures  r.ns == ns+nu(k,v)
+    ensures  v in r.ns
+    ensures  k in r.m.Keys && r.m[k] == v
+////    ensures  COK(v, r.oHeap+r.ns)
+    ensures  k in r.m.Keys
+    ensures  v in r.m.Values
+    ensures  r.m.Values == m.Values + {v}
+    ensures  r.m == m[k:=v]
+    ensures  mapLEQ(m, r.m)
+////    ensures  r.calid()
+    ensures  r.from(this)
+    ensures  AllMapEntriesAreUnique(this.m)
+
+
+     { var rv := putin(k,v);
+       assert klonLEQ(this, rv);
+       rv
+      }
+
+
+  opaque function {:verify false} OLDputInside(k : Object, v : Object) : (r : Klon)
     //put k -> v into map, k inside o
     reads oHeap`fields, oHeap`fieldModes
     reads k`fields, k`fieldModes
@@ -908,7 +1017,30 @@ assert (forall x <- oHeap :: (x.Ready() && x.AllOutgoingReferencesWithinThisHeap
 
 
     // reveal calid(); assert calid();
-      var rv := Klon(VMapKV(m,k,v), o, o_amfo, c_amfo, oHeap, ns+{v});
+var rv := Klon(VMapKV(m,k,v), o, o_amfo, c_owner, c_amfx, oHeap, ns+nu(k,v));
+
+//////////////////////////////////////////////////////////////////////////////////////
+// unpkacing KlonKV
+//////////////////////////////////////////////////////////////////////////////////////
+
+    assert  klonVMapOK(this.m);
+
+    var cdouble := this.(m:= VMapKV(this.m,k,v));
+    var nsv := (cdouble.ns + nu(k,v));
+    var r   := cdouble.(ns:= nsv);
+
+      assert (forall k <-  this.m.Keys :: k.AMFO <= this.m.Keys);
+
+      assert k.AMFO <= this.m.Keys + {k};
+
+      assert  klonVMapOK(r.m);
+
+      assert klonEQ(rv,r);
+
+      assert   rv == r;
+
+//////////////////////////////////////////////////////////////////////////////////////
+
       assert rv == klonKV(this,k,v);
 
       assert klonVMapOK(rv.m);
@@ -923,29 +1055,29 @@ assert (forall x <- oHeap :: (x.Ready() && x.AllOutgoingReferencesWithinThisHeap
       assert COK(v, rv.oHeap+rv.ns) by {
         var rrr := rv.oHeap+rv.ns;
         var vvv := oHeap+ns+{v};
-        assert COK(v, vvv);  // from reqs
-        assert rv.oHeap+rv.ns == oHeap+(ns+{v});
-        assert rrr == vvv;
-        assert COK(v, rrr);
+          assert COK(v, vvv);  // from reqs
+          assert rv.oHeap+rv.ns == oHeap+(ns+{v});
+          assert rrr == vvv;
+          assert COK(v, rrr);
       }
 
-    assert rv.calidObjects() by {
-      reveal rv.calidObjects();
+          assert rv.calidObjects() by {
+            reveal rv.calidObjects();
 
-                                                                                                                                                                                       assert rv.o in rv.oHeap by {
-        assert calid(); reveal calid();
-        assert calidObjects(); reveal calidObjects();
-        assert o in oHeap;
-        assert rv.o == o;
-        assert rv.o in oHeap;
-        assert rv.oHeap == oHeap;
-        assert rv.o in rv.oHeap;
-      }
-      assert rv.m.Keys <= rv.oHeap;
-      assert rv.ns !! rv.oHeap by {
-      assert ns !! oHeap by { reveal oXn; }
-      assert v !in oHeap;
-      AddToDisjointSet(v,ns,oHeap);
+                                                                                                                                                                                            assert rv.o in rv.oHeap by {
+              assert calid(); reveal calid();
+              assert calidObjects(); reveal calidObjects();
+              assert o in oHeap;
+              assert rv.o == o;
+              assert rv.o in oHeap;
+              assert rv.oHeap == oHeap;
+              assert rv.o in rv.oHeap;
+            }
+            assert rv.m.Keys <= rv.oHeap;
+            assert rv.ns !! rv.oHeap by {
+            assert ns !! oHeap by { reveal oXn; }
+            assert v !in oHeap;
+            AddToDisjointSet(v,ns,oHeap);
 
 
         // assume {v} !! oHeap;   //why do we need this given the above? - answer: to speed veriication?
@@ -1147,7 +1279,12 @@ assert COK(k, oHeap);
 assert COK(v,oHeap+ns+{v});
 
 
-klonCalidKVCalid(this, k, v, rv);
+// klonCalidKVCalid(this, k, v, rv);
+
+  assert klonVMapOK(rv.m);
+  assume klonAllRefsOK(rv);
+  assume rv.calid();
+
 
   //  IHasCalidMap(rv);
     assert  rv.calidMap() by { reveal calid(); }
@@ -2088,39 +2225,40 @@ assert
     reads k`fields, k`fieldModes
     reads v`fields, v`fieldModes
     reads ns`fields, ns`fieldModes
+    reads m.Values`fieldModes
+    reads m.Keys`fieldModes
 
-//     requires calid()
-//     requires klonVMapOK(m) //lemma can derive from calid()
-//
-       requires canVMapKV(m,k,v)
-//     requires klonCanKV(this,k,v)
-//     requires AreWeNotMen(k, klonKV(this,k,v))
-//
-//     requires k  in oHeap
-//     requires k !in m.Keys
-//     requires v !in oHeap
-//     requires v !in ns
-//     requires v !in m.Values
-//     requires COK(k, oHeap)
-//     requires COK(v, oHeap+ns+{v})
-//     requires m.Keys <= oHeap
-//     requires k.allExternalOwners() <= m.Keys
-//     requires v.allExternalOwners() <= oHeap+ns //need to hae proceessed all owners first ************
-//
-//     requires (k.owner <= m.Keys) && (mapThruKlon(k.owner, this) == v.owner)
-//     requires mapThruKlonKV(k.AMFO, this, k, v) == v.AMFO
-//
-//     requires inside(k, o)
-//     requires v.fieldModes == k.fieldModes
-//
-//     ensures  r == klonKV(this,k,v)
-//     ensures  klonVMapOK(r.m)
-//     ensures  klonVMapOK(m)
-//     //ensures  r == Klon(VMapKV(m,k,v), o, oHeap, ns+{v})
-//
-//     ensures  v in r.ns
-//     ensures  k in r.m.Keys && r.m[k] == v
-//     ensures  COK(v, r.oHeap+r.ns)
+    requires calid()
+    requires klonVMapOK(m) //lemma can derive from calid()
+
+    requires canVMapKV(m,k,v)
+    requires klonCanKV(this,k,v)
+    requires AreWeNotMen(k, klonKV(this,k,v))
+
+    requires k  in oHeap
+    requires k !in m.Keys
+    requires v !in oHeap
+    requires v !in ns
+    requires v !in m.Values
+    requires COK(k, oHeap)
+    requires COK(v, oHeap+ns+{v})
+    requires m.Keys <= oHeap
+    requires k.allExternalOwners() <= m.Keys
+    requires v.allExternalOwners() <= oHeap+ns //need to hae proceessed all owners first ************
+
+    requires (k.owner <= m.Keys) && (mapThruKlon(k.owner, this) == v.owner)
+
+    requires inside(k, o)
+    requires v.fieldModes == k.fieldModes
+
+    ensures  r == klonKV(this,k,v)
+    ensures  klonVMapOK(r.m)
+    ensures  klonVMapOK(m)
+    //ensures  r == Klon(VMapKV(m,k,v), o, oHeap, ns+{v})
+
+    ensures  v in r.ns
+    ensures  k in r.m.Keys && r.m[k] == v
+  ////  ensures  COK(v, r.oHeap+r.ns)
     ensures  k in r.m.Keys
     ensures  v in r.m.Values
     ensures  r.m == m[k:=v]
@@ -2128,15 +2266,36 @@ assert
 
   ensures  mapLEQ(m,r.m)
   ensures  r.m.Keys >= m.Keys + {k}
-//   ensures  m.m.Values >= m'.m.Values + {b}
+  ensures  r.m.Values >= m.Values + {v}
   ensures  r.o == o
   ensures  r.oHeap == oHeap
+
+    ensures  klonEQ(r,klonKV(this,k,v))
+    ensures  klonLEQ(this, r)
+    ensures  klonVMapOK(r.m)
+    ensures  klonVMapOK(m)
+
+    ensures  r.ns == ns+nu(k,v)
+    ensures  v in r.ns
+    ensures  k in r.m.Keys && r.m[k] == v
+//    ensures  COK(v, r.oHeap+r.ns)
+    ensures  k in r.m.Keys
+    ensures  v in r.m.Values
+    ensures  r.m.Values == m.Values + {v}
+    ensures  r.m == m[k:=v]
+    ensures  mapLEQ(m, r.m)
+
+//    ensures  r.from(this)
+    ensures  AllMapEntriesAreUnique(this.m)
+
+
 
 //     ensures  r.calid()
 //     ensures  r.from(this)
     // ensures  AllMapEntriesAreUnique(this.m)
   {
-    var rv := Klon(VMapKV(m,k,v), o, o_amfo, c_amfo, oHeap, ns+{v});
+    var rv := Klon(VMapKV(m,k,v), o, o_amfo, c_owner, c_amfx, oHeap, ns+nu(k,v));
+   // var rv := klonKV(this,k,v);
     rv
     } //END putin
 
@@ -2174,7 +2333,7 @@ assert
     // ensures  r == klonKV(this,k,k)
     // ensures  klonVMapOK(r.m)
     // ensures  klonVMapOK(m)
-    ensures  r == Klon(VMapKV(m,k,k), o, o_amfo, c_amfo, oHeap, ns)
+    ensures  r == Klon(VMapKV(m,k,k), o, o_amfo,  {}, c_amfx, oHeap, ns)
 
 //     ensures  v in r.ns
     ensures  k in r.m.Keys && r.m[k] == k
@@ -2191,7 +2350,7 @@ assert
 //     ensures  r.from(this)
     // ensures  AllMapEntriesAreUnique(this.m)
   {
-    var rv := Klon(VMapKV(m,k,k), o, o_amfo, c_amfo, oHeap, ns);
+    var rv := Klon(VMapKV(m,k,k), o, o_amfo, {},  c_amfx, oHeap, ns);
     rv
     } //END putout
 
@@ -6621,139 +6780,6 @@ lemma trexy(a : Object, b : Object, c : Object, m : Klon)
   requires refBI(a,b)
   requires refBI(b,c)
   ensures  refBI(a,c)
-{}
-
-
-predicate wexy(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( rv : bool )
-//note doesnt requrie Valid???
-//  requires wexford3(m)
-  requires {of, ot} <= m.m.Keys
-  requires m.m[of] == cf
-  requires m.m[ot] == ct
-
-  requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))
-
-
-  requires (of != cf) ==> (cf.AMFO >= m.c_amfo)
-  requires (ot != ct) ==> (ct.AMFO >= m.c_amfo)
-
-
-  ensures rv == (refOK(of,ot) ==> refOK(cf,ct))
-{
-
-  // 25DEC 2024 - starting on the 2x2 version inside/outside of ,ot cases
-  //
-  if (not(of.AMFO >= m.o_amfo))
-    then //from outside
-      (if (not(ot.AMFO >= m.o_amfo)) then (
-        //both outside
-        assert (not(of.AMFO >= m.o_amfo)) && (not(ot.AMFO >= m.o_amfo));
-        assert of == cf;
-        assert ot == ct;
-        refOK(of,ot) ==> refOK(cf,ct)
-      ) else (
-        //from outside to inside...
-        assert (not(of.AMFO >= m.o_amfo)) && (ot.AMFO >= m.o_amfo);
-        assert of == cf;
-        assert ct.AMFO >= m.c_amfo;
-        refOK(of,ot) ==> refOK(cf,ct)))
-    else //from inside
-      (if (not(ot.AMFO >= m.o_amfo)) then (
-        //from inside to outside
-        assert (of.AMFO >= m.o_amfo) && (not(ot.AMFO >= m.o_amfo));
-        assert cf.AMFO >= m.c_amfo;
-        assert ot == ct;
-        refOK(of,ot) ==> refOK(cf,ct)
-      ) else (
-        //both inside
-        assert (of.AMFO >= m.o_amfo) && (ot.AMFO >= m.o_amfo);
-        assert cf.AMFO >= m.c_amfo;
-        assert ct.AMFO >= m.c_amfo;
-        refOK(of,ot) ==> refOK(cf,ct)))
-}
-
-predicate dexy(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( rv : bool )
-//  requires wexford3(m)
-/// HMM doesit still work?
-// agan doesn't need Valid??
-  requires {of, ot} <= m.m.Keys
-  requires m.m[of] == cf
-  requires m.m[ot] == ct
-
-  requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))
-
-  ensures rv == (refOK(of,ot) ==> refOK(cf,ct))
-{
-
-  // 25DEC 2024 - version done by case analysis of the refOK(of,ot)
-  //
-
-  if (of == ot) then (
-    assert refOK(of,ot);
-    refOK(cf,ct)) else (
-  if (refDI(of,ot)) then (
-    assert refOK(of,ot);
-    refOK(cf,ct)) else (
-  if (refBI(of,ot)) then (
-    assert refOK(of,ot);
-    refOK(cf,ct)
-  ) else (
-    assert not(refOK(of,ot));
-    true)))
-}
-
-
-
-
-
-
-predicate wexford4(m : Klon)
-  requires wexford3(m)
-{
-  && (forall i <- m.m.Keys, j <- m.m.Keys :: wexy(i,j,m.m[i],m.m[j],m))
-}
-
-predicate wexford3(m : Klon)
-{
-  && (m.m.Keys   <= m.oHeap)
-  && (m.m.Values <= m.oHeap+m.ns)
-  && (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) ==> (m.m[x] == x)))
-
-
-  && (forall x <- m.m.Keys ::
-      (if (x.AMFO >= m.o_amfo)
-        then ((m.m[x] != x) && (m.m[x].AMFO >= m.c_amfo))
-        else ((m.m[x] == x))))
-
-//  && (forall i <- m.m.Keys, j <- m.m.Keys :: wexy(i,j,m.m[i],m.m[j],m))
-
-}
-
-
-predicate wexford2(m : Klon)
-{
-  && (m.m.Keys   <= m.oHeap)
-  && (m.m.Values <= m.oHeap+m.ns)
-  && (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) ==> (m.m[x] == x)))
-  && (forall i <- m.m.Keys, j <- m.m.Keys :: refOK(i,j) ==> refOK(m.m[i],m.m[j]))
-}
-
-
-
-predicate wexford(m : Klon)
-{
-    forall i <- m.m.Keys, j <- m.m.Keys :: refOK(i,j) ==> refOK(m.m[i],m.m[j])
-
-}
-
-predicate waterford(m : Klon)
-{
-    forall i <- m.m.Keys, j <- m.m.Keys | refOK(i,j) :: refOK(m.m[i],m.m[j])
-
-}
-
-lemma wexwater(m : Klon)
-  ensures wexford(m) == waterford(m)
 {}
 
 

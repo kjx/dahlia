@@ -1,141 +1,13 @@
 
-class Object {
+///have to sort out c_amfx -- make sure it makes sense
 
-  const bound : Owner //movement bound - stands in for explcit owner parameters
-  const AMFB  : Owner //flattened bound
+function {:axiom} FAKE() : Object
 
-  const xtrnl : Owner//actual "dynamic" Owner owner of this object --- *XTERNAL*
-  const AMFX :  Owner//flattened owner  /// aka all externeal owners
-
-  const ntrnl : Owner //internal owners - i.e. Self-ownership - i.e. includers THIS
-  const AMFO  : Owner //All MY FUCKING Owner  (aka All My Flat Owner:-)
-
-
-constructor {:isolate_assertions} bake(oo : Owner, mb : Owner)
-  requires oo >= mb
-  requires forall o <- mb :: o.Ready()
-  requires forall o <- oo :: o.Ready()
-  requires forall o <- oo, ooo <- o.AMFO :: o.AMFO > ooo.AMFO
-
-  ensures mb == bound
-  ensures oo == xtrnl
-  ensures ntrnl > xtrnl >= bound
-  ensures (forall o <- oo ::   o.Ready())
-  ensures (forall o <- bound ::   o.Ready())
-
-  ensures fresh(this)
-  ensures Ready()
-  modifies {}
-  {
-    bound := mb;
-    xtrnl := oo;
-    ntrnl := oo + {this};
-
-    AMFB  := (set o <- mb, x <- o.AMFO :: x);
-    AMFX  := (set o <- oo, x <- o.AMFO :: x);
-    AMFO  := (set o <- oo, x <- o.AMFO :: x) + {this};
-
-new;
-
-    // assert
-    // && (AMFB == (set o <- bound, oo <- o.AMFO :: oo)) //hmm...
-    // && (AMFX == (set o <- xtrnl, oo <- o.AMFO :: oo))
-    // && (AMFO == (set o <- ntrnl, oo <- o.AMFO :: oo) +  {this})
-    // ;
-
-    // assert AMFB  == flatten(mb);
-    // assert AMFX  == flatten(oo);
-    // assert AMFO  == flatten(oo) + {this};
-
-    assert
-    && (forall oo <- xtrnl :: oo.AMFO < AMFO)
-    && (forall oo <- bound :: oo.AMFO < AMFO)
-    && (forall oo <- xtrnl :: oo.Ready())
-    && (forall oo <- bound :: oo.Ready())
-    ;
-
-assert forall o <- xtrnl, ooo <- o.AMFO :: o.AMFO > ooo.AMFO;
-assert forall oo <- AMFO :: oo.AMFO <= AMFO;
-
-}
-
-opaque predicate OReady()
-   reads {}
-   decreases AMFO, 20
-   {
-    Ready()
-   }
-
-predicate Ready()
-   reads {}
-   decreases AMFO, 20
-  {
-    && (AMFB == flatten(bound))
-    && (AMFX == flatten(xtrnl))
-    && (AMFO == (flatten(ntrnl - {this}) + {this}))
-    && (AMFO == (flatten(xtrnl) + {this}))
-    && (AMFO == AMFX + {this})
-    && (AMFX == AMFO - {this})
-
-
-    && (this !in AMFB)
-    && (this !in AMFX)
-    && (this  in AMFO)
-
-    && (AMFO > AMFX >= AMFB)
-
-    && (forall oo <- xtrnl :: AMFO > oo.AMFO)
-    && (forall oo <- bound :: AMFO > oo.AMFO)
-    && (forall oo <- xtrnl :: oo.Ready())
-    && (forall oo <- bound :: oo.Ready())
-
-    && (forall oo <- xtrnl :: (AMFO > oo.AMFO) && oo.Ready())
-
-    && (forall oo <- AMFO :: AMFO >= oo.AMFO)
-//    && (forall o <- xtrnl, ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
-    && (forall o <- AMFO, ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
-  }
-
-}//end class Object
-
-
-//owners
-
-type Owner = set<Object>
-
-function flatten(os : Owner) : Owner {(set o <- os, oo <- o.AMFO :: oo) + os}
-function flattenBound(os : Owner) : Owner {set o <- os, oo <- o.AMFB :: oo}
-
-//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
-//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
-//
-//  Geometric lemata
-//
-//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
-//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
-/
-// core geometry
-//
-
-// definitions of inside
-
-predicate inside(part : Object, whole : Object) : (rv : bool)  { part.AMFO >= whole.AMFO }
-
-predicate outside(part : Object, whole : Object) : (rv : bool) { not(inside(part,whole)) }
-
-lemma Inside3(a : Object, b : Object, c : Object)
-  requires inside(a,b)
-  requires inside(b,c)
-  ensures  inside(a,c)
-{}
-
-//interobejct references
-
-predicate refBI(f : Object, t : Object) {f.AMFB >= t.AMFX}
-predicate refDI(f : Object, t : Object) {f.AMFO == t.AMFX}
-predicate refOK(f : Object, t : Object) {(f==t) || refBI(f,t) || refDI(f,t)}
-
-predicate fefBI(f : Object, t : Object) {flatten(f.bound) >= flatten(t.xtrnl)}
+type SuperKlon = m : Klon | wexford2(m)
+  witness Klon(map[],
+               FAKE(),
+               {}, {}, {}, {}, {})
+//not sure about this. but...
 
 lemma recBIvsfefBI(f : Object, t : Object)
   requires f.Ready()
@@ -146,14 +18,14 @@ lemma recBIvsfefBI(f : Object, t : Object)
 lemma recBIvsFLAT(f : Object, t : Object)
   requires f.Ready()
   requires t.Ready()
-  ensures (f.AMFB >= t.AMFX) <==> (flatten(f.bound) >= flatten(t.xtrnl))
+  ensures (f.AMFB >= t.AMFX) <==> (flatten(f.bound) >= flatten(t.owner))
   ensures refBI(f,t) == fefBI(f,t)
 {}
 
 lemma recDIvsFLAT(f : Object, t : Object)
   requires f.Ready()
   requires t.Ready()
-  ensures (f.AMFO == t.AMFX) ==> ((flatten(f.ntrnl - {f}) + {f})  == flatten(t.xtrnl))
+  ensures (f.AMFO == t.AMFX) ==> ((flatten(f.ntrnl - {f}) + {f})  == flatten(t.owner))
 {}
 
 
@@ -230,53 +102,77 @@ lemma AXIOMAMFOREVERSE(part : Object, whole : Object)
 // inside vs inside
 //
 
-predicate recInside(part : Object, whole : Object) : (r : bool)
+lemma fuckenOwnerReady(part : Object, whole : Object)
     requires part.Ready()
+    ensures  forall  x <- part.owner :: x.Ready()
+    ensures  forall  x <- part.owner :: part.AMFO > x.AMFO
+{}
+
+predicate recInside(part : Object, whole : Object) : (r : bool)
+    requires part.QReady()
     decreases part.AMFO
 {
+//  forall x | x in part.owner ensures (true) { fuckenOwnerReady(x, whole); }
+
   || (part == whole)
-  || (exists x <- part.xtrnl :: recInside(x,whole))
+  || (exists x <- part.owner ::
+        && (x.QReady())                ////grr should be unnecessary
+        && (part.AMFO > x.AMFO)       ////grr should be unnecessary
+        && (recInside(x,whole)))
 }
 
 function collectAllOwners(o : Object) : (rv : Owner)
   decreases o.AMFO
-  requires o.Ready()
+  requires  o.QReady()
 {
-  {o} + o.xtrnl + (set xo <- o.xtrnl, co <- collectAllOwners(xo) :: co)
+  o.OvenReadyReady();
+  {o} + o.owner + (set xo <- o.owner, co <- collectAllOwners(xo) :: co)
 }
 
 lemma collectAllAMFO(o : Object)
   decreases o.AMFO
   requires  o.Ready()
+  requires  o.QReady()
   ensures   o.AMFO == collectAllOwners(o)
-  {}
+  {
+      o.OvenReadyReady();
+  }
 
 lemma {:isolate_assertions} recInsideCollectsAllOwners1(part : Object, whole : Object)
   decreases part.AMFO
-  requires part.Ready()
+  requires part.QReady()
   requires recInside(part,whole)
   ensures  (whole in collectAllOwners(part))
-{}
+{
+    part.OvenReadyReady();
+}
 
-lemma recInsideCollectsAllOwners2(part : Object, whole : Object)
+lemma {:isolate_assertions} recInsideCollectsAllOwners2(part : Object, whole : Object)
   decreases part.AMFO
-  requires part.Ready()
-  ensures recInside(part,whole) <== (whole in collectAllOwners(part))
-{}
+  requires part.QReady()
+  requires (whole in collectAllOwners(part))
+  ensures  recInside(part,whole)
+{
+    part.OvenReadyReady();
+}
 
 lemma recInsideAMFO1(part : Object, whole : Object)
   decreases part.AMFO
   requires part.Ready()
-  requires whole.Ready() //why not?
+  requires part.QReady()
+////  requires whole.Ready() //why not?
 
   requires (whole in part.AMFO)
   ensures  recInside(part,whole)
-{}
+{
+      part.OvenReadyReady();
+}
 
 lemma recInsideAMFO2(part : Object, whole : Object)
   decreases part.AMFO
-  requires  part.Ready()
-  requires  whole.Ready() //why not?
+  requires part.Ready()
+  requires part.QReady()
+//  requires  whole.Ready() //why not?
   requires  recInside(part,whole)
   ensures   (whole in part.AMFO)
 {}
@@ -284,6 +180,7 @@ lemma recInsideAMFO2(part : Object, whole : Object)
 
 lemma InsideRecInside2(part : Object, whole : Object)
    requires part.Ready()
+   requires part.QReady()
    requires whole.Ready() //why not?
    requires    inside(part,whole)
    ensures  recInside(part,whole)
@@ -300,7 +197,8 @@ lemma InsideRecInside2(part : Object, whole : Object)
 
 lemma InsideRecInside1(part : Object, whole : Object)
    requires part.Ready()
-   requires whole.Ready() //why not?
+   requires part.QReady()
+// requires whole.Ready() //why not?
    requires recInside(part,whole)
    ensures  inside(part,whole)
    {
@@ -324,7 +222,7 @@ lemma AMFOsisAMFOs(o : Object)
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 lemma
-INSIDE_CAN_POUNT_OUT(m' : SubKlon, f : Object, t : Object, o : Object, c : Object)
+INSIDE_CAN_POUNT_OUT(m' : Klon, f : Object, t : Object, o : Object, c : Object)
  requires f.Ready()
  requires o.Ready()
  requires t.Ready()
@@ -359,7 +257,7 @@ INSIDE_CAN_POUNT_OUT(m' : SubKlon, f : Object, t : Object, o : Object, c : Objec
 }
 
 lemma
- MOVING_ON_IN(m' : SubKlon, f : Object, t : Object, o : Object, c : Object)
+ MOVING_ON_IN(m' : Klon, f : Object, t : Object, o : Object, c : Object)
 /// can move an object down; doesn't lose access
  requires f.Ready()
  requires o.Ready()
@@ -415,50 +313,16 @@ lemma INCOMING_REFS_OWNER_ONLY(f : Object, t : Object, o : Object)
 
 
 
-//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
-//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
-
-datatype SubKlon = SubKlon
-(
-  m : vmap<Object,Object>,    //the  klon map
-  c : set<Object>,            //context -was oHeap / oHeap+ns
-  o_amfo : Owner,             //was o. so the AMFO of o
-  c_amfo : Owner              //epected ownershio of the clone..
-)
-{
-    predicate from(prev : SubKlon)
-  {
-    && mapGEQ(m, prev.m)
-    && o_amfo == prev.o_amfo
-    && c_amfo == prev.c_amfo
-    && c == prev.c
-  }
-}
-
-
-type Klon = m : SubKlon | wexford2(m)  witness  SubKlon(map[], {}, {}, {})
-
-
-function  subklonKV(m' : SubKlon, k : Object, v : Object) : (m : SubKlon)
+function  subklonKV(m' : Klon, k : Object, v : Object) : (m : Klon)
   requires k !in m'.m.Keys
   requires v !in m'.m.Values
 {
 m'.(m:=m'.m[k:=v])  //l.(m:=l.m[k:=v])
 }
 
-function mapThruKlon(os: set<Object>, m : SubKlon) : (r : set<Object>)
-  //image of os under klon mapping m
-  // reads m.m.Keys`fields, m.m.Keys`fieldModes
-  // reads m.m.Values`fields, m.m.Values`fieldModes
-  requires os <= m.m.Keys
-{ set o <- os :: m.m[o] }
 
 
-
-
-
-
-lemma {:verify false} KVdexy(m' : SubKlon, k : Object, v : Object, m : SubKlon)
+lemma {:verify false} KVdexy(m' : Klon, k : Object, v : Object, m : Klon)
 //the whole thing!
 //this one is on ice, cos we're choppint up the KVscartchmonkey version...
   requires k !in m'.m.Keys
@@ -527,7 +391,7 @@ forall i <- m.m.Keys, j <- m.m.Keys
       assert not(of.AMFO >= m.o_amfo);
 
       if (ot.AMFX == m.o_amfo) { //directly inside
-          assert ((ot != ct) && (ct.AMFX == m.c_amfo));
+          assert ((ot != ct) && (ct.AMFX == m.c_amfx));
           assert refOK(of,ot);
           assert refOK(cf,ct);
         } else  {
@@ -538,7 +402,7 @@ forall i <- m.m.Keys, j <- m.m.Keys
       assert (refOK(of,ot) ==> refOK(cf,ct));
 
       } else {
-        assert ((v != k) && (v.AMFO >= m.c_amfo));  //inside & cloned
+        assert ((v != k) && (v.AMFO >= m.c_amfx));  //inside & cloned
 
         assert (refOK(of,ot) ==> refOK(cf,ct));
       }
@@ -552,7 +416,7 @@ forall i <- m.m.Keys, j <- m.m.Keys
 
 
       if (ot.AMFX == m.o_amfo) { //directly inside
-          assert ((ot != ct) && (ct.AMFX == m.c_amfo));
+          assert ((ot != ct) && (ct.AMFX == m.c_amfx));
           assert refOK(of,ot);
           assert refOK(cf,ct);
 
@@ -613,7 +477,7 @@ assume dexy_NO_builtin(i,j,m.m[i],m.m[j],m);
 
 
 
-lemma {:verify false} KVscratchmonkey(m' : SubKlon, k : Object, v : Object, m : SubKlon)
+lemma {:verify false} KVscratchmonkey(m' : Klon, k : Object, v : Object, m : Klon)
 //the whole thing!
 //current dev version of KVdexy...
 //aim is to go through cbopping out cases as sublemmas kvdXXX
@@ -683,7 +547,7 @@ forall i <- m.m.Keys, j <- m.m.Keys
       assert not(of.AMFO >= m.o_amfo);
 
       if (ot.AMFX == m.o_amfo) { //directly inside
-          assert ((ot != ct) && (ct.AMFX == m.c_amfo));
+          assert ((ot != ct) && (ct.AMFX == m.c_amfx));
           assert refOK(of,ot);
           assert refOK(cf,ct);
         } else  {
@@ -694,7 +558,7 @@ forall i <- m.m.Keys, j <- m.m.Keys
       assert (refOK(of,ot) ==> refOK(cf,ct));
 
       } else {
-        assert ((v != k) && (v.AMFO >= m.c_amfo));  //inside & cloned
+        assert ((v != k) && (v.AMFO >= m.c_amfx));  //inside & cloned
 
         assert (refOK(of,ot) ==> refOK(cf,ct));
       }
@@ -709,7 +573,7 @@ forall i <- m.m.Keys, j <- m.m.Keys
 //
 //
 //       if (ot.AMFX == m.o_amfo) { //directly inside
-//           assert ((ot != ct) && (ct.AMFX == m.c_amfo));
+//           assert ((ot != ct) && (ct.AMFX == m.c_amfx));
 //           assert refOK(of,ot);
 //           assert refOK(cf,ct);
 //
@@ -746,9 +610,7 @@ assume dexy_NO_builtin(i,j,m.m[i],m.m[j],m);
 
 
 
-
-
-lemma kvdArmedStruggle(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+lemma kvdArmedStruggle(m' : Klon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 //refDI(k,ot) case
 
   requires k !in m'.m.Keys
@@ -804,7 +666,7 @@ lemma kvdArmedStruggle(m' : SubKlon, k : Object, v : Object, of : Object, ot : O
 //       assert not(of.AMFO >= m.o_amfo);
 //
 //       if (ot.AMFX == m.o_amfo) { //directly inside
-//           assert ((ot != ct) && (ct.AMFX == m.c_amfo));
+//           assert ((ot != ct) && (ct.AMFX == m.c_amfx));
 //           assert refOK(of,ot);
 //           assert refOK(cf,ct);
 //         } else  {
@@ -815,7 +677,7 @@ lemma kvdArmedStruggle(m' : SubKlon, k : Object, v : Object, of : Object, ot : O
 //       assert (refOK(of,ot) ==> refOK(cf,ct));
       // }
 //      else {
-//         assert ((v != k) && (v.AMFO >= m.c_amfo));  //inside & cloned
+//         assert ((v != k) && (v.AMFO >= m.c_amfx));  //inside & cloned
 //
 //         assert (refOK(of,ot) ==> refOK(cf,ct));
 //       }
@@ -833,7 +695,7 @@ lemma kvdArmedStruggle(m' : SubKlon, k : Object, v : Object, of : Object, ot : O
 
 
 
-lemma kvdOTHER(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+lemma kvdOTHER(m' : Klon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 //refDI(k,ot) case
 
   requires k !in m'.m.Keys
@@ -871,11 +733,11 @@ lemma kvdOTHER(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, c
 
 
 lemma {:isolate_assertions}
-NOT_ACTUALLY_FUCKED_OUTSIE_CANT_POUNT_IN(m' : SubKlon, f : Object, t : Object, o : Object, c : Object)
+NOT_ACTUALLY_FUCKED_OUTSIE_CANT_POUNT_IN(m' : Klon, f : Object, t : Object, o : Object, c : Object)
 //  requires o in m'.m.Keys
 //  requires m'.m[o] == c
 //  requires m'.o_amfo == o.AMFO
-//  requires m'.c_amfo == c.AMFO
+//  requires m'.c_amfx == c.AMFO
 
  requires f.Ready()
  requires t.Ready()
@@ -942,7 +804,7 @@ NOT_ACTUALLY_FUCKED_OUTSIE_CANT_POUNT_IN(m' : SubKlon, f : Object, t : Object, o
 
 
 
-lemma {:isolate_assertions} kvdNOTKK(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+lemma {:isolate_assertions} kvdNOTKK(m' : Klon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 
   requires ((of != k) && (ot != k))
 
@@ -984,7 +846,7 @@ lemma {:isolate_assertions} kvdNOTKK(m' : SubKlon, k : Object, v : Object, of : 
 }
 
 
-predicate kvdReqs(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+predicate kvdReqs(m' : Klon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 {
   && k !in m'.m.Keys
   && v !in m'.m.Values
@@ -1005,7 +867,7 @@ predicate kvdReqs(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object
 }
 
 
-lemma kvdEQKK(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+lemma kvdEQKK(m' : Klon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 
   requires (of == ot == k)
 
@@ -1024,7 +886,7 @@ lemma kvdEQKK(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf
 {}
 
 
-lemma kvdOO(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+lemma kvdOO(m' : Klon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 
   requires not(of.AMFO >= m'.o_amfo) //needs an o_o so we can write inside...
   requires not(ot.AMFO >= m'.o_amfo) //needs an o_o so we can write inside...
@@ -1045,7 +907,7 @@ lemma kvdOO(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf :
 
 
 
-lemma {:isolate_assertions}  kvdOI(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon, o : Object, c : Object)
+lemma {:isolate_assertions}  kvdOI(m' : Klon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : Klon, o : Object, c : Object)
 
    requires of.Ready()
    requires  o.Ready()
@@ -1062,7 +924,7 @@ lemma {:isolate_assertions}  kvdOI(m' : SubKlon, k : Object, v : Object, of : Ob
   requires o in m'.m.Keys
   requires c == m'.m[o]
   requires o.AMFO == m'.o_amfo
-  requires c.AMFO == m'.c_amfo
+  requires c.AMFO == m'.c_amfx
 
   requires  o.AMFX == c.AMFX
 //wanted ensures  (o.AMFO - {o}) == (c.AMFO - {c})  //doesnt allow clone to be pushed down
@@ -1105,7 +967,7 @@ if (not(refOK(of,ot))) {
 
    assert refOK(of,ct);
 
-   assert ct.AMFO == m.c_amfo;
+   assert ct.AMFO == m.c_amfx;
    allmagic2restored(m',k,v,m);
    assert allmagic2(m);
 
@@ -1114,7 +976,7 @@ if (not(refOK(of,ot))) {
 }
 
 
-lemma kvdIO(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, o : Object, c : Object, m : SubKlon)
+lemma kvdIO(m' : Klon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, o : Object, c : Object, m : Klon)
 
   requires    (of.AMFO >= m'.o_amfo) //needs an o_o so we can write inside...
   requires not(ot.AMFO >= m'.o_amfo) //needs an o_o so we can write inside...
@@ -1127,7 +989,7 @@ lemma kvdIO(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf :
   requires o in m'.m.Keys
   requires c == m'.m[o]
   requires o.AMFO == m'.o_amfo
-  requires c.AMFO == m'.c_amfo
+  requires c.AMFO == m'.c_amfx
   requires cf.AMFB >= of.AMFB
 
   requires  o.AMFX == c.AMFX
@@ -1163,17 +1025,17 @@ lemma kvdIO(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf :
 }
 
 
-lemma {:isolate_assertions} kvdII(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+lemma {:isolate_assertions} kvdII(m' : Klon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 
   requires kvdReqs(m',k,v,of,ot,cf,ct,m)
 
-  requires forall k <- m'.m.Keys :: k.xtrnl <= m'.m.Keys   //IN-KLON
+  requires forall k <- m'.m.Keys :: k.owner <= m'.m.Keys   //IN-KLON
   requires forall k <- m'.m.Keys :: k.AMFO  <= m'.m.Keys   //IN-KLON
   requires m'.o_amfo <= m'.m.Keys  //IN-KLON
 
-  requires forall o <- m.m.Keys :: && (o.AMFO <= m.m.Keys) && (o.bound <= m.m.Keys) && (o.xtrnl <= m.m.Keys) && (o.ntrnl <= m.m.Keys) //IN-KLON
+  requires forall o <- m.m.Keys :: && (o.AMFO <= m.m.Keys) && (o.bound <= m.m.Keys) && (o.owner <= m.m.Keys) && (o.ntrnl <= m.m.Keys) //IN-KLON
 
-  requires k.xtrnl <= m.m.Keys   //IN-KLON
+  requires k.owner <= m.m.Keys   //IN-KLON
   requires k.AMFO  <= m.m.Keys   //IN-KLON
   requires magic3(k,v,m)
 
@@ -1219,7 +1081,7 @@ lemma {:isolate_assertions} kvdII(m' : SubKlon, k : Object, v : Object, of : Obj
   assert v in m.m.Values;
   assert m.m[k] == v;
   assert m.o_amfo <= m.m.Keys;
-  assert k.xtrnl <= m.m.Keys;
+  assert k.owner <= m.m.Keys;
   assert k.AMFO  <= m.m.Keys;
 
   assert {k, of, ot} <= m.m.Keys;
@@ -1258,8 +1120,8 @@ fuckenHell3(of,ot,cf,ct,m);
 // //     //continue here!
 // // //
 // // //         assert (of.AMFO >= m.o_amfo) && (ot.AMFO >= m.o_amfo);
-// // //         assert cf.AMFO >= m.c_amfo;
-// // //         assert ct.AMFO >= m.c_amfo;
+// // //         assert cf.AMFO >= m.c_amfx;
+// // //         assert ct.AMFO >= m.c_amfx;
 //
 //   if (of == ot) {
 //     assert refOK(of,ot);
@@ -1305,7 +1167,7 @@ fuckenHell3(of,ot,cf,ct,m);
 
 
 lemma {:verify false}  //FUCKED2
-kdvDIKN(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+kdvDIKN(m' : Klon, k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 
   requires (refDI(of,ot) && (of == k))
   requires refDI(k,ot)
@@ -1352,7 +1214,7 @@ kdvDIKN(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Obj
       assert not(of.AMFO >= m.o_amfo);
 
       if (ot.AMFX == m.o_amfo) { //directly inside
-          assert ((ot != ct) && (ct.AMFX == m.c_amfo));
+          assert ((ot != ct) && (ct.AMFX == m.c_amfx));
           assert refOK(of,ot);
           assert refOK(cf,ct);
         } else  {
@@ -1363,7 +1225,7 @@ kdvDIKN(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Obj
       assert (refOK(of,ot) ==> refOK(cf,ct));
 
       } else {
-        assert ((v != k) && (v.AMFO >= m.c_amfo));  //inside & cloned
+        assert ((v != k) && (v.AMFO >= m.c_amfx));  //inside & cloned
 
         assert (refOK(of,ot) ==> refOK(cf,ct));
       }
@@ -1397,13 +1259,13 @@ kdvDIKN(m' : SubKlon, k : Object, v : Object, of : Object, ot : Object, cf : Obj
 
 //extrabit#1
 //         if (ot.AMFO >= m.o_amfo) //inside
-//          { assert ((ot != ct) && (ct.AMFO >= m.c_amfo));
+//          { assert ((ot != ct) && (ct.AMFO >= m.c_amfx));
 //            assert refOK(of,ot);
 //            assert refOK(cf,ct); }
 
 
 
-lemma {:verify false} KVwexy(m' : SubKlon, k : Object, v : Object, m : SubKlon)
+lemma {:verify false} KVwexy(m' : Klon, k : Object, v : Object, m : Klon)
   requires k !in m'.m.Keys
   requires v !in m'.m.Values
   requires m == subklonKV(m',k,v)
@@ -1444,7 +1306,7 @@ forall i <- m.m.Keys, j <- m.m.Keys
         // //from outside to inside...
         assert (not(of.AMFO >= m.o_amfo)) && (ot.AMFO >= m.o_amfo);
         assert of == cf;
-        assert ct.AMFO >= m.c_amfo;
+        assert ct.AMFO >= m.c_amfx;
 
         if ((of == k) && (ot == k))
           {
@@ -1462,7 +1324,7 @@ forall i <- m.m.Keys, j <- m.m.Keys
             assert not(of.AMFO >= m.o_amfo);
             assert ot.AMFO >= m.o_amfo;
             if (ot.AMFO > m.o_amfo) { assert refOK(of,ot); }
-            assert ct.AMFO >= m.c_amfo;
+            assert ct.AMFO >= m.c_amfx;
             //assert magic(k,v,m);
             assert refOK(of,ot) ==> refOK(cf,ct);
           }
@@ -1499,14 +1361,14 @@ forall i <- m.m.Keys, j <- m.m.Keys
 //       (if (not(ot.AMFO >= m.o_amfo)) then (
 //         //from inside to outside
 //         assert (of.AMFO >= m.o_amfo) && (not(ot.AMFO >= m.o_amfo));
-//         assert cf.AMFO >= m.c_amfo;
+//         assert cf.AMFO >= m.c_amfx;
 //         assert ot == ct;
 //         refOK(of,ot) ==> refOK(cf,ct)
 //       ) else (
 //         //both inside
 //         assert (of.AMFO >= m.o_amfo) && (ot.AMFO >= m.o_amfo);
-//         assert cf.AMFO >= m.c_amfo;
-//         assert ct.AMFO >= m.c_amfo;
+//         assert cf.AMFO >= m.c_amfx;
+//         assert ct.AMFO >= m.c_amfx;
 //         refOK(of,ot) ==> refOK(cf,ct)))
 //
 
@@ -1535,20 +1397,20 @@ forall i <- m.m.Keys, j <- m.m.Keys
 //         //from outside to inside...
 //         assert (not(of.AMFO >= m.o_amfo)) && (ot.AMFO >= m.o_amfo);
 //         assert of == cf;
-//         assert ct.AMFO >= m.c_amfo;
+//         assert ct.AMFO >= m.c_amfx;
 //         refOK(of,ot) ==> refOK(cf,ct)))
 //     else //from inside
 //       (if (not(ot.AMFO >= m.o_amfo)) then (
 //         //from inside to outside
 //         assert (of.AMFO >= m.o_amfo) && (not(ot.AMFO >= m.o_amfo));
-//         assert cf.AMFO >= m.c_amfo;
+//         assert cf.AMFO >= m.c_amfx;
 //         assert ot == ct;
 //         refOK(of,ot) ==> refOK(cf,ct)
 //       ) else (
 //         //both inside
 //         assert (of.AMFO >= m.o_amfo) && (ot.AMFO >= m.o_amfo);
-//         assert cf.AMFO >= m.c_amfo;
-//         assert ct.AMFO >= m.c_amfo;
+//         assert cf.AMFO >= m.c_amfx;
+//         assert ct.AMFO >= m.c_amfx;
 //         refOK(of,ot) ==> refOK(cf,ct)))
 //
 //
@@ -1564,7 +1426,7 @@ forall i <- m.m.Keys, j <- m.m.Keys
 
 
 
-predicate {:isolate_assertions} oxy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon) : ( rv : bool )
+predicate {:isolate_assertions} oxy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( rv : bool )
   requires {of, ot} <= m.m.Keys
   requires m.m[of] == cf
   requires m.m[ot] == ct
@@ -1576,8 +1438,8 @@ predicate {:isolate_assertions} oxy_NO_builtin(of : Object, ot : Object, cf : Ob
 //  requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))
   //seems not to requires ANY other constraints than this one...
 //
-//   requires (of != cf) ==> (cf.AMFO >= m.c_amfo)
-//   requires (ot != ct) ==> (ct.AMFO >= m.c_amfo)
+//   requires (of != cf) ==> (cf.AMFO >= m.c_amfx)
+//   requires (ot != ct) ==> (ct.AMFO >= m.c_amfx)
 
 
   ensures rv == (inside(of,ot) ==> inside(cf,ct))
@@ -1605,7 +1467,7 @@ predicate {:isolate_assertions} oxy_NO_builtin(of : Object, ot : Object, cf : Ob
 
 
 
-predicate wexy(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( rv : bool )
+predicate wexy(of : Object, ot : Object, cf : Object, ct: Object, m : SuperKlon) : ( rv : bool )
 //note doesnt requrie Valid???
 // this Kklon has wexford2()  BUILT IN@!!A
   requires {of, ot} <= m.m.Keys
@@ -1614,8 +1476,8 @@ predicate wexy(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( 
 
   requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))
 
-  requires (of != cf) ==> (cf.AMFO >= m.c_amfo)
-  requires (ot != ct) ==> (ct.AMFO >= m.c_amfo)
+  requires (of != cf) ==> (cf.AMFO >= m.c_amfx)
+  requires (ot != ct) ==> (ct.AMFO >= m.c_amfx)
 
   ensures rv == (refOK(of,ot) ==> refOK(cf,ct))
 {
@@ -1634,27 +1496,27 @@ predicate wexy(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( 
         //from outside to inside...
         assert (not(of.AMFO >= m.o_amfo)) && (ot.AMFO >= m.o_amfo);
         assert of == cf;
-        assert ct.AMFO >= m.c_amfo;
+        assert ct.AMFO >= m.c_amfx;
         refOK(of,ot) ==> refOK(cf,ct)))
     else //from inside
       (if (not(ot.AMFO >= m.o_amfo)) then (
         //from inside to outside
         assert (of.AMFO >= m.o_amfo) && (not(ot.AMFO >= m.o_amfo));
-        assert cf.AMFO >= m.c_amfo;
+        assert cf.AMFO >= m.c_amfx;
         assert ot == ct;
         refOK(of,ot) ==> refOK(cf,ct)
       ) else (
         //both inside
         assert (of.AMFO >= m.o_amfo) && (ot.AMFO >= m.o_amfo);
-        assert cf.AMFO >= m.c_amfo;
-        assert ct.AMFO >= m.c_amfo;
+        assert cf.AMFO >= m.c_amfx;
+        assert ct.AMFO >= m.c_amfx;
         refOK(of,ot) ==> refOK(cf,ct)))
 }
 
 
 
 
-predicate wexy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon) : ( rv : bool )
+predicate wexy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( rv : bool )
 
   // requires {of, ot} <= m.m.Keys
   // requires m.m[of] == cf
@@ -1667,8 +1529,8 @@ predicate wexy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m :
 //  requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))
   //seems not to requires ANY other constraints than this one...
 //
-//   requires (of != cf) ==> (cf.AMFO >= m.c_amfo)
-//   requires (ot != ct) ==> (ct.AMFO >= m.c_amfo)
+//   requires (of != cf) ==> (cf.AMFO >= m.c_amfx)
+//   requires (ot != ct) ==> (ct.AMFO >= m.c_amfx)
 
 
   ensures rv == (refOK(of,ot) ==> refOK(cf,ct))
@@ -1688,27 +1550,27 @@ predicate wexy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m :
         //from outside to inside...
         assert (not(of.AMFO >= m.o_amfo)) && (ot.AMFO >= m.o_amfo);
         assert of == cf;
-        assert ct.AMFO >= m.c_amfo;
+        assert ct.AMFO >= m.c_amfx;
         refOK(of,ot) ==> refOK(cf,ct)))
     else //from inside
       (if (not(ot.AMFO >= m.o_amfo)) then (
         //from inside to outside
         assert (of.AMFO >= m.o_amfo) && (not(ot.AMFO >= m.o_amfo));
-        assert cf.AMFO >= m.c_amfo;
+        assert cf.AMFO >= m.c_amfx;
         assert ot == ct;
         refOK(of,ot) ==> refOK(cf,ct)
       ) else (
         //both inside
         assert (of.AMFO >= m.o_amfo) && (ot.AMFO >= m.o_amfo);
-        assert cf.AMFO >= m.c_amfo;
-        assert ct.AMFO >= m.c_amfo;
+        assert cf.AMFO >= m.c_amfx;
+        assert ct.AMFO >= m.c_amfx;
         refOK(of,ot) ==> refOK(cf,ct)))
 }
 
 
 
 
-predicate dexy(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( rv : bool )
+predicate dexy(of : Object, ot : Object, cf : Object, ct: Object, m : SuperKlon) : ( rv : bool )
 //  requires wexford3(m)
 /// HMM doesit still work?
 // agan doesn't need Valid??
@@ -1741,7 +1603,7 @@ predicate dexy(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( 
 
 
 
-predicate dexy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon) : ( rv : bool )
+predicate dexy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( rv : bool )
 //no builtin constraints version
   // requires {of, ot} <= m.m.Keys
   // requires m.m[of] == cf
@@ -1771,7 +1633,7 @@ predicate dexy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m :
 
 
 
-lemma compare_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+lemma compare_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 
   requires allmagic2(m)
 
@@ -1781,8 +1643,8 @@ lemma compare_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : 
 
 //   requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))
 //
-//   requires (of != cf) ==> (cf.AMFO >= m.c_amfo)
-//   requires (ot != ct) ==> (ct.AMFO >= m.c_amfo)
+//   requires (of != cf) ==> (cf.AMFO >= m.c_amfx)
+//   requires (ot != ct) ==> (ct.AMFO >= m.c_amfx)
 
   ensures  dexy_NO_builtin(of,ot,cf,ct,m)  ==> wexy_NO_builtin(of,ot,cf,ct,m)
   ensures  dexy_NO_builtin(of,ot,cf,ct,m) <==  wexy_NO_builtin(of,ot,cf,ct,m)
@@ -1811,7 +1673,7 @@ lemma compare_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : 
 
 }
 
-predicate cexy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+predicate cexy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 //
 //   requires {of, ot} <= m.m.Keys
 //   requires m.m[of] == cf
@@ -1821,94 +1683,97 @@ predicate cexy_NO_builtin(of : Object, ot : Object, cf : Object, ct: Object, m :
    refOK(of,ot) ==> refOK(cf,ct)
 }
 
-predicate magic3(k : Object, v : Object, m : SubKlon) : ( rv : bool )
+predicate magic3(k : Object, v : Object, m : Klon) : ( rv : bool )
 //see allmagic3 for why k & v must be in m already
   requires k in m.m.Keys
   requires v in m.m.Values
   requires m.m[k] == v
   requires m.o_amfo <= m.m.Keys   //IN-KLON
-  requires k.xtrnl <= m.m.Keys   //IN-KLON
+  requires k.owner <= m.m.Keys   //IN-KLON
   requires k.AMFO  <= m.m.Keys   //IN-KLON
+  reads m.oHeap`fields, m.oHeap`fieldModes
+  reads m.ns`fields, m.ns`fieldModes
 {
-  var CXTRA := m.c_amfo - mapThruKlon(m.o_amfo, m);
-  var OXTRA := mapThruKlon(m.o_amfo, m) - m.c_amfo;
+  var CXTRA := m.c_amfx - mapThruKlon(m.o_amfo, m);
+  var OXTRA := mapThruKlon(m.o_amfo, m) - m.c_amfx;
 
-assert  mapThruKlon(m.o_amfo, m) - OXTRA + CXTRA == m.c_amfo;
+assert  mapThruKlon(m.o_amfo, m) - OXTRA + CXTRA == m.c_amfx;
 
-///KJX continue from here - needs to be done in parallel for xtrnl & AMFO!
-///KJX continue from here - needs to be done in parallel for xtrnl & AMFO!
-///KJX continue from here - needs to be done in parallel for xtrnl & AMFO!
+///KJX continue from here - needs to be done in parallel for owner & AMFO!
+///KJX continue from here - needs to be done in parallel for owner & AMFO!
+///KJX continue from here - needs to be done in parallel for owner & AMFO!
 
   && (v.AMFO == (mapThruKlon(k.AMFO, m) - OXTRA + CXTRA )) //and this one???
 }
 
 
-function  tragic3(k : Object, m : SubKlon) : Owner
+function  tragic3(k : Object, m : Klon) : Owner
   requires k in m.m.Keys
   // requires v in m.m.Values
   // requires m.m[k] == v
   requires m.o_amfo <= m.m.Keys   //IN-KLON
-  requires k.xtrnl <= m.m.Keys   //IN-KLON
+  requires k.owner <= m.m.Keys   //IN-KLON
   requires k.AMFO  <= m.m.Keys   //IN-KLON
-
+  reads m.oHeap`fields, m.oHeap`fieldModes
+  reads m.ns`fields, m.ns`fieldModes
 {
-  var CXTRA := m.c_amfo - mapThruKlon(m.o_amfo, m);
-  var OXTRA := mapThruKlon(m.o_amfo, m) - m.c_amfo;
+  var CXTRA := m.c_amfx - mapThruKlon(m.o_amfo, m);
+  var OXTRA := mapThruKlon(m.o_amfo, m) - m.c_amfx;
 
-assert  (mapThruKlon(m.o_amfo, m) - OXTRA + CXTRA) == m.c_amfo;
+assert  (mapThruKlon(m.o_amfo, m) - OXTRA + CXTRA) == m.c_amfx;
 
-///KJX continue from here - needs to be done in parallel for xtrnl & AMFO!
-///KJX continue from here - needs to be done in parallel for xtrnl & AMFO!
-///KJX continue from here - needs to be done in parallel for xtrnl & AMFO!
+///KJX continue from here - needs to be done in parallel for owner & AMFO!
+///KJX continue from here - needs to be done in parallel for owner & AMFO!
+///KJX continue from here - needs to be done in parallel for owner & AMFO!
 
   (mapThruKlon(k.AMFO, m) - OXTRA + CXTRA ) //and this one??
 }
 
 
 
-lemma  magic3tragic3(k : Object, v : Object, m : SubKlon)
+lemma  magic3tragic3(k : Object, v : Object, m : Klon)
   requires k in m.m.Keys
   requires v in m.m.Values
   requires m.m[k] == v
   requires m.o_amfo <= m.m.Keys   //IN-KLON
-  requires k.xtrnl <= m.m.Keys   //IN-KLON
+  requires k.owner <= m.m.Keys   //IN-KLON
   requires k.AMFO  <= m.m.Keys   //IN-KLON
   requires magic3(k,v,m)
   ensures (
     var mTKoA := mapThruKlon(m.o_amfo, m);
-    var CXTRA := m.c_amfo - mTKoA;
-    var OXTRA := mTKoA - m.c_amfo;
-    && ((mTKoA - OXTRA + CXTRA) == m.c_amfo)
+    var CXTRA := m.c_amfx - mTKoA;
+    var OXTRA := mTKoA - m.c_amfx;
+    && ((mTKoA - OXTRA + CXTRA) == m.c_amfx)
     && (v.AMFO == tragic3(k,m))
   )
 {
     var mTKoA := mapThruKlon(m.o_amfo, m);
-    var CXTRA := m.c_amfo - mTKoA;
-    var OXTRA := mTKoA - m.c_amfo;
+    var CXTRA := m.c_amfx - mTKoA;
+    var OXTRA := mTKoA - m.c_amfx;
     assert
-      && ((mTKoA - OXTRA + CXTRA) == m.c_amfo)
+      && ((mTKoA - OXTRA + CXTRA) == m.c_amfx)
       && (v.AMFO == tragic3(k,m))
       ;
 }
 
-lemma magic3sanity(m : SubKlon, o : Object, c : Object)
+lemma magic3sanity(m : Klon, o : Object, c : Object)
   requires o.AMFO == m.o_amfo
-  requires c.AMFO == m.c_amfo
+  requires c.AMFO == m.c_amfx
   requires o in m.m.Keys
   requires c in m.m.Values
   requires m.m[o] == c
 //see allmagic3 for why k & v must be in m already
-  requires forall k <- m.m.Keys :: k.xtrnl <= m.m.Keys   //IN-KLON
+  requires forall k <- m.m.Keys :: k.owner <= m.m.Keys   //IN-KLON
   requires forall k <- m.m.Keys :: k.AMFO  <= m.m.Keys   //IN-KLON
   requires allmagic3(m)
   requires m.o_amfo <= m.m.Keys
-  requires m.c_amfo == m.m[o].AMFO
+  requires m.c_amfx == m.m[o].AMFO
   ensures  magic3(o, c, m)
 {}
 
 
-predicate allmagic3(m : SubKlon)
-  requires forall k <- m.m.Keys :: k.xtrnl <= m.m.Keys   //IN-KLON
+predicate allmagic3(m : Klon)
+  requires forall k <- m.m.Keys :: k.owner <= m.m.Keys   //IN-KLON
   requires forall k <- m.m.Keys :: k.AMFO  <= m.m.Keys   //IN-KLON
   requires m.o_amfo <= m.m.Keys   //IN-KLON
 {
@@ -1916,16 +1781,16 @@ predicate allmagic3(m : SubKlon)
   forall x <- m.m.Keys :: magic3(x,m.m[x],m)
 }
 
-lemma allmagic3restored(m' : SubKlon, k : Object, v : Object, m : SubKlon)
+lemma allmagic3restored(m' : Klon, k : Object, v : Object, m : Klon)
   requires k !in m'.m.Keys
   requires v !in m'.m.Values
-  requires forall k <- m'.m.Keys :: k.xtrnl <= m'.m.Keys   //IN-KLON
+  requires forall k <- m'.m.Keys :: k.owner <= m'.m.Keys   //IN-KLON
   requires forall k <- m'.m.Keys :: k.AMFO  <= m'.m.Keys   //IN-KLON
   requires m'.o_amfo <= m'.m.Keys   //IN-KLON
   requires allmagic3(m')
   requires m == subklonKV(m',k,v)
 
-  requires k.xtrnl <= m.m.Keys   //IN-KLON
+  requires k.owner <= m.m.Keys   //IN-KLON
   requires k.AMFO  <= m.m.Keys   //IN-KLON
   requires magic3(k,v,m)
 
@@ -1946,12 +1811,12 @@ lemma allmagic3restored(m' : SubKlon, k : Object, v : Object, m : SubKlon)
 }
 
 
-lemma magic3preservesOwnership(m : SubKlon)
-  requires forall k <- m.m.Keys :: k.xtrnl <= m.m.Keys   //IN-KLON
+lemma magic3preservesOwnership(m : Klon)
+  requires forall k <- m.m.Keys :: k.owner <= m.m.Keys   //IN-KLON
   requires forall k <- m.m.Keys :: k.AMFO  <= m.m.Keys   //IN-KLON
   requires m.o_amfo <= m.m.Keys
   requires allmagic3(m)
-  ensures forall i <- m.m.Keys, j <- m.m.Keys ::  (oxy_NO_builtin(i,j,m.m[i],m.m[j],m));
+  ensures forall i <- m.m.Keys, j <- m.m.Keys ::  (oxy_NO_builtin(i,j,m.m[i],m.m[j],m))
   {
 assert forall i <- m.m.Keys :: magic3(i,m.m[i],m);
 
@@ -1969,59 +1834,64 @@ forall i <- m.m.Keys, j <- m.m.Keys
   }
 
 
-function supertragic(k : Owner, m : SubKlon) : Owner
+function supertragic(k : Owner, m : Klon) : Owner
   requires m.o_amfo <= m.m.Keys   //IN-KLON
   requires k <= m.m.Keys
+  reads m.oHeap`fields, m.oHeap`fieldModes
+  reads m.ns`fields, m.ns`fieldModes
 {
-  var CXTRA := m.c_amfo - mapThruKlon(m.o_amfo, m);
-  var OXTRA := mapThruKlon(m.o_amfo, m) - m.c_amfo;
+  var CXTRA := m.c_amfx - mapThruKlon(m.o_amfo, m);
+  var OXTRA := mapThruKlon(m.o_amfo, m) - m.c_amfx;
 
   (mapThruKlon(k,m) - OXTRA + CXTRA )
 }
 
 //or should this take another parameter for v?
-predicate tragicallyhip(o : Object, m : SubKlon)
+predicate tragicallyhip(o : Object, m : Klon)
   requires m.o_amfo <= m.m.Keys   //IN-KLON
-  requires m.m.Keys >= o.ntrnl > o.xtrnl >= o.bound
+  requires m.m.Keys >= o.ntrnl > o.owner >= o.bound
   requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB
   requires o in m.m.Keys
+  reads m.oHeap`fields, m.oHeap`fieldModes
+  reads m.ns`fields, m.ns`fieldModes
+  reads o
 {
   var c := m.m[o];
 
   && (c.bound == supertragic(o.bound, m))
   && (c.AMFB  == supertragic(o.AMFB , m))
-  && (c.xtrnl == supertragic(o.xtrnl, m))
+  && (c.owner == supertragic(o.owner, m))
   && (c.AMFX  == supertragic(o.AMFX , m))
   && (c.ntrnl == supertragic(o.ntrnl, m))
   && (c.AMFO  == supertragic(o.AMFO , m))
 }
 
-opaque predicate acertainratio(o : Object, m : SubKlon)
+opaque predicate acertainratio(o : Object, m : Klon)
 {
-  reveal o.OReady();
+  reveal o.Ready();
   && (m.o_amfo <= m.m.Keys)   //IN-KLON
-  && (m.m.Keys >= o.ntrnl > o.xtrnl >= o.bound)
+  && (m.m.Keys >= o.ntrnl > o.owner >= o.bound)
   && (m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB)
   && (o in m.m.Keys)
-  && (o.OReady())
+  && (o.Ready())
 }
 
 
-opaque predicate allcertainratio(m : SubKlon)
+opaque predicate allcertainratio(m : Klon)
 {
   forall o <- m.m.Keys :: acertainratio(o,m)
 }
 
 
-lemma fked1(o1 : Object, o2 : Object, m : SubKlon)
+lemma fked1(o1 : Object, o2 : Object, m : Klon)
   requires m.o_amfo <= m.m.Keys   //IN-KLON
 
-  requires m.m.Keys >= o1.ntrnl > o1.xtrnl >= o1.bound
+  requires m.m.Keys >= o1.ntrnl > o1.owner >= o1.bound
   requires m.m.Keys >= o1.AMFO  > o1.AMFX  >= o1.AMFB
   requires o1 in m.m.Keys
   requires o1.Ready()
 
-  requires m.m.Keys >= o2.ntrnl > o2.xtrnl >= o2.bound
+  requires m.m.Keys >= o2.ntrnl > o2.owner >= o2.bound
   requires m.m.Keys >= o2.AMFO  > o2.AMFX  >= o2.AMFB
   requires o2 in m.m.Keys
   requires o2.Ready()
@@ -2031,7 +1901,7 @@ lemma fked1(o1 : Object, o2 : Object, m : SubKlon)
 {}
 
 
-lemma {:isolate_assertions} fked2(o1 : Object, o2 : Object, m : SubKlon)
+lemma {:isolate_assertions} fked2(o1 : Object, o2 : Object, m : Klon)
   requires m.o_amfo <= m.m.Keys   //IN-KLON
   requires o1 in m.m.Keys
   requires o2 in m.m.Keys
@@ -2039,18 +1909,18 @@ lemma {:isolate_assertions} fked2(o1 : Object, o2 : Object, m : SubKlon)
   requires allcertainratio(m)
 
   requires forall o <- m.m.Keys :: o.Ready()
-//   ensures  m.m.Keys >= o1.ntrnl > o1.xtrnl >= o1.bound
+//   ensures  m.m.Keys >= o1.ntrnl > o1.owner >= o1.bound
 //   ensures  m.m.Keys >= o1.AMFO  > o1.AMFX  >= o1.AMFB
 //   ensures  o1 in m.m.Keys
 //   ensures  o1.Ready()
 //
-//   ensures  m.m.Keys >= o2.ntrnl > o2.xtrnl >= o2.bound
+//   ensures  m.m.Keys >= o2.ntrnl > o2.owner >= o2.bound
 //   ensures  m.m.Keys >= o2.AMFO  > o2.AMFX  >= o2.AMFB
 //   ensures  o2 in m.m.Keys
 //  ensures  o2.Ready()
 
  requires
-   reveal allcertainratio(), acertainratio(), o2.OReady();
+   reveal allcertainratio(), acertainratio(), o2.Ready();
    forall k <- m.m.Keys :: tragicallyhip(k, m)
 
 //  requires (inside(o1,o2))
@@ -2071,31 +1941,31 @@ lemma {:isolate_assertions} fked2(o1 : Object, o2 : Object, m : SubKlon)
   assert
     var o := o2;
       && (m.o_amfo <= m.m.Keys)   //IN-KLON
-      && (m.m.Keys >= o.ntrnl > o.xtrnl >= o.bound)
+      && (m.m.Keys >= o.ntrnl > o.owner >= o.bound)
       && (m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB)
       && (o in m.m.Keys)
       by { reveal acrm, allcertainratio(), acertainratio(); }
-   assert o2 in m.m.Keys && o2.Ready() by { reveal acrm, allcertainratio(), acertainratio(), o2.OReady(); }
+   assert o2 in m.m.Keys && o2.Ready() by { reveal acrm, allcertainratio(), acertainratio(), o2.Ready(); }
 
   assert  (refOK(m.m[o1],m.m[o2]));
 }
 
 
 
-lemma fuckenHell(k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : SubKlon)
+lemma fuckenHell(k : Object, v : Object, of : Object, ot : Object, cf : Object, ct: Object, m : Klon)
 {}
 
-predicate dante(o : Object, m : SubKlon)
+predicate dante(o : Object, m : Klon)
 {
   && o.Ready()
   && (o in m.m.Keys)
   && (o.AMFO <= m.m.Keys)
   && (o.bound <= m.m.Keys)
-  && (o.xtrnl <= m.m.Keys)
+  && (o.owner <= m.m.Keys)
   && (o.ntrnl <= m.m.Keys)
 }
 
-lemma {:isolate_assertions}  fuckenHell2(a : Object, b : Object, c : Object, d : Object, aa : Owner, bb : Owner, cc : Owner, dd : Owner, m : SubKlon)
+lemma {:isolate_assertions}  fuckenHell2(a : Object, b : Object, c : Object, d : Object, aa : Owner, bb : Owner, cc : Owner, dd : Owner, m : Klon)
   requires dante(a,m)
   requires dante(b,m)
   requires dante(c,m)
@@ -2111,7 +1981,7 @@ lemma {:isolate_assertions}  fuckenHell2(a : Object, b : Object, c : Object, d :
 {}
 
 
-lemma {:isolate_assertions} fuckenHell3(a : Object, b : Object, c : Object, d : Object, m : SubKlon)
+lemma {:isolate_assertions} fuckenHell3(a : Object, b : Object, c : Object, d : Object, m : Klon)
   requires dante(a,m)
   requires dante(b,m)
   requires dante(c,m)
@@ -2121,7 +1991,7 @@ lemma {:isolate_assertions} fuckenHell3(a : Object, b : Object, c : Object, d : 
   requires forall o <- m.m.Keys ::
       && (o.AMFO <= m.m.Keys)
       && (o.bound <= m.m.Keys)
-      && (o.xtrnl <= m.m.Keys)
+      && (o.owner <= m.m.Keys)
       && (o.ntrnl <= m.m.Keys)
 
   requires allmagic3(m)
@@ -2164,19 +2034,19 @@ lemma {:isolate_assertions} fuckenHell3(a : Object, b : Object, c : Object, d : 
 }
 //
 //
-// predicate magic3old(k : Object, v : Object, m : SubKlon) : ( rv : bool )
+// predicate magic3old(k : Object, v : Object, m : Klon) : ( rv : bool )
 //
 //   requires k !in m.m.Keys
 //   requires v !in m.m.Values
 //
 //   //  requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))
 //
-// //  requires (k != v) ==> (v.AMFO >= m.c_amfo)
+// //  requires (k != v) ==> (v.AMFO >= m.c_amfx)
 // {
 //   //  && (if (k.AMFO >= m.o_amfo)
-//   //       then ((v != k) && (v.AMFO >= m.c_amfo))
+//   //       then ((v != k) && (v.AMFO >= m.c_amfx))
 //   //       else ((v == k)))
-//   //  && ((k.AMFX == m.o_amfo) ==> (v.AMFX == m.c_amfo))
+//   //  && ((k.AMFX == m.o_amfo) ==> (v.AMFX == m.c_amfx))
 //
 //    && ((k !in m.m.Keys) && (v !in m.m.Values))
 //
@@ -2184,19 +2054,19 @@ lemma {:isolate_assertions} fuckenHell3(a : Object, b : Object, c : Object, d : 
 //     forall i <- m.m.Keys, j <- m.m.Keys :: oxy_NO_builtin(i,j,satam.m[i],satam.m[j],satam))
 // }
 
-predicate magic2(k : Object, v : Object, m : SubKlon) : ( rv : bool )
+predicate magic2(k : Object, v : Object, m : Klon) : ( rv : bool )
 
   //  requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))
 
-//  requires (k != v) ==> (v.AMFO >= m.c_amfo)
+//  requires (k != v) ==> (v.AMFO >= m.c_amfx)
 {
    && (if (k.AMFO >= m.o_amfo)
-        then ((v != k) && (v.AMFO >= m.c_amfo))
+        then ((v != k) && (v.AMFO >= m.c_amfx))
         else ((v == k)))
-   && ((k.AMFX == m.o_amfo) ==> (v.AMFX == m.c_amfo))
+   && ((k.AMFX == m.o_amfo) ==> (v.AMFX == m.c_amfx))
 }
 
-lemma allmagic2restored(m' : SubKlon, k : Object, v : Object, m : SubKlon)
+lemma allmagic2restored(m' : Klon, k : Object, v : Object, m : Klon)
   requires k !in m'.m.Keys
   requires v !in m'.m.Values
   requires allmagic2(m')
@@ -2219,57 +2089,57 @@ lemma allmagic2restored(m' : SubKlon, k : Object, v : Object, m : SubKlon)
 }
 
 
-predicate magic(k : Object, v : Object, m : SubKlon) : ( rv : bool )
+predicate magic(k : Object, v : Object, m : Klon) : ( rv : bool )
 
 //  requires (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))
 
-//  requires (k != v) ==> (v.AMFO >= m.c_amfo)
+//  requires (k != v) ==> (v.AMFO >= m.c_amfx)
 {
       (if (k.AMFO >= m.o_amfo)
-        then ((v != k) && (v.AMFO >= m.c_amfo))
+        then ((v != k) && (v.AMFO >= m.c_amfx))
         else ((v == k)))
 }
 
 
-predicate allmagic2(m : SubKlon)
+predicate allmagic2(m : Klon)
 {
   forall x <- m.m.Keys :: magic2(x,m.m[x],m)
 }
 
-predicate allmagic(m : SubKlon)
+predicate allmagic(m : Klon)
 {
   forall x <- m.m.Keys :: magic(x,m.m[x],m)
 }
 
-lemma wexford3allmagic(m : SubKlon)
+lemma wexford3allmagic(m : Klon)
   ensures allmagic(m) == wexford3(m)
 {}
 
 
-predicate cexford4(m : SubKlon)
+predicate cexford4(m : Klon)
 {
   && (forall i <- m.m.Keys, j <- m.m.Keys :: cexy_NO_builtin(i,j,m.m[i],m.m[j],m))
 }
 
 
-predicate dexford4(m : SubKlon)
+predicate dexford4(m : Klon)
 {
   && (forall i <- m.m.Keys, j <- m.m.Keys :: dexy_NO_builtin(i,j,m.m[i],m.m[j],m))
 }
 
-predicate wexford4(m : SubKlon)
+predicate wexford4(m : Klon)
   requires allmagic2(m)
 {
   && (forall i <- m.m.Keys, j <- m.m.Keys :: wexy_NO_builtin(i,j,m.m[i],m.m[j],m))
 }
 
-lemma four4(m : SubKlon)
+lemma four4(m : Klon)
   requires allmagic2(m)
   ensures  cexford4(m) == dexford4(m) == wexford4(m)
 {}
 
 
-predicate wexford3(m : SubKlon)
+predicate wexford3(m : Klon)
 {
   // && (m.m.Keys   <= m.c)
   // && (m.m.Values <= m.c)
@@ -2277,7 +2147,7 @@ predicate wexford3(m : SubKlon)
 
   && (forall x <- m.m.Keys ::
       (if (x.AMFO >= m.o_amfo)
-        then ((m.m[x] != x) && (m.m[x].AMFO >= m.c_amfo))
+        then ((m.m[x] != x) && (m.m[x].AMFO >= m.c_amfx))
         else ((m.m[x] == x))))
 
   // && (forall x <- m.m.Keys :: (not(x.AMFO >= m.o_amfo) <==> (m.m[x] == x)))
@@ -2289,8 +2159,8 @@ predicate wexford3(m : SubKlon)
 }
 
 
-predicate wexford2(m : SubKlon)
-// note this is built into the Klon
+predicate wexford2(m : Klon)
+// note this is built into the SuperKlon
 {
   // && (m.m.Keys   <= m.c)
   // && (m.m.Values <= m.c)
@@ -2323,11 +2193,11 @@ lemma wexwater(m : Klon)
 //   requires a.Ready()
 //   {
 //     assert a.Ready();
-//     assert forall o <- a.xtrnl ::
+//     assert forall o <- a.owner ::
 //       && a.AMFO > o.AMFO
 //       && o.Ready();
-//     assert forall oo <- a.xtrnl :: oo.AMFO < a.AMFO;
-//     assert forall oo <- a.xtrnl :: oo.Ready();
+//     assert forall oo <- a.owner :: oo.AMFO < a.AMFO;
+//     assert forall oo <- a.owner :: oo.Ready();
 //     set oo <- a.AMFX, ooo <- AllMyConcievableOwners(oo) :: ooo
 //   }
 
@@ -2345,29 +2215,3 @@ requires aa >= cc
 
 ensures bb >= cc
  {}
-
-
-
-//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
-//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
-type vmap<K,V> = u : map<K,V> | AllMapEntriesAreUnique(u)
-
-
-predicate AllMapEntriesAreUnique<K,V(==)>(m : map<K,V>)
-{
-    forall i <- m.Keys, j <- m.Keys :: (m[i] == m[j]) ==> (i == j)
-}
-
-predicate not(x : bool) { !x }
-
-lemma skip() {}
-
-predicate mapLEQ<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
-{
-  (forall k <- left.Keys :: k in right && (left[k] == right[k]))
-}
-
-predicate mapGEQ<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
-{
-  (forall k <- right.Keys :: k in left && (left[k] == right[k]))
-}

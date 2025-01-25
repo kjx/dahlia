@@ -384,6 +384,95 @@ lemma anoyingExternalOwners()
 
 
 
+predicate SpikeReady()
+///can probably delete this and the following lemmas
+   reads {}
+   decreases AMFO, 20
+  {
+    && (AMFB == flatten(bound))
+    && (AMFX == flatten(owner))
+    && (AMFO == (flatten(ntrnl - {this}) + {this}))
+    && (AMFO == (flatten(owner) + {this}))
+    && (AMFO == AMFX + {this})
+    && (AMFX == AMFO - {this})
+
+//from older OwnersValid()
+  && (owner >= bound)
+  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
+//end older OwnersValid()
+
+    && (this !in AMFB)
+    && (this !in AMFX)
+    && (this  in AMFO)
+
+    && (AMFO > AMFX >= AMFB)
+
+    && (forall oo <- owner :: AMFO > oo.AMFO)
+    && (forall oo <- bound :: AMFO > oo.AMFO)
+    && (forall oo <- owner :: oo.Ready())
+    && (forall oo <- bound :: oo.Ready())
+
+    && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
+
+    && (forall oo <- AMFO :: AMFO >= oo.AMFO)
+//    && (forall o <- owner, ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+    && (forall o <- AMFO, ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+  }
+
+lemma OvenReadySpikeReady()
+  ensures OvenReady()  ==> SpikeReady()
+ {}
+
+lemma SpikeReadyOvenReady()
+  ensures SpikeReady() ==> OvenReady()
+ {}
+
+lemma ReadySpikeReady()
+  requires Ready()
+  ensures  SpikeReady()
+ {}
+
+lemma SpikeReadyReady()
+  requires SpikeReady()
+  ensures  Ready()
+ { assert SpikeReady();
+ SpikeReadyOvenReady();
+ assert OvenReady();
+ OvenReadyReady();
+ assert Ready();
+   }
+
+lemma OvenReadyReady()
+  ensures OvenReady() ==> Ready()
+ {}
+
+lemma ReadyOvenReady()
+  ensures Ready()  ==> OvenReady()
+ {}
+
+
+predicate QReady()
+//quickversion of ready for CollectAllOwners etc...
+{
+    && (forall x <- owner :: x.QReady())
+    && (forall x <- owner :: AMFO > x.AMFO)
+}
+
+lemma ReadyIsQReady1()
+  requires Ready()
+  ensures  QReady()
+{}
+
+lemma ReadyIsQReady2()
+  requires OvenReady()
+{}
+
+lemma ReadyIsQReady3()
+  requires SpikeReady()
+  ensures  QReady()
+{}
+
+
 lemma u(o : Object)
   requires o.Ready()
   ensures  o !in o.AMFB
@@ -817,6 +906,11 @@ function flattenAMFOs(os : set<Object>) : (of : set<Object>)
     os +   ///not technically needed if we keep "requires forall o <- os :: o in o.AMFO"
     (set o <- os, oo <- o.AMFO :: oo)
 }
+
+function flattenBound(os : Owner) : Owner
+   //union of flattened bounds (AMFB) of all os
+   {set o <- os, oo <- o.AMFB :: oo}
+function flatten(os : Owner) : Owner {flattenAMFOs(os)}
 
 lemma AMFOisBigger(o : Object)
   requires o.Ready()

@@ -150,7 +150,7 @@ assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
 
 print "about to clone a\n";
 
-var m := Klon(map[], a, a.AMFO, a.AMFO, os, {} );
+var m := Klon(map[], a, a.AMFO, a.AMFO, os, {}, {} );
 
 var ra, rm := Clone_Via_Map(a, m);
 
