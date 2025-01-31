@@ -1854,7 +1854,7 @@ predicate tragicallyhip(o : Object, m : Klon)
   requires o in m.m.Keys
   reads m.oHeap`fields, m.oHeap`fieldModes
   reads m.ns`fields, m.ns`fieldModes
-  reads o
+   reads o
 {
   var c := m.m[o];
 
