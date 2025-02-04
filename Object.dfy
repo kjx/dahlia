@@ -165,6 +165,20 @@ class Object {
     nick := name;
     new;
 
+
+    assert forall o <- oo :: o.Ready();
+    forall o <- oo ensures (o.QReady())
+      {
+        assert o.Ready();
+        o.ReadyIsQReady1();
+        assert o.QReady();
+      }
+    assert forall o <- oo :: o.QReady();
+    assert forall o <- owner :: o.QReady();
+    assert forall o <- oo :: AMFO > o.AMFO;
+
+    assert QReady();
+
 // just can't be done here!!!
 // assert OwnersValid();
 // assert Ready();
@@ -412,25 +426,34 @@ predicate SpikeReady()
     && (forall oo <- owner :: oo.Ready())
     && (forall oo <- bound :: oo.Ready())
 
+
     && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
 
+    && (forall oo <- (AMFO - {this}) :: (AMFO > oo.AMFO) && oo.Ready())
+
     && (forall oo <- AMFO :: AMFO >= oo.AMFO)
-//    && (forall o <- owner, ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
-    && (forall o <- AMFO, ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+    && (forall o <- owner, ooo <- o.AMFO :: AMFO > o.AMFO >= ooo.AMFO)
+    && (forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+
+    && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.QReady())
+    && (forall oo <- owner :: oo.QReady())
+    && (forall oo <- bound :: oo.QReady())
   }
 
-lemma OvenReadySpikeReady()
-  ensures OvenReady()  ==> SpikeReady()
- {}
 
 lemma SpikeReadyOvenReady()
-  ensures SpikeReady() ==> OvenReady()
+  ensures SpikeReady() ==> OvenReady() ==> Ready() ==> QReady()
  {}
 
-lemma ReadySpikeReady()
-  requires Ready()
-  ensures  SpikeReady()
- {}
+lemma SpikeReadyOvenReadyBreakdown()
+  {
+    assert SpikeReady() ==> OvenReady();
+    assert OvenReady() ==> Ready();
+    assert Ready() ==> QReady();
+    assert SpikeReady() ==> Ready();
+    assert SpikeReady() ==> OvenReady() ==> Ready() ==> QReady();
+  }
+
 
 lemma SpikeReadyReady()
   requires SpikeReady()
@@ -443,34 +466,61 @@ lemma SpikeReadyReady()
    }
 
 lemma OvenReadyReady()
-  ensures OvenReady() ==> Ready()
+  requires OvenReady()
+  ensures  Ready()
  {}
 
 lemma ReadyOvenReady()
-  ensures Ready()  ==> OvenReady()
+  requires Ready()
+  ensures  OvenReady()
  {}
 
 
 predicate QReady()
+  decreases AMFO
 //quickversion of ready for CollectAllOwners etc...
 {
-    && (forall x <- owner :: x.QReady())
     && (forall x <- owner :: AMFO > x.AMFO)
+    && (forall x <- owner :: x.QReady())
 }
 
 lemma ReadyIsQReady1()
+  decreases AMFO
   requires Ready()
   ensures  QReady()
-{}
+{
+  assert OvenReady();   //but not really...
+  assert (forall x <- owner :: AMFO > x.AMFO);
+  assert (forall x <- owner :: x.Ready());
+  forall  x <- owner ensures x.QReady() {
+    assert AMFO > x.AMFO;
+    ///lemma ReadyIsQReady1()
+    x.ReadyIsQReady1();
+    assert x.QReady();
+    }
+  assert (forall x <- owner :: x.QReady());
+}
 
 lemma ReadyIsQReady2()
   requires OvenReady()
-{}
-
-lemma ReadyIsQReady3()
-  requires SpikeReady()
   ensures  QReady()
 {}
+
+// lemma ReadyIsQReady3()
+//   decreases AMFO
+//   requires SpikeReady()
+//   ensures  QReady()
+// {
+//   assert SpikeReady();
+//   forall x <- owner ensures x.QReady() {
+//       assert AMFO > x.AMFO;
+//       assert x.SpikeReady();
+//       x.ReadyIsQReady1();
+//       assert x.QReady();
+//   }
+//
+//   assert QReady();
+// }
 
 
 lemma u(o : Object)
@@ -591,10 +641,12 @@ predicate OvenReady()
     && (AMFO == (flattenAMFOs(owner) + {this}))
     && (AMFO == AMFX + {this})
     && (AMFX == AMFO - {this})
+
 //from older OwnersValid()
   && (owner >= bound)
   && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
 //end older OwnersValid()
+
     && (this !in AMFB)
     && (this !in AMFX)
     && (this  in AMFO)
@@ -614,6 +666,11 @@ predicate OvenReady()
     && (forall oo <- AMFO :: AMFO >= oo.AMFO)
     && (forall o <- owner, ooo <- o.AMFO :: AMFO >  o.AMFO >= ooo.AMFO)
     && (forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+
+    && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.QReady())
+    && (forall oo <- owner :: oo.QReady())
+    && (forall oo <- bound :: oo.QReady())
+
   }
 
 
