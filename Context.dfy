@@ -2,7 +2,6 @@
 
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -102,6 +101,8 @@ assert
     && AllTheseOwnersAreFlatOK(a.AMFO - {a})
     ;
 
+assert COK(a,more);
+
 }
 
 
@@ -112,25 +113,27 @@ lemma COKWiderContext(a : Object, context : set<Object>, extra : set<Object>)
 {
   reveal COK();
   assert COK(a,context);
-//  assert  (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO);
-
-var context := context + extra;
-assert
-    && (a in context)
-    //&& (a.AMFO <= context)
-    //&& (a.AMFB <= context) //sgould be derivable, AMFB <= AMFO
-    && (a.AMFB <= a.AMFO <= context)
-    && (forall oo <- a.AMFO :: oo.Ready())
-    && (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO)
-  //  && (a.TRUMP()||(a.Ready() && a.Valid()))
-    && (a.Ready())
-    && (a.Valid())
-    && (a.AllOutgoingReferencesAreOwnership(context))
-//    && (a.AllOutgoingReferencesWithinThisHeap(context))
-    && (a.AllOwnersAreWithinThisHeap(context))
-
-    && AllTheseOwnersAreFlatOK(a.AMFO - {a})
-    ;
+  assert context <= (context + extra);
+  COKWiderContext2(a, context, context + extra);
+// //  assert  (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO);
+//
+// var context := context + extra;
+// assert
+//     && (a in context)
+//     //&& (a.AMFO <= context)
+//     //&& (a.AMFB <= context) //sgould be derivable, AMFB <= AMFO
+//     && (a.AMFB <= a.AMFO <= context)
+//     && (forall oo <- a.AMFO :: oo.Ready())
+//     && (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO)
+//   //  && (a.TRUMP()||(a.Ready() && a.Valid()))
+//     && (a.Ready())
+//     && (a.Valid())
+//     && (a.AllOutgoingReferencesAreOwnership(context))
+// //    && (a.AllOutgoingReferencesWithinThisHeap(context))
+//     && (a.AllOwnersAreWithinThisHeap(context))
+//
+//     && AllTheseOwnersAreFlatOK(a.AMFO - {a})
+//     ;
 }
 
 lemma CallOKWiderContext(aa: set<Object>, context : set<Object>, extra : set<Object>)
