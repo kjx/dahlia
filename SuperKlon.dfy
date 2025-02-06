@@ -109,21 +109,21 @@ lemma fuckenOwnerReady(part : Object, whole : Object)
 {}
 
 predicate recInside(part : Object, whole : Object) : (r : bool)
-    requires part.QReady()
+    requires part.SKReady()
     decreases part.AMFO
 {
 //  forall x | x in part.owner ensures (true) { fuckenOwnerReady(x, whole); }
 
   || (part == whole)
   || (exists x <- part.owner ::
-        && (x.QReady())                ////grr should be unnecessary
+        && (x.SKReady())                ////grr should be unnecessary
         && (part.AMFO > x.AMFO)       ////grr should be unnecessary
         && (recInside(x,whole)))
 }
 
 function collectAllOwners(o : Object) : (rv : Owner)
   decreases o.AMFO
-  requires  o.QReady()
+  requires  o.SKReady()
 {
   o.OvenReadyReady();
   {o} + o.owner + (set xo <- o.owner, co <- collectAllOwners(xo) :: co)
@@ -132,7 +132,7 @@ function collectAllOwners(o : Object) : (rv : Owner)
 lemma collectAllAMFO(o : Object)
   decreases o.AMFO
   requires  o.Ready()
-  requires  o.QReady()
+  requires  o.SKReady()
   ensures   o.AMFO == collectAllOwners(o)
   {
       o.OvenReadyReady();
@@ -140,7 +140,7 @@ lemma collectAllAMFO(o : Object)
 
 lemma {:isolate_assertions} recInsideCollectsAllOwners1(part : Object, whole : Object)
   decreases part.AMFO
-  requires part.QReady()
+  requires part.SKReady()
   requires recInside(part,whole)
   ensures  (whole in collectAllOwners(part))
 {
@@ -149,7 +149,7 @@ lemma {:isolate_assertions} recInsideCollectsAllOwners1(part : Object, whole : O
 
 lemma {:isolate_assertions} recInsideCollectsAllOwners2(part : Object, whole : Object)
   decreases part.AMFO
-  requires part.QReady()
+  requires part.SKReady()
   requires (whole in collectAllOwners(part))
   ensures  recInside(part,whole)
 {
@@ -159,7 +159,7 @@ lemma {:isolate_assertions} recInsideCollectsAllOwners2(part : Object, whole : O
 lemma recInsideAMFO1(part : Object, whole : Object)
   decreases part.AMFO
   requires part.Ready()
-  requires part.QReady()
+  requires part.SKReady()
 ////  requires whole.Ready() //why not?
 
   requires (whole in part.AMFO)
@@ -171,7 +171,7 @@ lemma recInsideAMFO1(part : Object, whole : Object)
 lemma recInsideAMFO2(part : Object, whole : Object)
   decreases part.AMFO
   requires part.Ready()
-  requires part.QReady()
+  requires part.SKReady()
 //  requires  whole.Ready() //why not?
   requires  recInside(part,whole)
   ensures   (whole in part.AMFO)
@@ -180,7 +180,7 @@ lemma recInsideAMFO2(part : Object, whole : Object)
 
 lemma InsideRecInside2(part : Object, whole : Object)
    requires part.Ready()
-   requires part.QReady()
+   requires part.SKReady()
    requires whole.Ready() //why not?
    requires    inside(part,whole)
    ensures  recInside(part,whole)
@@ -197,7 +197,7 @@ lemma InsideRecInside2(part : Object, whole : Object)
 
 lemma InsideRecInside1(part : Object, whole : Object)
    requires part.Ready()
-   requires part.QReady()
+   requires part.SKReady()
 // requires whole.Ready() //why not?
    requires recInside(part,whole)
    ensures  inside(part,whole)

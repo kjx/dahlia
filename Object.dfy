@@ -104,6 +104,7 @@ class Object {
   requires forall o <- mb :: o.Ready()
   requires forall o <- oo :: o.Ready()
   requires forall o <- oo, ooo <- o.AMFO :: o.AMFO > ooo.AMFO
+  requires forall o <- oo, ooo <- o.AMFO :: ooo.Ready()
 
 //end OverReady()
     requires CallOK(oo, context)
@@ -151,6 +152,9 @@ class Object {
     ensures fresh(this)
 
   {
+
+
+
     bound := mb;
     AMFB  := flattenAMFOs(mb);// + {this}; -- see above
 
@@ -165,6 +169,17 @@ class Object {
     nick := name;
     new;
 
+  assert this !in AMFX;
+
+  assert AMFX == AMFO - {this};
+
+    assert AMFXREADY:  (forall b <- AMFX  :: b.Ready());
+    forall b <- AMFX, c <-  b.AMFO ensures inside(b,c)  {
+      assert b.Ready();
+      fucked(b);
+      assert inside(b,c);
+    }
+    assert AMFXINSIDE: (forall b <- AMFX, c <- b.AMFO :: inside(b,c));
 
     assert forall o <- oo :: o.Ready();
     forall o <- oo ensures (o.QReady())
@@ -267,12 +282,28 @@ assert CallOK(flattenAMFOs(oo),  {this} + context);
 
 //print "Object.make() just constructed ", fmtobj(this), "\n";
 
+assert (forall b <- AMFX, c <- b.AMFO :: c in AMFO);
+assert (forall b <- AMFX  :: b.Ready());
+assert (forall b <- AMFX, c <- b.AMFO :: b.Ready());
+assert (forall b <- AMFX, c <- b.AMFO :: b.Ready());
+forall b <- AMFX, c <- b.AMFO  ensures (inside(b,c))
+  {
+    fucked(b);
+    fucked(c);
+    assert inside(b,c);
+    assert inside(this,c);
+  }
+assert (forall b <- AMFX, c <- b.AMFO :: inside(this,c));
+
+
+assert (forall b <- AMFX, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c));
+
 
 assert
   && (forall oo <- AMFX :: AMFO > oo.AMFO)
   && (forall oo <- AMFX :: oo.Ready())
   && (forall x <- AMFX, oo <- x.AMFO ::  AMFO > oo.AMFO)
-  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
+  && (forall b <- AMFX, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
   by {
     reveal COKOK;
     reveal COK(), CallOK();
@@ -287,7 +318,7 @@ assert forall o <- AMFO :: AMFO >= o.AMFO;
 ///assert forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO;
 
 
-assert forall            ooo <- this.AMFO :: AMFO >= this.AMFO >= ooo.AMFO;
+assert forall ooo <- this.AMFO :: AMFO >= this.AMFO >= ooo.AMFO;
 assert forall oo <- (AMFO - {this}) :: (AMFO > oo.AMFO) && oo.Ready();
 assert forall oo <- (AMFO - {this}), ooo <- oo.AMFO :: oo.Ready() && ooo.Ready();
 
@@ -308,7 +339,7 @@ assert forall oo <- (AMFO - {this}),  ooo <- oo.AMFO :: AMFO >= oo.AMFO >= ooo.A
 
    assert OwnersValid();
    assert OvenReady();
-  }
+  }//end make()j
 
 lemma fucked(o : Object)
   requires o.Ready()
@@ -474,6 +505,8 @@ lemma ReadyOvenReady()
   requires Ready()
   ensures  OvenReady()
  {}
+
+predicate SKReady()   decreases AMFO   { Ready() }
 
 
 predicate QReady()
@@ -704,9 +737,7 @@ predicate  OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec2024}
   && (forall oo <- AMFX :: AMFO > oo.AMFO)
   && (forall oo <- AMFX :: oo.Ready())
   && (forall x <- AMFX, oo <- x.AMFO ::  AMFO > oo.AMFO)
-  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
-
-
+  && (forall b <- AMFX, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
 
 //  && (AMFB == flattenAMFOs(bound) + {this}) //WTFFF - how is thatPOSSIBLE - 20Dec2024
 //
