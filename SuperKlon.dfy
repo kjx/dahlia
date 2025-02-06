@@ -123,9 +123,11 @@ predicate recInside(part : Object, whole : Object) : (r : bool)
 
 function collectAllOwners(o : Object) : (rv : Owner)
   decreases o.AMFO
+  requires  o.Ready()
+  requires  o.OvenReady()
   requires  o.SKReady()
 {
-  o.OvenReadyReady();
+  o.fucked(o);
   {o} + o.owner + (set xo <- o.owner, co <- collectAllOwners(xo) :: co)
 }
 
@@ -140,21 +142,30 @@ lemma collectAllAMFO(o : Object)
 
 lemma {:isolate_assertions} recInsideCollectsAllOwners1(part : Object, whole : Object)
   decreases part.AMFO
+  requires part.Ready()
   requires part.SKReady()
   requires recInside(part,whole)
   ensures  (whole in collectAllOwners(part))
 {
-    part.OvenReadyReady();
+  //  part.OvenReadyReady();
 }
 
-lemma {:isolate_assertions} recInsideCollectsAllOwners2(part : Object, whole : Object)
+lemma recInsideCollectsAllOwners2(part : Object, whole : Object)
   decreases part.AMFO
-  requires part.SKReady()
-  requires (whole in collectAllOwners(part))
-  ensures  recInside(part,whole)
-{
-    part.OvenReadyReady();
-}
+  requires part.Ready()
+  ensures recInside(part,whole) <== (whole in collectAllOwners(part))
+{}
+
+// lemma {:isolate_assertions} recInsideCollectsAllOwners2(part : Object, whole : Object)
+//   decreases part.AMFO
+//   requires part.SKReady()
+//   requires part.Ready()
+//   requires part.OvenReady()
+//   requires (whole in collectAllOwners(part))
+//   ensures  recInside(part,whole)
+// {
+//     part.OvenReadyReady();
+// }
 
 lemma recInsideAMFO1(part : Object, whole : Object)
   decreases part.AMFO
@@ -317,6 +328,7 @@ function  subklonKV(m' : Klon, k : Object, v : Object) : (m : Klon)
   requires k !in m'.m.Keys
   requires v !in m'.m.Values
 {
+      reveal UniqueMapEntry();
 m'.(m:=m'.m[k:=v])  //l.(m:=l.m[k:=v])
 }
 
@@ -1776,6 +1788,9 @@ predicate allmagic3(m : Klon)
   requires forall k <- m.m.Keys :: k.owner <= m.m.Keys   //IN-KLON
   requires forall k <- m.m.Keys :: k.AMFO  <= m.m.Keys   //IN-KLON
   requires m.o_amfo <= m.m.Keys   //IN-KLON
+
+  reads m.oHeap`fields, m.oHeap`fieldModes
+  reads m.ns`fields, m.ns`fieldModes
 {
 
   forall x <- m.m.Keys :: magic3(x,m.m[x],m)

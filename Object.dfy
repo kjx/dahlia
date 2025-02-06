@@ -409,13 +409,45 @@ lemma anoyingExternalOwners()
 
 
 
+predicate Ready()
+   reads {}
+   decreases AMFO, 20
+  {
+    && (AMFB == flatten(bound))
+    && (AMFX == flatten(owner))
+    && (AMFO == (flatten(ntrnl - {this}) + {this}))
+    && (AMFO == (flatten(owner) + {this}))
+    && (AMFO == AMFX + {this})
+    && (AMFX == AMFO - {this})
+
+
+    && (this !in AMFB)
+    && (this !in AMFX)
+    && (this  in AMFO)
+
+    && (AMFO > AMFX >= AMFB)
+
+    && (forall oo <- owner :: AMFO > oo.AMFO)
+    && (forall oo <- bound :: AMFO > oo.AMFO)
+    && (forall oo <- owner :: oo.Ready())
+    && (forall oo <- bound :: oo.Ready())
+
+    && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
+
+    && (forall oo <- AMFO :: AMFO >= oo.AMFO)
+//    && (forall o <- owner, ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+    && (forall o <- AMFO, ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+
+    && ntrnl > owner >= bound  //IN-KLON    //or sgiould this have some contexts somnewhere?
+    && AMFO  > AMFX  >= AMFB   //IN-KLON
+  }
 
 
 
 
 
 
-/*opaque*/ predicate Ready()
+/*opaque*/ predicate XReady()
 // ready means all the owenrs are (at least) ready...
 // I had to inline the defition --- see "//Ready()inlined"
 // WHO the fuck knows WHY?
