@@ -4,7 +4,6 @@
 
 type Owner = set<Object>   //still trying to devie if this sould be called Owner or Owners or Region or what!
 
-
 datatype Mode =
     | Rep // owned by me
     | Peer // owned by my owner
@@ -151,6 +150,7 @@ class Object {
     ensures unchanged( context )
     ensures fresh(this)
 
+    modifies {}
   {
 
 
@@ -343,7 +343,7 @@ assert forall oo <- (AMFO - {this}),  ooo <- oo.AMFO :: AMFO >= oo.AMFO >= ooo.A
 
 lemma fucked(o : Object)
   requires o.Ready()
-  ensures  forall oo <- o.AMFO :: oo.Ready()
+  ensures  forall oo <- o.AMFX :: oo.Ready()
   ensures  forall oo <- o.AMFO :: o.AMFO >= oo.AMFO
   ensures  forall oo <- o.AMFO, ooo <- oo.AMFO :: ooo.Ready()
   ensures  forall oo <- o.AMFO, ooo <- oo.AMFO :: oo.AMFO >= ooo.AMFO
@@ -431,6 +431,7 @@ predicate Ready()
     && (forall oo <- bound :: AMFO > oo.AMFO)
     && (forall oo <- owner :: oo.Ready())
     && (forall oo <- bound :: oo.Ready())
+    && (forall oo <- AMFX  :: oo.Ready())
 
     && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
 
@@ -444,20 +445,6 @@ predicate Ready()
 
 
 
-
-
-
-/*opaque*/ predicate XReady()
-// ready means all the owenrs are (at least) ready...
-// I had to inline the defition --- see "//Ready()inlined"
-// WHO the fuck knows WHY?
-// update this, update that too.
-
-//it's important: this has *no*  reads clause!
-   reads {}
-   decreases AMFO, 20
-{ OvenReady() }
-// { OwnersValid() }
 
 
 
@@ -483,6 +470,7 @@ predicate SpikeReady()
     && (this  in AMFO)
 
     && (AMFO > AMFX >= AMFB)
+    && (ntrnl > owner >= bound)
 
     && (forall oo <- owner :: AMFO > oo.AMFO)
     && (forall oo <- bound :: AMFO > oo.AMFO)
@@ -1027,10 +1015,11 @@ function flattenAMFOs(os : set<Object>) : (of : set<Object>)
     (set o <- os, oo <- o.AMFO :: oo)
 }
 
+
+function flatten(os : Owner) : Owner {flattenAMFOs(os)}
 function flattenBound(os : Owner) : Owner
    //union of flattened bounds (AMFB) of all os
    {set o <- os, oo <- o.AMFB :: oo}
-function flatten(os : Owner) : Owner {flattenAMFOs(os)}
 
 lemma AMFOisBigger(o : Object)
   requires o.Ready()

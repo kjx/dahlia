@@ -382,9 +382,9 @@ assert klonOwnersAreCompatible(k, v, m0);
   assert klonAllOwnersAreCompatible(m1);
   assert klonAllRefsOK(m0);
 
-  assert wexford(m0);
+//  assert wexford(m0);
   // wexfordKV(k,v,m0,m1);
-  assert wexford(m1);
+//  assert wexford(m1);
 
 //    klonAllRefsKVOK(k,v,m0,m1);i
 
@@ -460,9 +460,9 @@ assert forall o <-(m1.m.Keys - {k}):: klonOwnersAreCompatible(o,m1.m[o],m0);
 
     assert klonAllRefsOK(m0);
 
-assert wexford(m0);
+//assert wexford(m0);
 //wexfordKV(k,v,m0,m1);
-assert wexford(m1);
+//assert wexford(m1);
 
 
 
@@ -622,26 +622,16 @@ datatype Klon = Klon
   //    p : Object,  // Owner of the new (target) clone.  needs to be inside the source object's movement
 
   o_amfo  : Owner,             //was o. so the AMFO of o
-  c_owner : Owner,             //prooposed owner of c
+  c_owner : Owner,             //prooposed owner of
   c_amfx  : Owner,             //amfx of clone... - can't have AMFO cos c likely hasn't been created yet.
 
   oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts
-  ns : set<Object> //ns - new objects  (must be !! oHeap,   m.Values <= oHeap + ns
+  ns : set<Object>      //ns - new objects  (must be !! oHeap,   m.Values <= oHeap + ns
   )
+
 {
-  predicate OK() { wexford2(this) }
 
   predicate from(prev : Klon)
-    // should this be unique or not?
-    // m.from(prev) assuming prev.klonVMapOK, then I',m Klon(OK) and a a "strict but improper extension"
-    // strict - thijngs like oHeap can't change
-    // improper - could be exactly the same as prev
-    //
-    // if most things are OK,  given xown, xm := foo(own, m);
-    // then we should have xm.from(m);  I THINK??
-    //
-/// what's really annoy6ing is: should I keep track of the first from?
-    // cos usually that's what I need to prove.
     reads oHeap`fields, oHeap`fieldModes
     reads ns`fields, ns`fieldModes
     reads prev.oHeap`fields, prev.oHeap`fieldModes
@@ -651,30 +641,16 @@ datatype Klon = Klon
   {
     reveal calid(), calidObjects(), calidOK(), calidMap(), calidSheep();
     && mapGEQ(m, prev.m)
-    && o     == prev.o
-    && o_amfo == prev.o_amfo
+    && o       == prev.o
+    && o_amfo  == prev.o_amfo
     && c_owner == prev.c_owner
-    && c_amfx == prev.c_amfx
-    && oHeap == prev.oHeap
-    && ns    >= prev.ns
-    && calid()         //should these be requirements?
-       //KJX       && prev.calid()   //currently YES because the underlyign thing will require calid and reutnr calid
+    && c_amfx  == prev.c_amfx
+    && oHeap   == prev.oHeap
+    && ns      >= prev.ns
+    //&& calid()         //should these be requirements?
+    //&& prev.calid()   //currently YES because the underlyign thing will require calid and reutnr calid
   }
 
-
-  static lemma fromityH(a : Object, context : set<Object>, prev : Klon, next: Klon)
-    requires prev.calid()
-    requires next.calid()
-    requires next.from(prev)
-
-    requires context <= prev.oHeap
-    requires COK(a,context)
-
-    ensures context <= next.oHeap
-    ensures COK(a,next.oHeap)
-  {
-    COKWiderContext2(a,context,next.oHeap);
-  }
 
   twostate predicate allUnchangedExcept(except : set<Object> := {})
     reads m.Values, m.Keys, o, oHeap
@@ -686,7 +662,44 @@ datatype Klon = Klon
   }
 
 
+    predicate readyOK(o : Object)
+     //o is Ready, in m.Keys, and all owners are in m.Keys...
+  {
+    && o.Ready()
+    && (o in m.Keys)
+    && (ownersInKlown(o))
 
+//     && (o.AMFB <= m.Keys)
+//     && (o.AMFX <= m.Keys)
+//     && (o.AMFO <= m.Keys)
+//
+//     && (o.bound <= m.Keys)
+//     && (o.owner <= m.Keys)
+//     && (o.ntrnl <= m.Keys)
+  }
+
+  predicate ownersInKlown(o : Object)
+{
+    && (o.AMFB <= m.Keys)
+    && (o.AMFX <= m.Keys)
+    && (o.AMFO <= m.Keys)
+
+    && (o.bound <= m.Keys)
+    && (o.owner <= m.Keys)
+    && (o.ntrnl <= m.Keys)
+}
+
+   predicate readyAll()
+     // all keys are readyOK
+     //kjx: our should this just be ready or calid or somnething??
+   {
+      forall k <- m.Keys :: readyOK(k)
+   }
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// OLDER functions & SHIT on KLONs
 
   opaque function at(k : Object) : (v : Object)
     //return value corresponding to key k
@@ -707,28 +720,6 @@ datatype Klon = Klon
 
 
 
-
-  method superTRUMP(k : Object, v : Object)
-  //what the TRUMP is this doing
-    requires COK(k, {k})
-    requires CallOK({}, {k})
-    requires CallOK({k})
-    requires AllTheseOwnersAreFlatOK({k})
-    requires forall ooo <- k.AMFO :: k.AMFO > ooo.AMFO
-
-  {
-    reveal CallOK(), COK();
-    assert k.Ready();  assert k.Valid();
-
-
-    var jd := new Object.make( map[], {k}, {k}, "hello");
-    assert jd !in oHeap;
-    Vance(jd);
-  }
-
-  method Vance(v : Object)
-    requires v !in oHeap
-  {}
 
 
 
@@ -6692,7 +6683,13 @@ lemma klonSameOwnersAreCompatible(o : Object, c : Object, m1 : Klon)
 
 
 
-predicate klonAllRefsOK(m : Klon) { wexford2(m) }
+predicate klonAllRefsOK(m : Klon)
+  requires m.readyAll()
+  requires m.o_amfo <= m.m.Keys
+ {
+  //wexford2(m)
+  allklownMapOK(m)
+ }
 
 
 

@@ -26,16 +26,25 @@ predicate outside(part : Object, whole : Object) : (rv : bool)
     not(inside(part,whole))
   }
 
-// ///inside BUT NOT equal to
-// predicate strictlyInside(part : Object, whole : Object) : (rv : bool)
-//  // reads part, whole
-//  {
-// // || whole.region.World?
-//   && part != whole
-//   && whole.AMFO <= part.AMFO
-//  }
-// lemma reallyStrictlyInside(part : Object, whole : Object)
-//  ensures strictlyInside(part, whole) == (part.AMFO > whole.AMFO) {}
+///inside BUT NOT equal to
+predicate strictlyInside(part : Object, whole : Object) : (rv : bool)
+ // reads part, whole
+ {
+// || whole.region.World?
+  && part != whole
+  && whole.AMFO <= part.AMFO
+ }
+
+lemma reallyStrictlyInside(part : Object, whole : Object)
+ requires part.Ready()
+ requires whole.Ready()
+ ensures strictlyInside(part, whole) == (part.AMFO > whole.AMFO)
+ {
+   assert strictlyInside(part, whole) == ((part != whole) && (whole.AMFO <= part.AMFO));
+   assert strictlyInside(part, whole) == ((part != whole) && (part.AMFO >= whole.AMFO));
+   AXIOMAMFOS(part,whole);
+   assert ((part != whole) <==> (part.AMFO != whole.AMFO));
+ }
 
 predicate directlyInside(part : Object, whole : Object) : (rv : bool)
  {
