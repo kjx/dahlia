@@ -46,24 +46,22 @@ function OOOLDEmapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
 // ...BUT we never RETURN from a meethod that creates an object
 //  UNTIL that object is fully populatioend with FIELDS
 
-function   mapThruKlown(k : Object, m : Klon) : Owner
-  requires k in m.m.Keys
-  // requires v in m.m.Values
-  // requires m.m[k] == v
-  requires m.o_amfo <= m.m.Keys   //IN-KLON
-  requires k.owner <= m.m.Keys   //IN-KLON
-  requires k.AMFO  <= m.m.Keys   //IN-KLON
-  reads m.oHeap`fields, m.oHeap`fieldModes
-  reads m.ns`fields, m.ns`fieldModes
-{
-  mapKlown(k.AMFO, m)
-}
+// function   mapThruKlown(k : Object, m : Klon) : Owner
+//   requires k in m.m.Keys
+//   // requires v in m.m.Values
+//   // requires m.m[k] == v
+//   requires m.o_amfo <= m.m.Keys   //IN-KLON
+//   requires k.owner <= m.m.Keys   //IN-KLON
+//   requires k.AMFO  <= m.m.Keys   //IN-KLON
+//   reads m.oHeap`fields, m.oHeap`fieldModes
+//   reads m.ns`fields, m.ns`fieldModes
+// {
+//   mapThruKlown(k.AMFO, m)
+// }
 
-function mapKlown(k : Owner, m : Klon) : Owner
+function mapThruKlown(k : set<Object>, m : Klon) : Owner
   requires m.o_amfo <= m.m.Keys   //KLON-OK
   requires k <= m.m.Keys
-  reads m.oHeap`fields, m.oHeap`fieldModes
-  reads m.ns`fields, m.ns`fieldModes
 {
   var CXTRA := m.c_amfx - mapThruKlon(m.o_amfo, m);
   var OXTRA := mapThruKlon(m.o_amfo, m) - m.c_amfx;
@@ -74,7 +72,7 @@ function mapKlown(k : Owner, m : Klon) : Owner
 }
 
 
-lemma LEMMAMapKlown(k : Owner, m : Klon)
+lemma LEMMAmapThruKlown(k : Owner, m : Klon)
   requires m.o_amfo <= m.m.Keys   //IN-KLON
   requires k <= m.m.Keys
 {
@@ -105,12 +103,12 @@ lemma KLUCKO(o : Object, m : Klon)
 // {
 //   var c := m.m[o];
 //
-//   && (c.bound == mapKlown(o.bound, m))
-//   && (c.AMFB  == mapKlown(o.AMFB,  m))
-//   && (c.owner == mapKlown(o.owner, m))
-//   && (c.AMFX  == mapKlown(o.AMFX , m))
-//   && (c.ntrnl == mapKlown(o.ntrnl, m))
-//   && (c.AMFO  == mapKlown(o.AMFO,  m))  ///KJX HUMM
+//   && (c.bound == mapThruKlown(o.bound, m))
+//   && (c.AMFB  == mapThruKlown(o.AMFB,  m))
+//   && (c.owner == mapThruKlown(o.owner, m))
+//   && (c.AMFX  == mapThruKlown(o.AMFX , m))
+//   && (c.ntrnl == mapThruKlown(o.ntrnl, m))
+//   && (c.AMFO  == mapThruKlown(o.AMFO,  m))  ///KJX HUMM
 // }
 
 
@@ -126,47 +124,45 @@ predicate {:isolate_assertions} klownMapOK(o : Object, m : Klon)
   // requires o in m.m.Keys  //IN-KLON
 
   requires m.o_amfo <= m.m.Keys   //KLON-OK
-  requires m.readyOK(o)
-  requires (KLUCKO(o,m); o.Ready())//BUGGY!
-  requires o.Ready()
-  requires m.m.Keys >= o.bound
-  requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
-  requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
-  requires o.owner <= m.m.Keys   //IN-KLON
-  requires o.AMFO  <= m.m.Keys   //IN-KLON
-
-  reads m.oHeap`fields, m.oHeap`fieldModes
-  reads m.ns`fields, m.ns`fieldModes
-  reads m.m.Keys`fields, m.m.Keys`fieldModes
+  requires o in m.m.Keys
+  requires m.ownersInKlown(o)
+//   requires m.readyOK(o)
+// //  requires (KLUCKO(o,m); o.Ready())//BUGGY!
+//   requires o.Ready()
+//   requires m.m.Keys >= o.bound
+//   requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+//   requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+//   requires o.owner <= m.m.Keys   //IN-KLON
+//   requires o.AMFO  <= m.m.Keys   //IN-KLON
+//
+//   reads m.oHeap`fields, m.oHeap`fieldModes
+//   reads m.ns`fields, m.ns`fieldModes
+//   reads m.m.Keys`fields, m.m.Keys`fieldModes
 {
   var c := m.m[o];
 
-  && (c.bound == mapKlown(o.bound, m))
-  && (c.AMFB  == mapKlown(o.AMFB,  m))
-  && (c.owner == mapKlown(o.owner, m))
-  && (c.AMFX  == mapKlown(o.AMFX , m))
-  && (c.ntrnl == mapKlown(o.ntrnl, m))
-  && (c.AMFO  == mapKlown(o.AMFO,  m))
+  && (c.bound == mapThruKlown(o.bound, m))
+  && (c.AMFB  == mapThruKlown(o.AMFB,  m))
+  && (c.owner == mapThruKlown(o.owner, m))
+  && (c.AMFX  == mapThruKlown(o.AMFX , m))
+  && (c.ntrnl == mapThruKlown(o.ntrnl, m))
+  && (c.AMFO  == mapThruKlown(o.AMFO,  m))
 }
 
 
 
 
-lemma  MapKlownMapsOK1(k : Object, v : Object, m : Klon)
+lemma  mapThruKlownMapsOK1(k : Object, v : Object, m : Klon)
   requires m.o_amfo <= m.m.Keys   //KLON-OK
   requires m.readyOK(k)
   requires k in m.m.Keys
+  requires m.m[k] == v
   requires k.Ready()
   requires m.m.Keys >= k.ntrnl > k.owner >= k.bound  //IN-KLON
   requires m.m.Keys >= k.AMFO  > k.AMFX  >= k.AMFB   //IN-KLON
   requires k.owner <= m.m.Keys   //IN-KLON
   requires k.AMFO  <= m.m.Keys   //IN-KLON
 
-  requires m.readyOK(k)
-  requires k in m.m.Keys
-  requires v in m.m.Values
-  requires m.m[k] == v
-  requires m.o_amfo <= m.m.Keys   //IN-KLON
   requires k.owner <= m.m.Keys   //IN-KLON
   requires k.AMFO  <= m.m.Keys   //IN-KLON
   requires klownMapOK(k,m)
@@ -175,7 +171,7 @@ lemma  MapKlownMapsOK1(k : Object, v : Object, m : Klon)
     var CXTRA := m.c_amfx - mTKoA;
     var OXTRA := mTKoA - m.c_amfx;
     && ((mTKoA - OXTRA + CXTRA) == m.c_amfx)
-    && (v.AMFO == mapThruKlown(k,m))
+    && (v.AMFO == mapThruKlown(k.AMFO,m))
   )
 {
     var mTKoA := mapThruKlon(m.o_amfo, m);
@@ -183,36 +179,56 @@ lemma  MapKlownMapsOK1(k : Object, v : Object, m : Klon)
     var OXTRA := mTKoA - m.c_amfx;
     assert
       && ((mTKoA - OXTRA + CXTRA) == m.c_amfx)
-      && (v.AMFO == mapThruKlown(k,m))
+      && (v.AMFO == mapThruKlown(k.AMFO,m))
       ;
 }
 
 
 
 predicate {:isolate_assertions} allklownMapOK(m : Klon) : (rv : bool)
-//   requires forall k <- m.m.Keys :: k.owner <= m.m.Keys   //IN-KLON
-//   requires forall k <- m.m.Keys :: k.AMFO  <= m.m.Keys   //IN-KLON
-//
-//
+
   requires m.readyAll()
   requires m.o_amfo <= m.m.Keys //KLON-OK
-  //requires forall k <- m.m.Keys :: m.readyOK(k)
-
-  reads m.oHeap`fields, m.oHeap`fieldModes
-  reads m.ns`fields, m.ns`fieldModes
-  reads m.m.Keys`fields, m.m.Keys`fieldModes
-//  ensures  rv ==> (forall x <- m.m.Keys :: klownMapOK(x,m))
+  requires forall o <- m.m.Keys :: m.readyOK(o)
+  requires forall o <- m.m.Keys ::m.ownersInKlown(o)
+//
+//   requires forall o <- m.m.Keys :: (
+//         && (m.o_amfo <= m.m.Keys)   //KLON-OK
+//         && (m.readyOK(o))
+//         && (KLUCKO(o,m); o.Ready())//BUGGY!
+//         && (o.Ready())
+//         && (m.m.Keys >= o.bound)
+//         && (m.m.Keys >= o.ntrnl > o.owner >= o.bound ) //IN-KLON
+//         && (m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB )  //IN-KLON
+//         && (o.owner <= m.m.Keys)   //IN-KLON
+//         && (o.AMFO  <= m.m.Keys)   //IN-KLON
+  // )
+  // reads m.oHeap`fields, m.oHeap`fieldModes
+  // reads m.ns`fields, m.ns`fieldModes
+  // reads m.m.Keys`fields, m.m.Keys`fieldModes
+  // reads m.o`fields, m.o`fieldModes
 {
-  forall x <- m.m.Keys ::
-    (
-    // && x in m.m.Keys
-    && m.readyOK(x)
-    && (KLUCKO(x,m); x.Ready())//BUGGY!
-    // && x.owner <= m.m.Keys
-    // && x.AMFO  <= m.m.Keys
-    && klownMapOK(x,m)
-   )
+  //  forall o <- m.m.Keys :: klownMapOK(o,m)
+
+  forall o <- m.m.Keys :: klownMapOK(o,m)
+
+//         var c := m.m[o];
+//
+//         assert m.m.Keys > o.AMFX;
+//
+//        && (c.bound == mapThruKlown(o.bound, m))
+//        && (c.AMFB  == mapThruKlown(o.AMFB,  m))
+//        && (c.owner == mapThruKlown(o.owner, m))
+//        && (c.AMFX  == mapThruKlown(o.AMFX , m))
+//        && (c.ntrnl == mapThruKlown(o.ntrnl, m))
+//        && (c.AMFO  == mapThruKlown(o.AMFO,  m))
+//
+
+
+
 }
+
+
 
 lemma AllKlownMapKVRestored(m' : Klon, k : Object, v : Object, m : Klon)
 //Horrible name, but OKs adding a new cloned object into the klon.
@@ -435,43 +451,6 @@ lemma refBI_transitive(a : Object, b : Object, c : Object, m : Klon)
 
 
 //
-// derived lemmas equality etc
-//
-
-lemma AXIOMAMFOS(a : Object, b : Object)
-// equal AMFOs iff same objects
-  requires a.Ready()
-  requires b.Ready()
-  ensures  (a == b)  ==> (a.AMFO == b.AMFO)
-  ensures  (a == b) <==  (a.AMFO == b.AMFO)
-  ensures  (a == b) <==> (a.AMFO == b.AMFO)
-{}
-
-
-lemma AXIOMAMFO(part : Object, whole : Object)
-// o in AMFO ==> o.AMFO <= AMFO
-   requires  part.Ready()
-   requires  {whole}    <= part.AMFO
-   ensures   whole.AMFO <= part.AMFO
-   ensures   inside(part,whole)
-   {
-    AMFOsisAMFOs(part);
-   }
-
-lemma AXIOMAMFOREVERSE(part : Object, whole : Object)
-// inside(part,whole) ==> whole in part.AMFO
-   requires   part.Ready()
-   requires   whole.Ready()
-   requires   part.AMFO >= whole.AMFO
-
-   requires   inside(part,whole)
-   ensures    whole in part.AMFO
-   {
-    assert whole in whole.AMFO;
-    AMFOsisAMFOs(part);
-   }
-
-//
 // inside vs inside
 //
 
@@ -561,16 +540,6 @@ lemma InsideRecInside2(part : Object, whole : Object)
     recInsideCollectsAllOwners2(part,whole);
     assert recInside(part,whole);
    }
-
-
-
-
-lemma AMFOsisAMFOs(o : Object)
-   requires o.Ready()
-   ensures forall oo <- o.AMFO | oo != o :: (o.AMFO > oo.AMFO)
-{}
-
-
 
 
 

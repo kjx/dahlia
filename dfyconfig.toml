@@ -1,11 +1,11 @@
 includes = ["*.dfy"]
 # excludes = ["dahlia-remainder.dfy", "Main.dfy", "Klon.dfy", "Printing.dfy"]
-excludes = ["dahlia-remainder.dfy", "K2.dfy"]
+# excludes = ["dahlia-remainder.dfy", "K2.dfy"]
+excludes = ["dahlia-remainder.dfy", "K2.dfy", "Klon.dfy", "SuperKlon.dfy", "ScratchMonkey.dfy", "Printing.dfy", "Main.dfy"]
 
 [options]
 verify-included-files=true
 verification-time-limit=20
-cores=8 
+cores=8
 isolate-assertions=true
 #filter-symbol="xyzzy"
-

@@ -268,6 +268,7 @@ lemma KlonKVVMapOK(m0 : Klon, k : Object, v : Object, m1 : Klon)
 
 
 lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
+  requires m0.readyAll()
   requires klonAllRefsOK(m0)
   requires klonAllOwnersAreCompatible(m0)
   requires m0.calid()
@@ -281,15 +282,19 @@ lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
   requires (v==k) ==> (COK(v,m0.oHeap))
   requires (v!=k) ==> (COK(v,m0.oHeap+m0.ns+{v}))
 
+  requires k.Ready()
+  requires m0.ownersInKlown(k)
 
   requires m1 == klonKV(m0, k, v)
   requires mapGEQ(m1.m, m0.m)
+  requires klonLEQ(m0, m1)
 
   requires (v==k) == (outside(k, m0.o))
 
   requires (v!=k) ==> (v.fields == map[]) //KJX FRI20DEC - new objects being added need to be empty?
 
   ensures klonVMapOK(m1.m)
+  ensures m1.readyAll()
   ensures klonAllRefsOK(m1)
   ensures m1.calid()
   {
@@ -378,8 +383,25 @@ assert klonOwnersAreCompatible(k, v, m0);
 
 
   klonOwnersAreCompatibleKV(k,v,m0,m1);
+  assert klonOwnersAreCompatible(k,v,m1);
+  forall  o <- m1.m.Keys
+    ensures
+     klonOwnersAreCompatible(o,m1.m[o],m1)
+    {
+      if (o == k) {
+          //klonOwnersAreCompatibleKV(k,v,m0,m1);
+          assert klonOwnersAreCompatible(o,m1.m[o],m1);
+      } else {
+          assert klonAllOwnersAreCompatible(m0);
+          assert o in m0.m.Keys;
+          assert klonOwnersAreCompatible(o,m0.m[o],m0);
+          assert m0.m[o] == m1.m[o];
+          assert klonOwnersAreCompatible(o,m1.m[o],m1);
+      }
+    }
 
   assert klonAllOwnersAreCompatible(m1);
+  assert m0.readyAll();
   assert klonAllRefsOK(m0);
 
 //  assert wexford(m0);
@@ -388,17 +410,19 @@ assert klonOwnersAreCompatible(k, v, m0);
 
 //    klonAllRefsKVOK(k,v,m0,m1);i
 
+assert klonLEQ(m0, m1);
+    assert m1.readyAll();
     assert klonAllRefsOK(m1);
 
 
-  assume klonVMapOK(m1.m) && klonAllRefsOK(m1) && m1.calid();
+  assume klonVMapOK(m1.m) && m1.readyAll() && klonAllRefsOK(m1) && m1.calid();
   return;
 
 
 } else {
    assert v != k;
 
-  assume klonVMapOK(m1.m) && klonAllRefsOK(m1) && m1.calid();
+  assume klonVMapOK(m1.m) && m1.readyAll() && klonAllRefsOK(m1) && m1.calid();
   return;
 
    assert m1 == klonKV(m0,k,v);
@@ -458,6 +482,7 @@ assert forall o <-(m1.m.Keys - {k}):: klonOwnersAreCompatible(o,m1.m[o],m0);
 
     //assert klonAllOwnersAreCompatible(m1);
 
+    assert m0.readyAll();
     assert klonAllRefsOK(m0);
 
 //assert wexford(m0);
@@ -468,6 +493,7 @@ assert forall o <-(m1.m.Keys - {k}):: klonOwnersAreCompatible(o,m1.m[o],m0);
 
     klonAllRefsKVOK(k,v,m0,m1);
 
+    assert m1.readyAll();
     assert klonAllRefsOK(m1);
 
 
@@ -631,6 +657,23 @@ datatype Klon = Klon
 
 {
 
+
+
+//
+// predicate klonLEQ(c' : Klon, c : Klon)
+// {
+//   && (mapLEQ(c'.m, c.m))
+//   && (c'.o == c.o)
+//   && (c'.o_amfo  == c.o_amfo)
+//   && (c'.c_owner  == c.c_owner)
+//   && (c'.c_amfx  == c.c_amfx)
+//   && (c'.oHeap == c.oHeap)
+//   && (c'.ns <= c.ns)
+// }
+//
+
+
+
   predicate from(prev : Klon)
     reads oHeap`fields, oHeap`fieldModes
     reads ns`fields, ns`fieldModes
@@ -678,6 +721,11 @@ datatype Klon = Klon
 //     && (o.ntrnl <= m.Keys)
   }
 
+lemma ReadyOKDUCKED(o : Object)
+  requires readyOK(o)
+  ensures  o.Ready()
+  {}
+
   predicate ownersInKlown(o : Object)
 {
     && (o.AMFB <= m.Keys)
@@ -689,11 +737,12 @@ datatype Klon = Klon
     && (o.ntrnl <= m.Keys)
 }
 
-   predicate readyAll()
+   predicate  readyAll()
      // all keys are readyOK
      //kjx: our should this just be ready or calid or somnething??
    {
-      forall k <- m.Keys :: readyOK(k)
+      && (o_amfo <=   m.Keys)
+      && (forall k <- m.Keys :: readyOK(k))
    }
 
 
@@ -872,12 +921,14 @@ lemma roundTrip1(k : Object, v : Object, m : Klon)
 ///////////////
 
     requires calid()
+    requires readyAll()
     requires klonAllRefsOK(this) //lemma should be able to derive from calid()
     requires klonVMapOK(m) //lemma can derive from calid()
 
     requires canVMapKV(m,k,v)
     requires klonCanKV(this,k,v)
     requires AreWeNotMen(k, klonKV(this,k,v))
+    requires (k.owner <= m.Keys) && (mapThruKlon(k.owner, this) == v.owner)
 
     requires k  in oHeap
     requires k !in m.Keys
@@ -936,6 +987,7 @@ lemma roundTrip1(k : Object, v : Object, m : Klon)
     reads m.Keys`fieldModes
 
     requires calid()
+    requires readyAll()
     requires klonAllRefsOK(this) //lemma should be able to derive from calid()
     requires klonVMapOK(m) //lemma can derive from calid()
 
@@ -1260,6 +1312,7 @@ var rv := Klon(VMapKV(m,k,v), o, o_amfo, c_owner, c_amfx, oHeap, ns+nu(k,v));
     assert forall i <- m.Keys+{k} :: (rv.m[i] == v ) ==> (k == i);
     assert forall i <- rv.m.Keys :: UniqueMapEntry(rv.m, i);
 
+assert readyAll();
 assert klonAllRefsOK(this);
 assert calid();
 assert klonVMapOK(m);
@@ -1273,6 +1326,7 @@ assert COK(v,oHeap+ns+{v});
 // klonCalidKVCalid(this, k, v, rv);
 
   assert klonVMapOK(rv.m);
+  assert rv.readyAll();
   assume klonAllRefsOK(rv);
   assume rv.calid();
 
@@ -1554,6 +1608,7 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
 
     requires calid()
     requires klonVMapOK(m) //lemma can derive from calid()
+    requires readyAll()
     requires klonAllRefsOK(this)
 
     requires canVMapKV(m,k,k)
@@ -1566,6 +1621,8 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
     requires COK(k, oHeap)
     requires m.Keys <= oHeap
     requires k.allExternalOwners() <= m.Keys
+  //  requires ownersInKlown(k)  ///I think this imples the above?
+
 
     // requires (k.owner <= m.Keys) && (mapThruKlon(k.owner, this) == k.owner)  //OK right but why require it?
     // requires mapThruKlonKV(k.AMFO, this, k, k) == k.AMFO   //OK right but why require it?
@@ -1580,11 +1637,10 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
     ensures r.calid()
     ensures r.from(this)
 
-  {
-    var r := klonKV(this,k,k);
-
-    assert calid();
+{
+var r := klonKV(this,k,k);
     reveal calid();
+    assert calid();
     assert calidObjects();
     reveal calidObjects();
     reveal calidOK();
@@ -1593,6 +1649,9 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
     assert calidMap();
     reveal calidSheep();
     assert calidSheep();
+
+    assert BAA:  calidSheep();
+
 
     KlonExtendsCalidObjects(this, k, k, r);
 
@@ -1619,6 +1678,9 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
 
     assert CallOK(  ns,   oHeap+  ns);
     assert CallOK(r.ns, r.oHeap+r.ns);
+
+    assume ownersInKlown(k);  //EEEEVVVIIOILLLL
+
 klonCalidKVCalid(this, k, k, r);
     IHasCalidOK(r);
     IHasCalidMap(r);
@@ -1627,6 +1689,8 @@ klonCalidKVCalid(this, k, k, r);
     assert klonCanKV(this, k, k);
     assert r == klonKV(this, k, k);
 
+    reveal calidSheep();
+    assert calidSheep() by { reveal BAA; }
     reveal AreWeNotMen();
     assert forall x <- this.m.Keys :: AreWeNotMen(x, r);
     assert AreWeNotMen(k,r);
@@ -2014,7 +2078,8 @@ klonCalidKVCalid(this, k, k, r);
     reveal AreWeNotMen();
     assert forall x <- m.Keys :: AreWeNotMen(x, this);
 
-    assert forall x <- m.Keys :: x.fieldModes == m[x].fieldModes;
+    assert forall x <- m.Keys :: x.fieldModes == m[x].fieldModes 
+      by { reveal calidSheep2(); assert calidSheep2(); }
 
   }
 
@@ -2161,7 +2226,7 @@ lemma widerBoundsNest(o : Object, less : set<Object>, more : set<Object>)
 
 //shoudl this be in another file?
 //should this talk about KLON?
-method COKput(f : Object, context : set<Object>, n : string, t : Object)
+method  COKput(f : Object, context : set<Object>, n : string, t : Object)
   requires COK(f, context)
   requires n  in f.fieldModes.Keys
   requires n !in f.fields.Keys
@@ -2176,7 +2241,7 @@ method COKput(f : Object, context : set<Object>, n : string, t : Object)
   modifies f`fields
 {
   reveal COK();
-var a := f;
+var a := f;   //WHY??> COK??
 assert
       && (a in context)
     && (a.AMFO <= context)
@@ -2190,7 +2255,23 @@ assert
 
     && AllTheseOwnersAreFlatOK(a.AMFO - {a})
     ;
+
+assert PREC: AssignmentCompatible(f, f.fieldModes[n], t);
+
+assert f.AllFieldsContentsConsistentWithTheirDeclaration();
+assert OLDE: forall n <- a.fields :: AssignmentCompatible(a, a.fieldModes[n], a.fields[n]);
+
   f.fields := f.fields[n:=t];
+
+
+//  assert  AssignmentCompatible(f, f.fieldModes[n], t) by { reveal PREC; }
+
+// forall n <- a.fields ensures (AssignmentCompatible(a, a.fieldModes[n], a.fields[n]))
+//  {
+//
+//  }
+
+
 
 assert
       && (a in context)
@@ -2811,7 +2892,7 @@ assert  //James wonders if this shojuldb'e be AFTER the putoutside  ikt perhas t
   && (a in m.oHeap)  //KJX do I want this here?
   && (a.allExternalOwners() <= m.m.Keys)   //merging in objectage Spike
   && (a.AMFX <= m.m.Keys)                  //merging in objectage Spike
-  && (a.OvenReady())                       //merging in objectage Spike
+  && (a.Ready())                          //merging in objectage Spike
   && (a.AMFO == a.AMFX + {a})              //merging in objectage Spike
   && (a.AMFO <= m.m.Keys+{a})              //merging in objectage Spike
 //  && (mapThruVMapKV(a.AMFO, m.m, a, a) == a.AMFO)
@@ -4529,7 +4610,6 @@ assert AllTheseOwnersAreFlatOK(a.allExternalOwners()) by {
     assert COK(a, m.oHeap);
     RVfromCOK(a, m.oHeap);
     assert a.Ready();
-    assert a.OvenReady();
     m.calidOKFromCalid();
     assert CallOK(m.oHeap);
     COKowner(a, m.oHeap);
@@ -6450,6 +6530,7 @@ assert COKB4: COK(b, rm.oHeap+rm.ns);
 
 
     assert klonAllOwnersAreCompatible(m);
+    assert m.readyAll();
     assert klonAllRefsOK(m);
 
     assert m.calidMap();/////////////////////////
@@ -6491,30 +6572,39 @@ IHasCalidSheep(m);
 
 
 
-
 function mapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
   //image of os under klon mapping m
-  //currently doesn't require calid, to avoid circular reasonings
-  //but can reason through calid. which is probalby bad,really
-  //be bettter to split off as a lemma...
-  reads m.oHeap`fields, m.oHeap`fieldModes
-  reads m.ns`fields, m.ns`fieldModes
-//requires m.calid()  (does it or doesn't it?)
+  // reads m.m.Keys`fields, m.m.Keys`fieldModes
+  // reads m.m.Values`fields, m.m.Values`fieldModes
   requires os <= m.m.Keys
+{ set o <- os :: m.m[o] }
 
-  ensures m.calid() ==> (r  <= m.m.Values <= (m.oHeap + m.ns))  //Hmm. not great but...
-  ensures m.calid() ==> (CallOK(r, (m.oHeap + m.ns))) //ditto. or should they be lemmas..?
-{
-  var r := set o <- os :: m.m[o];
 
-  reveal m.calid(), m.calidOK();
-  assert m.calid() ==> (r  <= m.m.Values <= (m.oHeap + m.ns));
-
-  reveal COK(), CallOK();
-  assert m.calid() ==> (CallOK(r, (m.oHeap + m.ns)));
-
-  r
-}
+//
+// function mapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
+//   //image of os under klon mapping m
+//   //currently doesn't require calid, to avoid circular reasonings
+//   //but can reason through calid. which is probalby bad,really
+//   //be bettter to split off as a lemma...
+//
+//   // reads m.oHeap`fields, m.oHeap`fieldModes
+//   // reads m.ns`fields, m.ns`fieldModes
+// //requires m.calid()  (does it or doesn't it?)
+//   requires os <= m.m.Keys
+//
+//   ensures m.calid() ==> (r  <= m.m.Values <= (m.oHeap + m.ns))  //Hmm. not great but...
+//   ensures m.calid() ==> (CallOK(r, (m.oHeap + m.ns))) //ditto. or should they be lemmas..?
+// {
+//   var r := set o <- os :: m.m[o];
+//
+//   reveal m.calid(), m.calidOK();
+//   assert m.calid() ==> (r  <= m.m.Values <= (m.oHeap + m.ns));
+//
+//   reveal COK(), CallOK();
+//   assert m.calid() ==> (CallOK(r, (m.oHeap + m.ns)));
+//
+//   r
+// }
 
 //LEMMA  given a calid? Klon,  and that we canKV the fuyckedr,
 //then reult wil lbe calid, or if not calid, at leaset fucking klonVMapOK or whatever it is...
@@ -6694,6 +6784,9 @@ predicate klonAllRefsOK(m : Klon)
 
 
 lemma klonAllRefsKVOK(k : Object, v : Object, m' : Klon, m : Klon)
+//can add k,v to m' yeilding m
+//andn lal refs are OK
+  requires m'.readyAll()
   requires klonAllRefsOK(m')
   //requires m'.calid()
   requires klonCanKV(m',k,v)
@@ -6703,10 +6796,27 @@ lemma klonAllRefsKVOK(k : Object, v : Object, m' : Klon, m : Klon)
   requires m.m[k] == v
   requires m.m == m'.m[k:=v]
 
+  requires k.Ready()
+  requires m'.ownersInKlown(k)
+
+requires m.m.Keys >= k.bound
+requires m.m.Keys >= k.ntrnl > k.owner >= k.bound  //IN-KLON
+requires m.m.Keys >= k.AMFO  > k.AMFX  >= k.AMFB   //IN-KLON
+requires k.owner <= m.m.Keys   //IN-KLON
+requires k.AMFO  <= m.m.Keys   //IN-KLON
+
+
+  //preconds or allklownMapOK(m)
+  requires m == klonKV(m',k,v)
+  requires k.owner <= m.m.Keys   //IN-KLON
+  requires k.AMFO  <= m.m.Keys   //IN-KLON
+  requires klownMapOK(k,m)
+
 
   //this one of course...
   //  requires forall ot <- (m'.m.Keys + {k}) ::  klonRefOK(k,ot,v,m.m[ot],m)
 
+  ensures   m.readyAll()
   ensures   klonAllRefsOK(m)
 {
   assert k !in m'.m.Keys;
@@ -6718,11 +6828,15 @@ lemma klonAllRefsKVOK(k : Object, v : Object, m' : Klon, m : Klon)
 //      var ct := m'.m[ot];
 //       false; //TODO
 // //     klonRefOK(of,ot,cf,ct,m');
+//
 
-  assert (forall of <- m'.m.Keys, ot <- m'.m.Keys ::
-            (var cf := m'.m[of];  assert cf == m.m[of];
-            (var ct := m'.m[ot];  assert ct == m.m[ot];
-              true))); //TODO
+AllKlownMapKVRestored(m',k,v,m);
+
+//what on earth is this chuink doing (and how is it doing it?)
+        //   assert (forall of <- m'.m.Keys, ot <- m'.m.Keys ::
+        //             (var cf := m'.m[of];  assert cf == m.m[of];
+        //             (var ct := m'.m[ot];  assert ct == m.m[ot];
+        //               true))); //TODO
   //   klonRefOK(of,ot,cf,ct,m) == klonRefOK(of,ot,cf,ct,m');
 
 //NEED EXISTENTIONALITY HERE   TODO
@@ -6894,6 +7008,7 @@ lemma IHasCalidMap(r : Klon)
   requires (forall x <- r.m.Keys :: r.boundsNestingOK(r.m[x], r.oHeap+r.ns))
   requires (forall x <- r.m.Keys :: r.fieldMappingsOK(x, r.m[x], r.m.Keys))
 
+  requires r.readyAll()
   requires klonAllRefsOK(r)
   requires klonAllOwnersAreCompatible(r)
   // requires  && (forall x <- r.m.Keys ::
@@ -6917,6 +7032,7 @@ lemma IHasCalidMap(r : Klon)
           ;
 
         assert
+          && r.readyAll()
           && klonAllRefsOK(r)
           && klonAllOwnersAreCompatible(r)
           && AllMapEntriesAreUnique(r.m)

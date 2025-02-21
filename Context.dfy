@@ -84,7 +84,6 @@ assert TRIBBLE: (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO >
   by {
     assert COK(a,less);    reveal COK();
     assert a.Ready();
-    assert a.OvenReady();
     assert (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO);
   }
 

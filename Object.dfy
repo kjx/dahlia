@@ -133,7 +133,6 @@ class Object {
     ensures this !in owner
 
     ensures OwnersValid()
-    ensures OvenReady()
     ensures Ready()
 
     ensures (forall oo <- allExternalOwners() :: AMFO > oo.AMFO)
@@ -181,18 +180,6 @@ class Object {
     }
     assert AMFXINSIDE: (forall b <- AMFX, c <- b.AMFO :: inside(b,c));
 
-    assert forall o <- oo :: o.Ready();
-    forall o <- oo ensures (o.QReady())
-      {
-        assert o.Ready();
-        o.ReadyIsQReady1();
-        assert o.QReady();
-      }
-    assert forall o <- oo :: o.QReady();
-    assert forall o <- owner :: o.QReady();
-    assert forall o <- oo :: AMFO > o.AMFO;
-
-    assert QReady();
 
 // just can't be done here!!!
 // assert OwnersValid();
@@ -338,7 +325,7 @@ forall oo <- (AMFO - {this}), ooo <- oo.AMFO
 assert forall oo <- (AMFO - {this}),  ooo <- oo.AMFO :: AMFO >= oo.AMFO >= ooo.AMFO;
 
    assert OwnersValid();
-   assert OvenReady();
+   assert Ready();
   }//end make()j
 
 lemma fucked(o : Object)
@@ -420,46 +407,6 @@ predicate Ready()
     && (AMFO == AMFX + {this})
     && (AMFX == AMFO - {this})
 
-
-    && (this !in AMFB)
-    && (this !in AMFX)
-    && (this  in AMFO)
-
-    && (AMFO > AMFX >= AMFB)
-
-    && (forall oo <- owner :: AMFO > oo.AMFO)
-    && (forall oo <- bound :: AMFO > oo.AMFO)
-    && (forall oo <- owner :: oo.Ready())
-    && (forall oo <- bound :: oo.Ready())
-    && (forall oo <- AMFX  :: oo.Ready())
-
-    && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
-
-    && (forall oo <- AMFO :: AMFO >= oo.AMFO)
-//    && (forall o <- owner, ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
-    && (forall o <- AMFO, ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
-
-    && ntrnl > owner >= bound  //IN-KLON    //or sgiould this have some contexts somnewhere?
-    && AMFO  > AMFX  >= AMFB   //IN-KLON
-  }
-
-
-
-
-
-
-predicate SpikeReady()
-///can probably delete this and the following lemmas
-   reads {}
-   decreases AMFO, 20
-  {
-    && (AMFB == flatten(bound))
-    && (AMFX == flatten(owner))
-    && (AMFO == (flatten(ntrnl - {this}) + {this}))
-    && (AMFO == (flatten(owner) + {this}))
-    && (AMFO == AMFX + {this})
-    && (AMFX == AMFO - {this})
-
 //from older OwnersValid()
   && (owner >= bound)
   && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
@@ -469,112 +416,25 @@ predicate SpikeReady()
     && (this !in AMFX)
     && (this  in AMFO)
 
-    && (AMFO > AMFX >= AMFB)
-    && (ntrnl > owner >= bound)
+    && ntrnl > owner >= bound  //IN-KLON    //or sgiould this have some contexts somnewhere?
+    && AMFO  > AMFX  >= AMFB   //IN-KLON
+
 
     && (forall oo <- owner :: AMFO > oo.AMFO)
     && (forall oo <- bound :: AMFO > oo.AMFO)
     && (forall oo <- owner :: oo.Ready())
     && (forall oo <- bound :: oo.Ready())
-
+    && (forall oo <- AMFX  :: AMFO > oo.AMFO)
+    && (forall oo <- AMFX  :: oo.Ready())
 
     && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
-
     && (forall oo <- (AMFO - {this}) :: (AMFO > oo.AMFO) && oo.Ready())
 
     && (forall oo <- AMFO :: AMFO >= oo.AMFO)
-    && (forall o <- owner, ooo <- o.AMFO :: AMFO > o.AMFO >= ooo.AMFO)
+    && (forall o <- owner, ooo <- o.AMFO :: AMFO >  o.AMFO >= ooo.AMFO)
     && (forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
 
-    && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.QReady())
-    && (forall oo <- owner :: oo.QReady())
-    && (forall oo <- bound :: oo.QReady())
   }
-
-
-lemma SpikeReadyOvenReady()
-  ensures SpikeReady() ==> OvenReady() ==> Ready() ==> QReady()
- {}
-
-lemma SpikeReadyOvenReadyBreakdown()
-  {
-    assert SpikeReady() ==> OvenReady();
-    assert OvenReady() ==> Ready();
-    assert Ready() ==> QReady();
-    assert SpikeReady() ==> Ready();
-    assert SpikeReady() ==> OvenReady() ==> Ready() ==> QReady();
-  }
-
-
-lemma SpikeReadyReady()
-  requires SpikeReady()
-  ensures  Ready()
- { assert SpikeReady();
- SpikeReadyOvenReady();
- assert OvenReady();
- OvenReadyReady();
- assert Ready();
-   }
-
-lemma OvenReadyReady()
-  requires OvenReady()
-  ensures  Ready()
- {}
-
-lemma ReadyOvenReady()
-  requires Ready()
-  ensures  OvenReady()
- {}
-
-predicate SKReady()   decreases AMFO   { Ready() }
-
-
-predicate QReady()
-  decreases AMFO
-//quickversion of ready for CollectAllOwners etc...
-{
-    && (forall x <- owner :: AMFO > x.AMFO)
-    && (forall x <- owner :: x.QReady())
-}
-
-lemma ReadyIsQReady1()
-  decreases AMFO
-  requires Ready()
-  ensures  QReady()
-{
-  assert OvenReady();   //but not really...
-  assert (forall x <- owner :: AMFO > x.AMFO);
-  assert (forall x <- owner :: x.Ready());
-  forall  x <- owner ensures x.QReady() {
-    assert AMFO > x.AMFO;
-    ///lemma ReadyIsQReady1()
-    x.ReadyIsQReady1();
-    assert x.QReady();
-    }
-  assert (forall x <- owner :: x.QReady());
-}
-
-lemma ReadyIsQReady2()
-  requires OvenReady()
-  ensures  QReady()
-{}
-
-// lemma ReadyIsQReady3()
-//   decreases AMFO
-//   requires SpikeReady()
-//   ensures  QReady()
-// {
-//   assert SpikeReady();
-//   forall x <- owner ensures x.QReady() {
-//       assert AMFO > x.AMFO;
-//       assert x.SpikeReady();
-//       x.ReadyIsQReady1();
-//       assert x.QReady();
-//   }
-//
-//   assert QReady();
-// }
-
 
 lemma u(o : Object)
   requires o.Ready()
@@ -684,52 +544,6 @@ assert OwnersValid();
 }
 
 
-predicate OvenReady()
-   reads {}
-   decreases AMFO, 10
-  {
-    && (AMFB == flattenAMFOs(bound))
-    && (AMFX == flattenAMFOs(owner))
-    && (AMFO == (flattenAMFOs(ntrnl - {this}) + {this}))
-    && (AMFO == (flattenAMFOs(owner) + {this}))
-    && (AMFO == AMFX + {this})
-    && (AMFX == AMFO - {this})
-
-//from older OwnersValid()
-  && (owner >= bound)
-  && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
-//end older OwnersValid()
-
-    && (this !in AMFB)
-    && (this !in AMFX)
-    && (this  in AMFO)
-
-    && (AMFO > AMFX >= AMFB)
-
-    && (forall oo <- owner :: AMFO > oo.AMFO)
-    && (forall oo <- bound :: AMFO > oo.AMFO)
-    && (forall oo <- owner :: oo.Ready())
-    && (forall oo <- bound :: oo.Ready())
-
-//from older OwnersValid()
-    && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
-//end older OwnersValid()
-    && (forall oo <- (AMFO - {this}) :: (AMFO > oo.AMFO) && oo.Ready())
-
-    && (forall oo <- AMFO :: AMFO >= oo.AMFO)
-    && (forall o <- owner, ooo <- o.AMFO :: AMFO >  o.AMFO >= ooo.AMFO)
-    && (forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
-
-    && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.QReady())
-    && (forall oo <- owner :: oo.QReady())
-    && (forall oo <- bound :: oo.QReady())
-
-  }
-
-
-lemma  OROV()
-  ensures  OvenReady()  ==> OwnersValid()
-{}
 
 
 predicate  OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec2024}
@@ -765,6 +579,14 @@ predicate  OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec2024}
 
 
 lemma AMFOsisAMFOs()
+//my AMFO encompasses all my external owners AMFOs
+   requires Ready()
+   ensures  forall oo <- AMFO | oo != this :: (AMFO > oo.AMFO)
+{}
+
+
+lemma AMFOsisAMFOs1()
+//my AMFO encompasses or equals my owners AMFOs (equals if its me)
    requires Ready()
    requires OwnersValid()
    ensures forall oo <- AMFO :: oo.AMFO <= AMFO
@@ -824,14 +646,13 @@ lemma CallMyOwnersWillWitherAway(a : Object, context : set<Object>)
  //  reads ValidReadSet()`fields, ValidReadSet()`fieldModes
    {
 //for OvenReady()
-    OvenReady() &&
 //end OvenReady()
     Ready() && Valid()
    }
 
 lemma BIDEN()
   requires TRUMP()
-  ensures OvenReady() && Ready() && Valid()
+  ensures  && Ready() && Valid()
 {
    //////reveal TRUMP();
 }
@@ -1059,11 +880,9 @@ lemma Splurge(o : Object, context : set<Object>)
   assert COK(o, context);
   RVfromCOK(o, context);
   assert o.Ready();
-  assert o.OvenReady();
 
   assert o in o.AMFO;
   assert forall oo <- (o.AMFO - {o}) :: oo.Ready();
-  assert forall oo <- (o.AMFO - {o}) :: oo.OvenReady();
   assert forall oo <- (o.AMFO - {o}) :: oo in oo.AMFO;
   assert forall oo <- (o.AMFO - {o}) :: o !in oo.AMFO;
   assert forall oo <- (o.AMFO - {o}) :: o.AMFO > oo.AMFO;
@@ -1299,10 +1118,53 @@ set o <- os, v <- o.fields.Values | o != xo :: v
 
 
 
-lemma EQUALAMFOS(a : Object, b : Object)
+lemma FEWERFIELDS(a : Object)
+   requires a.Ready()
+   ensures  mapLEQ(a.fields, old(a.fields))
+   ensures  a.Ready()
+{}
+
+lemma ALLFEWERFIELDS(os : set<Object>)
+   requires forall a <- os :: a.Ready()
+   ensures  forall a <- os :: mapLEQ(a.fields, old(a.fields))
+   ensures  forall a <- os :: a.Ready()
+{}
+
+
+
+//
+// derived lemmas equality etc
+//
+
+lemma AXIOMAMFOS(a : Object, b : Object)
+// equal AMFOs iff same objects
   requires a.Ready()
   requires b.Ready()
   ensures  (a == b)  ==> (a.AMFO == b.AMFO)
   ensures  (a == b) <==  (a.AMFO == b.AMFO)
   ensures  (a == b) <==> (a.AMFO == b.AMFO)
-  {}
+{}
+
+
+lemma AXIOMAMFO(part : Object, whole : Object)
+// o in AMFO ==> o.AMFO <= AMFO
+   requires  part.Ready()
+   requires  {whole}    <= part.AMFO
+   ensures   whole.AMFO <= part.AMFO
+   ensures   inside(part,whole)
+   {
+    part.AMFOsisAMFOs();
+   }
+
+lemma AXIOMAMFOREVERSE(part : Object, whole : Object)
+// inside(part,whole) ==> whole in part.AMFO
+   requires   part.Ready()
+   requires   whole.Ready()
+   requires   part.AMFO >= whole.AMFO
+
+   requires   inside(part,whole)
+   ensures    whole in part.AMFO
+   {
+    assert whole in whole.AMFO;
+    part.AMFOsisAMFOs();
+   }
