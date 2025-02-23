@@ -1557,7 +1557,7 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
       reveal c.calidObjects();
   } else {
       reveal c.calid();
-      assert  {:contradiction} c.calid();
+      assert {:contradiction} c.calid();
       assert {:contradiction}
         && calidObjects()
         && calidOK()
@@ -1972,9 +1972,12 @@ klonCalidKVCalid(this, k, k, r);
 
 
   opaque predicate calidMap()
+    requires calidObjects() && calidOK()
+
     reads oHeap`fields, oHeap`fieldModes
     reads ns`fields, ns`fieldModes
-    requires calidObjects() && calidOK()
+    reads m.Keys`fields,     m.Keys`fieldModes
+    reads m.Values`fields,   m.Values`fieldModes
   {
     reveal calidObjects(); assert calidObjects();
     reveal calidOK(); assert calidOK();
@@ -2000,9 +2003,12 @@ klonCalidKVCalid(this, k, k, r);
   }
 
   opaque predicate  calidSheep2()
+    requires calidObjects() && calidOK() && calidMap()
+
     reads oHeap`fields, oHeap`fieldModes
     reads ns`fields, ns`fieldModes
-    requires calidObjects() && calidOK() && calidMap()
+    reads m.Keys`fields,     m.Keys`fieldModes
+    reads m.Values`fields,   m.Values`fieldModes
   {
     reveal calidObjects(); assert calidObjects();
     reveal calidOK(); assert calidOK();
@@ -2018,9 +2024,12 @@ klonCalidKVCalid(this, k, k, r);
 
 
   opaque predicate calidSheep()
+    requires calidObjects() && calidOK()// && calidMap()
+
     reads oHeap`fields, oHeap`fieldModes
     reads ns`fields, ns`fieldModes
-    requires calidObjects() && calidOK()// && calidMap()
+    reads m.Keys`fields,     m.Keys`fieldModes
+    reads m.Values`fields,   m.Values`fieldModes
   {
     reveal calidObjects(); assert calidObjects();
     reveal calidOK(); assert calidOK();
@@ -2037,9 +2046,12 @@ klonCalidKVCalid(this, k, k, r);
 
 
   opaque predicate calidSheep3()
+    requires calidObjects() && calidOK() && calidMap()
+
     reads oHeap`fields, oHeap`fieldModes
     reads ns`fields, ns`fieldModes
-    requires calidObjects() && calidOK() && calidMap()
+    reads m.Keys`fields,     m.Keys`fieldModes
+    reads m.Values`fields,   m.Values`fieldModes
   {
     reveal calidObjects(); assert calidObjects();
     reveal calidOK(); assert calidOK();
@@ -2078,7 +2090,7 @@ klonCalidKVCalid(this, k, k, r);
     reveal AreWeNotMen();
     assert forall x <- m.Keys :: AreWeNotMen(x, this);
 
-    assert forall x <- m.Keys :: x.fieldModes == m[x].fieldModes 
+    assert forall x <- m.Keys :: x.fieldModes == m[x].fieldModes
       by { reveal calidSheep2(); assert calidSheep2(); }
 
   }
@@ -2226,69 +2238,43 @@ lemma widerBoundsNest(o : Object, less : set<Object>, more : set<Object>)
 
 //shoudl this be in another file?
 //should this talk about KLON?
-method  COKput(f : Object, context : set<Object>, n : string, t : Object)
+method COKput(f : Object, context : set<Object>, n : string, t : Object)
   requires COK(f, context)
   requires n  in f.fieldModes.Keys
   requires n !in f.fields.Keys
   requires COK(t, context)
   requires refOK(f, t)
   requires AssignmentCompatible(f, f.fieldModes[n], t)
-  ensures  n in f.fields.Keys
-  ensures  f.fields[n] == t
+//  ensures  f.fields[n] == t
+//  ensures  n in f.fields.Keys
 //  ensures  forall x <- old(f.fields.Keys) :: f.fields[x] == old(f.fields[x])\
+
   ensures f.fields == old(f.fields)[n:=t]
   ensures  COK(f, context)
   modifies f`fields
 {
-  reveal COK();
-var a := f;   //WHY??> COK??
-assert
-      && (a in context)
-    && (a.AMFO <= context)
-    && (forall oo <- a.AMFO :: oo.Ready())
-  //  && (a.TRUMP()||(a.Ready() && a.Valid()))
-    && (a.Ready())
-    && (a.Valid())
-    && (a.AllOutgoingReferencesAreOwnership(context))
-//    && (a.AllOutgoingReferencesWithinThisHeap(context))
-    && (a.AllOwnersAreWithinThisHeap(context))
+    f.fields := f.fields[n:=t];
 
-    && AllTheseOwnersAreFlatOK(a.AMFO - {a})
-    ;
+assert DEREK: COK(f, context) by {
 
-assert PREC: AssignmentCompatible(f, f.fieldModes[n], t);
+    reveal COK();
+    assert (f in context);
+    assert (f.AMFB <= f.AMFO <= context);
+    assert (forall oo <- f.AMFO :: oo.Ready());
+    assert (forall o <- (f.AMFO - {f}), ooo <- o.AMFO :: f.AMFO >= o.AMFO > ooo.AMFO);
+    assert (f.Ready());
+    assert (f.Valid());
+    assert (f.AllOutgoingReferencesAreOwnership(context));
+    assert AllTheseOwnersAreFlatOK(f.AMFO - {f});
 
-assert f.AllFieldsContentsConsistentWithTheirDeclaration();
-assert OLDE: forall n <- a.fields :: AssignmentCompatible(a, a.fieldModes[n], a.fields[n]);
+    assert f.AllFieldsContentsConsistentWithTheirDeclaration();
+  //  && (f.AllOutgoingReferencesWithinThisHeap(context))
 
-  f.fields := f.fields[n:=t];
-
-
-//  assert  AssignmentCompatible(f, f.fieldModes[n], t) by { reveal PREC; }
-
-// forall n <- a.fields ensures (AssignmentCompatible(a, a.fieldModes[n], a.fields[n]))
-//  {
-//
-//  }
-
-
-
-assert
-      && (a in context)
-    && (a.AMFO <= context)
-    && (forall oo <- a.AMFO :: oo.Ready())
-  //  && (a.TRUMP()||(a.Ready() && a.Valid()))
-    && (a.Ready())
-    && (a.Valid())
-    && (a.AllOutgoingReferencesAreOwnership(context))
-  //  && (a.AllOutgoingReferencesWithinThisHeap(context))
-    && (a.AllOwnersAreWithinThisHeap(context))
-
-    && AllTheseOwnersAreFlatOK(a.AMFO - {a})
-    ;
-
+  }
+  assert COK(f, context) by { reveal DEREK; }
 
 }
+
 
 
   opaque function putin(k : Object, v : Object) : (r : Klon)
@@ -2425,6 +2411,8 @@ assert
     var rv := Klon(VMapKV(m,k,k), o, o_amfo, {},  c_amfx, oHeap, ns);
     rv
     } //END putout
+
+
 
 
 
@@ -6673,9 +6661,16 @@ lemma KlonVMapOKfromCalid(m : Klon)
 }
 
 
+//
+// lemma klonSameOwnersAreCompatible(o : Object, m : Klon)
+//    ensures klonOwnersAreCompatible(o,o,m)
+// {}
+
+
 predicate klonAllOwnersAreCompatible( m : Klon, ks: set<Object> := m.m. Keys)
 //
 requires ks <= m.m. Keys
+
 reads m.oHeap`fields,      m.oHeap`fieldModes
 reads m.ns`fields,         m.ns`fieldModes
 reads m.m.Keys`fields,     m.m.Keys`fieldModes
