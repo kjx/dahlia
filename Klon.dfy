@@ -3366,7 +3366,8 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
   ensures  klonVMapOK(m.m)
   ensures  a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...
 
-  ensures  b.fields.Keys == a.fields.Keys
+  //ensures  b.fields.Keys == a.fields.Keys  //FUCK
+  ensures a.fieldModes == b.fieldModes
 
   ensures  a in m.m.Keys
   ensures  (a in m.m.Keys) && m.m[a] == b
@@ -3391,8 +3392,6 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
   ensures  m.ns    >= m'.ns
   ensures  m.m.Keys    <= m.oHeap
 
-  ensures a.fieldModes == b.fieldModes
-  ensures b.fields.Keys == a.fields.Keys
 
   ensures  unchanged(a)
   ensures  unchanged(m'.oHeap)
@@ -3480,16 +3479,16 @@ by
   assert m.calid();
   assert m'.calid() by { reveal MPRIME; }
 
-  var ns : seq<string> := set2seq(a.fields.Keys);
+  var fieldNames : seq<string> := set2seq(a.fields.Keys);
 
   assert forall k <- a.fields.Keys :: (multiset(a.fields.Keys))[k] == 1;
-  assert forall s <- ns :: (multiset(ns))[s] == 1;
-  assert forall i | 0 <= i < |ns|, j | 0 <= j < |ns| :: (ns[i] == ns[j]) <==> i == j;
+  assert forall s <- fieldNames :: (multiset(fieldNames))[s] == 1;
+  assert forall i | 0 <= i < |fieldNames|, j | 0 <= j < |fieldNames| :: (fieldNames[i] == fieldNames[j]) <==> i == j;
   //assert b.fields.Keys == {};
-  assert b.fields.Keys == seq2set(ns[..0]);
+  assert b.fields.Keys == seq2set(fieldNames[..0]);
 
 
-  print "Clone_All_Fields fields:", fmtobj(a), " fields=", fmtseqstr(ns), "\n";
+  print "Clone_All_Fields fields:", fmtobj(a), " fields=", fmtseqstr(fieldNames), "\n";
 
   //DOING FIELDS≈≈
 
@@ -3530,8 +3529,9 @@ by
   assert unchanged(a) && unchanged(m.oHeap);
   assert CallOK(m.m.Keys, m.oHeap);
 
+  assert b.fields.Keys == seq2set(fieldNames[..0]) == {};
 
-  for i := 0 to |ns|
+  for i := 0 to |fieldNames|
 
     invariant  rm.o     == m.o      == m'.o
     invariant  rm.oHeap == m.oHeap  == m'.oHeap
@@ -3560,8 +3560,8 @@ by
     //invariant forall x <- m.m.Keys :: (not(inside(x,m.o)) ==> (m.at(x) == x))
     invariant (m'.oHeap - m'.m.Keys +{a}) >= (m.oHeap - m.m.Keys +{a})
     invariant (m'.oHeap - m'.m.Keys) >= (m.oHeap - m.m.Keys)
-    invariant b.fields.Keys == seq2set(ns[..i])
-    invariant forall i | 0 <= i < |ns|, j | 0 <= j < |ns| :: (ns[i] == ns[j]) <==> i == j
+    invariant b.fields.Keys == seq2set(fieldNames[..i])
+    invariant forall i | 0 <= i < |fieldNames|, j | 0 <= j < |fieldNames| :: (fieldNames[i] == fieldNames[j]) <==> i == j
 
     invariant  m.m[a] == b
     invariant  a.fieldModes == b.fieldModes
@@ -3570,19 +3570,18 @@ by
 
     invariant old(m'.calid())
   {
-
-    assert b.fields.Keys == seq2set(ns[..i]);
+    assert b.fields.Keys == seq2set(fieldNames[..i]);
 
     assert COK(b, m.oHeap+m.ns);
 
-    var n : string := ns[i];
+    var n : string := fieldNames[i];
     var ofv : Object := a.fields[n];
 
-    assert n !in seq2set(ns[..i]);
+    assert n !in seq2set(fieldNames[..i]);
 
     assert (n !in b.fields.Keys) by {
-      assert n !in seq2set(ns[..i]);
-      assert b.fields.Keys == seq2set(ns[..i]);
+      assert n !in seq2set(fieldNames[..i]);
+      assert b.fields.Keys == seq2set(fieldNames[..i]);
       assert (n !in b.fields.Keys);
     }
 
@@ -3590,8 +3589,8 @@ by
     print "  TLOOP  (recurse on field ",n,")\n";
     print "  TLOOP m:", |m.oHeap - m.m.Keys|, " m':", |m'.oHeap - m'.m.Keys|, "\n";
     print "  TLOOP b.fieldsKeys==", b.fields.Keys, "\n";
-    print "  TINV                ", ns[..i], "\n";
-    print "  TLOOPINV            ",seq2set(ns[..i]),"\n";
+    print "  TINV                ", fieldNames[..i], "\n";
+    print "  TLOOPINV            ",seq2set(fieldNames[..i]),"\n";
 
 
     print "VARIANT*CAF ", |(m'.oHeap - m'.m.Keys +{a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
@@ -3655,8 +3654,8 @@ by
     print "v_caf ", v_caf, "\n";
     print "v_cfm ", v_cfm, "\n";
 
-    assert b.fields.Keys == seq2set(ns[..i]);
-    assert a.fields.Keys == seq2set(ns);
+    assert b.fields.Keys == seq2set(fieldNames[..i]);
+    assert a.fields.Keys == seq2set(fieldNames);
 
     print "okaoka ", (m'.oHeap - m'.m.Keys +{a}) >  (m.oHeap - m.m.Keys +{a}), "\n";
     print "okaoka ", (m'.oHeap - m'.m.Keys +{a}) == (m.oHeap - m.m.Keys +{a}), "\n";
@@ -3725,10 +3724,14 @@ by
   assert refOK(a, a.fields[n]);
 
 
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
 
 
     rm := Clone_Field_Map(a,n,b,m);
 
+
+//////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
     assert  old(m'.calid());
@@ -3746,17 +3749,42 @@ by
     //   assert (forall x <- m'.m.Keys :: x.fieldModes == m'.m[x].fieldModes);
     //
 
-
+    assert n == fieldNames[i];
+    assert n in b.fields.Keys;
     assert b.fields.Keys == OLDFLDS + {n};
+
+
+    nqf(n,fieldNames[i]);
+
+    assert {n} == {fieldNames[i]} == seq2set([ n ]) == seq2set([ fieldNames[i] ]);
+    assert {n} == {fieldNames[i]} == seq2set([ fieldNames[i] ]);
+
+//    invariant  b.fields.Keys == seq2set(fieldNames[..i])
+
+    extendSeqSet(fieldNames, i);
+
+  assert  seq2set(fieldNames[..i+1]) == seq2set(fieldNames[..i]) + seq2set([fieldNames[i]]);
+
+  assert  seq2set(fieldNames[..i+1]) == seq2set(fieldNames[..i]) + seq2set([n]);
+
+  assert b.fields.Keys == seq2set(fieldNames[..i+1]);
+
+
+//    assert b.fields.Keys == seq2set(fieldNames[..i]) + seq2set([fieldNames[i]]);
+
+//    assert b.fields.Keys == seq2set(fieldNames[..(i+1)]);
+
+    // assert fieldNames[..i] + [fieldNames[i]] == fieldNames[..i+1];
+    // assert b.fields.Keys == seq2set(fieldNames[..i]) + seq2set([fieldNames[i]]);
+    // assert b.fields.Keys == seq2set(fieldNames[..i+1]);
 
     assert rm.from(m);
     //assert m.from(m');
     //assert rm.from(m');
 
-    assert b.fields.Keys == seq2set(ns[..i+1]);
 
     assert rm.calid();
-    //  assert COK(b, m.oHeap+m.ns);
+    //  assert COK(b, m.oHeap+m.ns );
     m := rm;
     assert m.calid();
     assert old(m'.calid());
@@ -3821,8 +3849,6 @@ by
     by { reveal m.calid();    assert m.calid();
          reveal m.calidOK();  assert m.calidOK();
        }
-
-
   } //end of loop
 
   assert unchanged(a) && unchanged(m.oHeap);
@@ -3923,6 +3949,34 @@ by
 
   return;
 }
+//end Clone_All_Fields
+
+
+
+
+
+lemma extendSeq<T>(ss : seq<T>, n : nat)
+    requires n < |ss|
+    ensures  ss[..n+1] == ss[..n] + [ss[n]]
+{}
+
+
+ lemma extendSeqSet<T>(ss : seq<T>, n : nat)
+    requires n < |ss|
+    ensures  seq2set(ss[..n+1]) == seq2set(ss[..n]) + seq2set([ss[n]])
+{}
+
+ lemma singletonSeqSet<T>(ss : seq<T>, n : nat)
+    requires n < |ss|
+    ensures  {ss[n]} == seq2set([ ss[n] ])
+{}
+
+
+lemma nqf<T>(a : T, b : T)
+    requires a == b
+    ensures  {a} == {b} == seq2set([ a ]) == seq2set([ b ])
+ {}
+
 //end Clone_All_Fields
 
 

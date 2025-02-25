@@ -316,7 +316,7 @@ lemma IAmTheContradictoryOne<T>( t : T,  ts : set<T>)
 predicate not(x : bool) { !x }  //becuase sometimes ! is too hard to see!
 
 
-ghost function gset2seq<T>(X: set<T>) : (S: seq<T>)
+ghost function gset2seq<T>(X: set<T>) : (S: useq<T>)
   ensures forall x <- X :: x in S
   ensures forall s <- S :: s in X
   ensures |X| == |S|
@@ -328,23 +328,87 @@ ghost function gset2seq<T>(X: set<T>) : (S: seq<T>)
   var Y := X;
   if (Y == {}) then [] else (
       var y : T :| y in Y;
-     [y] + gset2seq( Y - {y} ) )
+      var rs : set<T> :=  Y - {y};
+      assert y !in rs;
+      var gs : useq<T> := gset2seq(rs);
+      assert y !in gs;
+      reveal UniqueSeqEntry();
+      var rv : useq<T> := [y] + gs;
+      rv)
   }
-//  by method { S := set2seq(X);
-//   assert forall x <- X :: x in S;
-//   assert forall s <- S :: s in X;
-//   assert |X| == |S|;
-//   assert forall x <- X :: (multiset(X))[x] == 1;
-//   assert forall s <- S :: (multiset(S))[s] == 1;
-//   assert forall i | 0 <= i < |S|, j | 0 <= j < |S| :: (S[i] == S[j]) <==> i == j;
-//   assert (set s <- S) == X;
-//   assert S == fset2seq(X);
-//  }
+
+
+function prepend<T>(t : T, ts : useq<T>) : ( S : useq<T>)
+  requires t !in ts
+  requires forall i |  0 <= i < |ts| :: ts[i] != t
+//  requires AllSeqEntriesAreUnique(ts)
+  requires forall k |  0 <= k < |ts|, i |  0 <= i < |ts| :: ts[i] == ts[k] ==> i == k
+//  requires forall k |  0 <= k < |ts| :: (
+//        forall i |  0 <= i < |ts| :: ts[i] == ts[k] ==> i == k
+//      )
+
+//  ensures  S == [t] + ts
+  {
+//the commetned out assertions seem to be unnecessary
+//tho' not oficially "redundant"
+//leaving here for now for version stavility
+
+      reveal UniqueSeqEntry();
+//    assert t !in ts;
+//    assert forall k |  0 <= k < |ts| :: UniqueSeqEntry(ts, k);
+
+    // assert forall k |  0 <= k < |ts|, i |  0 <= i < |ts| :: ts[i] == ts[k] ==> i == k;
+
+//    assert forall i |  0 <= i < |ts| :: ts[i] != t;
+      var ts1 := [t] + ts;
+//    assert ts1[0] == t;
+//    assert ts1[1..] == ts;
+//    assert forall i |  0 <= i < |ts| :: ts1[i+1] == ts[i];
+
+//    assert forall i |  1 <= i < |ts1| :: ts1[i] != t;
+
+    assert AllSeqEntriesAreUnique(ts1);
+    ts1
+  }
 
 
 
+function append<T>(ts : useq<T>, t : T) : (S : useq<T>)
+  requires t !in ts
+  requires forall i |  0 <= i < |ts| :: ts[i] != t
+//  requires AllSeqEntriesAreUnique(ts)
+  requires forall k |  0 <= k < |ts|, i |  0 <= i < |ts| :: ts[i] == ts[k] ==> i == k
+//  requires forall k |  0 <= k < |ts| :: (
+//        forall i |  0 <= i < |ts| :: ts[i] == ts[k] ==> i == k
+//      )
 
-method set2seq<T>(X: set<T>) returns (S: seq<T>)
+//  ensures  S == [t] + ts
+  {
+//the commetned out assertions seem to be unnecessary
+//tho' not oficially "redundant"
+//leaving here for now for version stavility
+
+      reveal UniqueSeqEntry();
+//    assert t !in ts;
+//    assert forall k |  0 <= k < |ts| :: UniqueSeqEntry(ts, k);
+
+    // assert forall k |  0 <= k < |ts|, i |  0 <= i < |ts| :: ts[i] == ts[k] ==> i == k;
+
+//    assert forall i |  0 <= i < |ts| :: ts[i] != t;
+      var ts1 := ts + [t];
+//    assert ts1[0] == t;
+//    assert ts1[1..] == ts;
+//    assert forall i |  0 <= i < |ts| :: ts1[i+1] == ts[i];
+
+//    assert forall i |  1 <= i < |ts1| :: ts1[i] != t;
+
+    assert AllSeqEntriesAreUnique(ts1);
+    ts1
+  }
+
+
+
+method set2seq<T>(X: set<T>) returns (S: useq<T>)
   ensures forall x <- X :: x in S
   ensures forall s <- S :: s in X
   ensures |X| == |S|
@@ -352,7 +416,7 @@ method set2seq<T>(X: set<T>) returns (S: seq<T>)
   ensures forall s <- S :: (multiset(S))[s] == 1
   ensures forall i | 0 <= i < |S|, j | 0 <= j < |S| :: (S[i] == S[j]) <==> i == j
   ensures (set s <- S) == X
-  // ensures S == gset2seq(X)
+//  ensures S == gset2seq(X)
   modifies { }
 {
   S := [];
@@ -368,7 +432,7 @@ method set2seq<T>(X: set<T>) returns (S: seq<T>)
     invariant forall x <- X :: (multiset(X))[x] == 1
     invariant forall s <- S :: (multiset(S))[s] == 1
     invariant forall i | 0 <= i < |S|, j | 0 <= j < |S| :: (S[i] == S[j]) <==> i == j
-   // invariant S == fset2seq(Z)
+//    invariant S + gset2seq(Y) == gset2seq(X)
     {
     var y: T;
     y :| y in Y;
@@ -376,10 +440,30 @@ method set2seq<T>(X: set<T>) returns (S: seq<T>)
     // assert S+[y] == fset2seq(Z)+[y];
     // assert S+[y] == fset2seq(Z+{y});
     // S, Z, Y := S+[y], Z+{y}, Y-{y};]
-    S, Y := S+[y], Y-{y};
+    S, Y := append(S,y), Y-{y};
     // assert S == fset2seq(Z);
   }
 }
+
+
+lemma singleton2singleseq<T>(t : T)
+  ensures  gset2seq( {t} ) == [t]
+{
+  var X : set<T> := {t};
+  var S : seq<T> := gset2seq(X);
+  assert S == [t];
+}
+
+// lemma singleton3singleseq<T>(t : T, S' : seq<T>, X' : set<T>)
+//   requires S' == [t]
+//   ensures  X' == {t}
+// {
+//   var X : set<T> := {t};
+//   var S : seq<T> := gset2seq(X);
+//   singleton2singleseq(t);
+//   assert S' == [t];
+//   assert X' == {t};
+// }
 
 predicate oneWayJesus<T>(X: set<T>, S: seq<T>) //really should be set2seqOK
 {
@@ -510,7 +594,42 @@ function seq2set2<T>(q : seq<T>) : set<T> {
      if |q| == 0 then {} else {q[0]} + seq2set(q[1..]) }
 
 
+/////     /////     /////     /////     /////     /////     /////
+    /////     /////     /////     /////     /////     /////     /////
+/////     /////     /////     /////     /////     /////     /////
+    /////     /////     /////     /////     /////     /////     /////
 
+
+type useq<T> = u : seq<T> | AllSeqEntriesAreUnique(u)
+//unique sequence
+
+// method shouldFail2() returns (s : useq<int>)
+//   //and it does fail
+// {
+//   s := [11,11,11];
+// }
+
+predicate AllSeqEntriesAreUnique<T(==)>(s : seq<T>)
+{
+    reveal UniqueSeqEntry();
+    forall i : nat | 0 <= i < |s| :: UniqueSeqEntry(s, i)
+}
+
+
+opaque predicate UniqueSeqEntry<T(==)>(s : seq<T>, k : nat)
+  requires 0 <= k < |s|
+{
+  //true
+  forall i |  0 <= i < |s| :: s[i] == s[k] ==> i == k
+}
+
+
+/////     /////     /////     /////     /////     /////     /////
+    /////     /////     /////     /////     /////     /////     /////
+/////     /////     /////     /////     /////     /////     /////
+    /////     /////     /////     /////     /////     /////     /////
+
+/// mappishness...
 
 function Extend_A_Map<KV>(m': map<KV,KV>, d : set<KV>) : (m: map<KV,KV>)
 //extend m'  with x:=x forall x in d
