@@ -23,7 +23,7 @@ method Xlone_Via_Map(a : Object, m' : Klon)
 
   if (outside(a,m.o)) { //outside. so just map to itself
     b := a;
-    m := m.putOutside(a);
+    m := m.XXXputOutside(a);
     print "RETN Clone_Via_Map: outside ", fmtobj(a), "\n";
     return; // end outside case
   }
@@ -133,12 +133,11 @@ var amxo := flattenAMFOs(a.owner);
 
 
  method Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
-  //decreases |m'.oHeap| - |m'.m.Keys| + |{a}|, |a.AMFO|, |a.fields.Keys|, 12
-  decreases |m'.oHeap - m'.m.Keys|, |a.AMFO|, |a.fields.Keys|, 12
+  decreases |m'.oHeap - m'.m.Keys + {a}|, |a.AMFO|, |a.fields.Keys|, 12
 
 {
   print "CALL Clone_All_Owner of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
-  print "VARIANT CAO ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 12, "\n";
+  print "VARIANT CAO ", |m'.oHeap - m'.m.Keys  + {a}|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 12, "\n";
   print "ENTRY   CAO ", a.owner - m'.m.Keys ," a in Keys ", (a !in m'.m.Keys), "\n";
 
   var rm := m';
@@ -200,14 +199,14 @@ var amxo := flattenAMFOs(a.owner);
 
 
 
-
-
+////££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
+////££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 
 
 method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
   returns (m : Klon)
 
-  decreases |m'.oHeap - m'.m.Keys|, |a.AMFO|, fielddiff(a,b), 10
+  decreases |m'.oHeap - m'.m.Keys + {a}|, |a.AMFO|, fielddiff(a,b), 10
 
   modifies b`fields
 {
@@ -217,7 +216,7 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
 
 //TUESDAY15DEC2024
 
-  print "VARIANT CAF ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
+  print "VARIANT CAF ", |(m.oHeap - m.m.Keys) + {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 10, "\n";
   print "<<<<<<<<<<<\n";
   print "just cloned ", fmtobj(a), " as ", fmtobj(b), "\n";
   print "<<<<<<<<<<<\n";
@@ -234,12 +233,12 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
 
 
   print "BLOOP BLOOP BLOOP\n";
-  var rm := m;
 
   for i := 0 to |fieldNames|
 
   {
     var n : string := fieldNames[i];
+    assume n in a.fields.Keys;
     var ofv : Object := a.fields[n];
 
     print "  TLOOP  ",fmtobj(a),".",n," :=", fmtobj(ofv), "\n";
@@ -249,7 +248,7 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
     print "  TINV                ", fieldNames[..i], "\n";
     print "  TLOOPINV            ",seq2set(fieldNames[..i]),"\n";
 
-    print "VARIANT*CAF ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
+    print "VARIANT*CAF ", |(m.oHeap - m.m.Keys) + {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 10, "\n";
 
     var OLDFLDS := b.fields.Keys;
 
@@ -265,7 +264,7 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
 print "WHOOPS-> ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys - b.fields.Keys|," 10\n";
 print "->WHOOPS ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys - b.fields.Keys|," 5 \n";
 
-    rm := Xlone_Field_Map(a,n,b,m);
+    m := Xlone_Field_Map(a,n,b,m);
   }
 
   print "RETN Clone_All_Fields done ", fmtobj(a), "\n";
@@ -274,15 +273,15 @@ print "->WHOOPS ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys
 }
 //end Xlone_All_Fields
 
-
-
+////££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
+////££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 
 
 
 method Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   returns (m : Klon)
 
-  decreases |m'.oHeap - m'.m.Keys|, |a.AMFO|, fielddiff(a,b), 5 //Xlone_Field_Map
+  decreases |m'.oHeap - m'.m.Keys + {a}|, |a.AMFO|, fielddiff(a,b), 5 //Xlone_Field_Map
 
   modifies b`fields
 {
@@ -292,7 +291,7 @@ method Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
 
   m := m';
 
-  var v_cfm := ((m.oHeap - m.m.Keys), a.AMFO, (a.fields.Keys - b.fields.Keys), 5);//Xlone_Field_Map *variant for decreases clause*
+  var v_cfm := ((m.oHeap - m.m.Keys + {a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5);//Xlone_Field_Map *vxriant for dxcreases clause*
 
   var onb := m.ns - {b};
   var ctx := (m.oHeap+m.ns);
@@ -300,7 +299,8 @@ method Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   var ofv := XXXCOKat(a,n,m.oHeap);
 
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-  var rfv, rm := Xlone_Via_Map(ofv, m);
+  var rfv : Object;
+  rfv, m := Xlone_Via_Map(ofv, m);
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
   m.XXXCOKput(b, m.oHeap+m.ns, n, rfv);

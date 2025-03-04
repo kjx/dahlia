@@ -1635,6 +1635,25 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
 
 
 
+
+  opaque function {:verify false} XXXputOutside(k : Object) : (r : Klon)
+    //put k -> k into map, k oustide o
+    reads oHeap`fields, oHeap`fieldModes
+    reads k`fields, k`fieldModes
+    reads ns`fields, ns`fieldModes
+    reads o`fields, o`fieldModes
+    reads m.Values`fieldModes
+    reads m.Keys
+
+    ensures r == klonKV(this,k,k)
+    ensures klonVMapOK(r.m)
+    ensures klonVMapOK(m)
+    ensures r.calid()
+    ensures r.from(this)
+{
+  putOutside(k)
+}
+
   opaque function putOutside(k : Object) : (r : Klon)
     //put k -> k into map, k oustide o
     reads oHeap`fields, oHeap`fieldModes

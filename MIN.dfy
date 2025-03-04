@@ -2562,7 +2562,7 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
 
 
 print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
-print "VARIANT CFM ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys - b.fields.Keys - {n})|, " ", 10, "\n";
+print "VARIANT CFM ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys - b.fields.Keys - {n})|, " ", 5, "\n";
 
 
   assert m'.calid() by { reveal MPRIME; }
