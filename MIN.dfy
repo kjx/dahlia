@@ -89,6 +89,8 @@ print "CALL Clone_Via_Map ", fmtobj(a), "\n";
       assert klonOwnersAreCompatible(a, b, m);
       assert klonVMapOK(m.m);
     }
+
+    print "RETN Clone_Via_Map already cloned ", fmtobj(a), "\n";
     return;
   }
 
@@ -128,6 +130,7 @@ print "CALL Clone_Via_Map ", fmtobj(a), "\n";
       assert m.readyAll();
     }
 
+    print "RETN Clone_Via_Map: outside ", fmtobj(a), "\n";
     return; // end outside case
   }
   else
@@ -184,7 +187,7 @@ print "CALL Clone_Via_Map ", fmtobj(a), "\n";
 
   assert m.from(m');
   //  }
-  print "RETN Clone_Via_Map:", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
+  print "RETN Clone_Via_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
   assert m.readyAll();
   return;
@@ -267,7 +270,7 @@ method Clone_Clone_Clone(a : Object, m' : Klon)
 //  assert AKKK: COK(a, m.m.Keys+{a} );
 
 
-  print "Clone_Clone_CLone of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
+  print "CALL Clone_Clone_CLone of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
   print "VARIANT CCC ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 15, "\n";
 
   assert CallOK(a.owner, m.oHeap) by {
@@ -347,7 +350,6 @@ assert AllTheseOwnersAreFlatOK(a.allExternalOwners()) by {
 
 //b := a; return;///FUKOF  //16s
 
-  print "Clone_Clone_CLone ", fmtobj(a), " calling if", fmtown(a.owner) ,"\n";
 
   //extraOK        reveal COK(); assert a.owner.extra == {}; //extra not yet cloned
 
@@ -357,7 +359,8 @@ assert ((m'.oHeap - m'.m.Keys),10 decreases to (m.oHeap - m.m.Keys),5);
     decreases to
       (m.oHeap - m.m.Keys), a.AMFO, (a.fields.Keys), 12);
 
-
+  print "Clone_Clone_Clone ", fmtobj(a), " calling CAO", fmtown(a.owner) ,"\n";
+  printmapping(m.m);
 
 /////////////////////////////////////////////////////////////////////////////////
   var rm := Clone_All_Owners(a, m);
@@ -464,7 +467,6 @@ assert ownerInsideOwner(rAMXO,rAMXB);
 //b := a; return;///FUKOF  //20s
 
 
-  print "Clone_Clone_CLone ", fmtobj(a), " Clone_All_Owners RETURNS ", fmtown(rowner) ,"\n";
 
 
 
@@ -544,7 +546,6 @@ assert AllTheseOwnersAreFlatOK(rowner,rAMXO);
 
   if (a in rm.m.Keys) {
 
-    print "Clone_Clone_CLone ", fmtobj(a), " already cloned: abandoning ship!!\n";
 
 
     m := rm;
@@ -613,7 +614,7 @@ TargetOwnersReallyAreOK(b, rm);
 
 
 //END FUCKOFF
-
+    print "RETN Clone_Clone_CLone ", fmtobj(a), " already cloned: abandoning ship!!\n";
     return;
   } // a in rm.m.Keys - i.e. randomly done while cloning owners
 
@@ -887,7 +888,6 @@ print "CALLING MAKE...";
 print "BACK FROM MAKE with ",fmtobj(b),"\n";
   assert b.fields == map[];
 
-print "WTF\n";
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
@@ -1340,7 +1340,7 @@ assert rrm.AreWeNotMen(a, klonKV(rrm,a,b));
   // assert mapThruKlon(a.owner, xm) == b.owner;  //KJXOWNERS
   // assert mapThruKlon(a.AMFO, xm)  == b.AMFO;
 
-  print "Clone_CLone_Clone map updated ", fmtobj(a), ":=", fmtobj(b) ,"\n";
+  print "Clone_Clone_Clone map updated ", fmtobj(a), ":=", fmtobj(b) ,"\n";
 
 
 
@@ -1440,6 +1440,12 @@ assert a.AMFO <= xm.m.Keys;
 assert b.AMFO <= xm.oHeap+xm.ns;
 
 
+// print "about to call------------------------------\n";
+// print "a  ;",a ,"\n";
+// print "b  ;",b ,"\n";
+// print "xm ;",xm,"\n";
+// print "about to call------------------------------\n";
+
    m := Clone_All_Fields(a,b, xm);
 
   /////   /////    /////    /////   /////    /////    /////   /////    /////
@@ -1456,7 +1462,7 @@ assert b.AMFO <= xm.oHeap+xm.ns;
 
   assert COK(b, m.oHeap+m.ns) by { reveal COKB; }
 
-  print "Clone_Clone_CLone of ", fmtobj(a), " retuning ", fmtobj(b) ,"\n";
+  print "RETN Clone_Clone_CLone of ", fmtobj(a), " retuning ", fmtobj(b) ,"\n";
 
   assert m.m.Values >= m'.m.Values + {b};
 }//end Clone_Clone_Clone
@@ -1508,7 +1514,7 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   requires m'.m.Keys <= m'.oHeap
   requires a in m'.oHeap
 
-  decreases |m'.oHeap| - |m'.m.Keys| + |{a}|, |a.AMFO|, |a.fields.Keys|, 12
+  decreases |m'.oHeap| - |m'.m.Keys|, |a.AMFO|, |a.fields.Keys|, 12
 
   requires a !in m'.m.Keys //mustn't have cloned a yet...
   requires COK(a, m'.oHeap)
@@ -1524,8 +1530,9 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
      //the above should be OK because it's bascially tautological
   modifies {}
 {
-  print "Clone_All_Owner of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
-  print "VARIANT CAO ", |(m'.oHeap - m'.m.Keys) + {a}|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 12, "\n";
+  print "CALL Clone_All_Owner of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
+  print "VARIANT CAO ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 12, "\n";
+  print "ENTRY   CAO ", a.owner - m'.m.Keys ," a in Keys ", (a !in m'.m.Keys), "\n";
 
 
   var rm := m';
@@ -1582,6 +1589,7 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
 
   var MX := a.owner - xm.m.Keys;
 
+      print "PRELOOP ", |MX|," a in Keys ", (a !in xm.m.Keys), "\n";
 
   while ((MX != {}) && (a !in xm.m.Keys))
     decreases MX
@@ -1604,6 +1612,9 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
     invariant xm.m.Keys >= (m'.m.Keys)
     invariant xm.m.Values >= (m'.m.Values)
   {
+
+      print "LOOPTOP ", |MX|," a in Keys ", (a !in xm.m.Keys), "\n";
+
     assert xm == rm;
     xo :| xo in MX;
     assert xo in MX;
@@ -1715,6 +1726,7 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
 
       assert (b.fieldModes == a.fieldModes);
 
+      print "RETN - Clone All Onwers - already clonéd\n";
       return;
     }  // if a is in m.Keys after clone -- if it got added magically...
 
@@ -1741,6 +1753,9 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   assert a.owner <= m.m.Keys;
   AMFOsFromOwnersFromCalid(a,m);
   assert a.allExternalOwners() <= m.m.Keys;
+
+      print "RETN - Clone All Onwers - done Done DONE\n";
+
 }//END Clone_All_Owners
 
 
@@ -1774,7 +1789,7 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
   //clone all fields a.n into b.n
   //a should be preexisting (in m'.oHeapl); b should be "new"  in m'.ns
 
-  decreases |m'.oHeap| - |m'.m.Keys| +|{a}|, |a.AMFO|, |a.fields.Keys| - |b.fields.Keys|, 10 //Clone_All_Fields
+  decreases |m'.oHeap| - |m'.m.Keys|, |a.AMFO|, |a.fields.Keys| - |b.fields.Keys|, 10 //Clone_All_Fields
 
   requires MPRIME: m'.calid()
   requires COK(a, m'.oHeap)
@@ -1852,6 +1867,8 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
   //or can this  be modifies m'.ns?
   modifies b`fields   ///GGRRR
 {
+  print "CALL Clone_All_Fields: ", fmtobj(a), " pivot:", fmtobj(m'.o), "\n";
+
   m := m';
 
 // assert b.AMFO == mapThruKlon(a.AMFO, m');
@@ -1881,13 +1898,10 @@ by
 //   assert ownerInsideOwnerInsideOwner(m'.oHeap+m'.ns, b.AMFO, b.AMFB);
 // }
 
-  print "CALL Clone_All_Fields: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
-
-
   assert m'.calid() by { reveal MPRIME; }
 
   assert BINNS:  b in m.ns;
-  print "VARIANT CAF ", |(m'.oHeap - m'.m.Keys +{a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
+  print "VARIANT CAF ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
   print "<<<<<<<<<<<\n";
   print "just cloned ", fmtobj(a), " as ", fmtobj(b), "\n";
   print "<<<<<<<<<<<\n";
@@ -2041,7 +2055,7 @@ by
     print "  TLOOPINV            ",seq2set(fieldNames[..i]),"\n";
 
 
-    print "VARIANT*CAF ", |(m'.oHeap - m'.m.Keys +{a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
+    print "VARIANT*CAF ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
 
 
     //   assert (m.oHeap - m.m.Keys) < (m'.oHeap - m'.m.Keys);
@@ -2447,7 +2461,7 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   //clone field a.n into b.n
   //a should be preexisting (in m'.oHeapl); b should be "new" (in m'.ns)
 
-  decreases |m'.oHeap| - |m'.m.Keys| + |{a}|, |a.AMFO|, fielddiff(a,b), 5 //Clone_Field_Map
+  decreases |m'.oHeap| - |m'.m.Keys|, |a.AMFO|, fielddiff(a,b), 5 //Clone_Field_Map
 
   requires (|m'.oHeap| - |m'.m.Keys| + |{a}|, |a.AMFO|, fielddiff(a,b), 10
     decreases to |m'.oHeap| - |m'.m.Keys| + |{a}|, |a.AMFO|, fielddiff(a,b), 5)
@@ -2545,6 +2559,12 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   //or can this  be modifies m'.ns?
   modifies b`fields
 {
+
+
+print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
+print "VARIANT CFM ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys - b.fields.Keys - {n})|, " ", 10, "\n";
+
+
   assert m'.calid() by { reveal MPRIME; }
   assert unchanged(m'.ns);
 
@@ -2569,10 +2589,6 @@ assert klonOwnersAreCompatible(a, b, m);
 
 
   var v_cfm := ((m.oHeap - m.m.Keys +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5);//Clone_Field_Map *variant for decreases clause*
-
-print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
-
-  print "VARIANT CFM ", |(m'.oHeap - m'.m.Keys)+{a}|, " ", |a.AMFO|, " ", |(a.fields.Keys - b.fields.Keys - {n})|, " ", 10, "\n";
 
   var onb := m.ns - {b};
   var ctx := (m.oHeap+m.ns);
@@ -2727,9 +2743,9 @@ klonFieldsAreCompatible(a,ofv,b,rfv,m);
 
 
 
-print "ASSUMING ASSIGNMENT COMPATIBLE\n";
+//print "ASSUMING ASSIGNMENT COMPATIBLE\n";
         assume AssignmentCompatible(b, b.fieldModes[n], rfv);
-print "ASSUMING ASSIGNMENT COMPATIBLE\n";
+//print "ASSUMING ASSIGNMENT COMPATIBLE\n";
 
 
 //   assert AssignmentCompatible(b, b.fieldModes[n], rfv)
@@ -2782,14 +2798,14 @@ print "ASSUMING ASSIGNMENT COMPATIBLE\n";
 //           assert m.m[a] == b;
 //           // assert (mapThruKlon(a.owner, m) == b.owner);  //KJXOWNERS mapthru KLon.
 //           // assert m.m[ofv] == rfv;
-//           // assert mapThruKlon(ofv.owner, m) == rfv.owner;  //KJXOWNERS
+//           // assgert mapThruKlon(ofv.owner, m) == rfv.owner;  //KJXOWNERS
 //
 //           assert b.owner == rfv.owner; //WORK THE FOKKA?
 //
 //           //assuage b.owner == rfv.owner;   //KJXOWNERS
 //
 //         assert AssignmentCompatible(b, b.fieldModes[n], rfv);
-//
+//t
 //       case Borrow(pp,bb,nn,ff) =>
 //         assert refOK(a,a.fields[n]);
 //         assert refOK(b,rfv);
@@ -3091,6 +3107,9 @@ IHasCalidSheep(m);
 
   MapOKFromCalid(m);
   assert klonVMapOK(m.m);
+
+  print "RETN Clone_Field_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
+
 
 } //end Clone: /_Field_Map
 

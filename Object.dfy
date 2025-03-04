@@ -96,6 +96,63 @@ class Object {
 
 
 
+
+
+  constructor {:verify false} XXXmake(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
+
+    ensures owner == oo
+    ensures AMFO == flattenAMFOs(oo) + {this}
+    ensures bound == mb
+    ensures AMFB == flattenAMFOs(mb) // + {this}  //HMM dunno if "this" should be here, but... --- ABSOLUTELY NOT!
+    ensures ntrnl > owner >= bound
+
+    ensures fieldModes == ks
+    ensures fields == map[]
+
+    ensures this  in AMFO
+    ensures this !in owner
+
+    ensures OwnersValid()
+    ensures Ready()
+
+    ensures (forall oo <- allExternalOwners() :: AMFO > oo.AMFO)
+    ensures (forall o <-  AMFO :: inside(this, o))
+
+
+
+
+    ensures COK(this, context+{this})
+    ensures nick == name
+
+    //ensures CallOK({this} + {oo}+oo.AMFO, {this} + context)
+
+    ensures unchanged( context )
+    ensures fresh(this)
+
+    modifies {}
+  {
+
+
+
+    bound := mb;
+    AMFB  := flattenAMFOs(mb);// + {this}; -- see above
+
+    owner := oo;   ///should be owner for
+    AMFX  := flattenAMFOs(oo);
+
+    ntrnl := oo + {this};
+    AMFO  := flattenAMFOs(oo) + {this};
+
+    fieldModes := ks;
+    fields := map[];
+    nick := name;
+    new;
+
+  }//end XXXmake()j
+
+
+
+
   constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
     requires forall o <- oo :: o.Ready()  //hmmm
     requires oo >= mb

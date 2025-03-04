@@ -750,6 +750,19 @@ lemma ReadyOKDUCKED(o : Object)
 ///////////////////////////////////////////////////////////////////////////////////
 // OLDER functions & SHIT on KLONs
 
+  opaque function {:verify false} XXXat(k : Object) : (v : Object)
+    //return value corresponding to key k
+    //k must be in the map
+    reads oHeap`fields, oHeap`fieldModes
+    reads ns`fields, ns`fieldModes
+
+    //requires reveal calid(); reveal calidObjects();  m.Keys == m.Keys
+    //requires k in m.Keys
+    ensures  k in m.Keys //to guard the next one
+    ensures  v == m[k]
+  {  at(k) }
+
+
   opaque function at(k : Object) : (v : Object)
     //return value corresponding to key k
     //k must be in the map
@@ -902,6 +915,31 @@ lemma roundTrip1(k : Object, v : Object, m : Klon)
     v in m.Values
   }
 
+
+
+  opaque function {:verify false} XXXputInside(k : Object, v : Object) : (r : Klon)
+
+    ensures  klonEQ(r,klonKV(this,k,v))
+    ensures  klonLEQ(this, r)
+    ensures  klonVMapOK(r.m)
+    ensures  klonVMapOK(m)
+    //ensures  r == Klon(VMapKV(m,k,v), o, oHeap, ns+{v})
+
+    ensures  r.ns == ns+nu(k,v)
+    ensures  v in r.ns
+    ensures  k in r.m.Keys && r.m[k] == v
+////    ensures  COK(v, r.oHeap+r.ns)
+    ensures  k in r.m.Keys
+    ensures  v in r.m.Values
+    ensures  r.m.Values == m.Values + {v}
+    ensures  r.m == m[k:=v]
+    ensures  mapLEQ(m, r.m)
+////    ensures  r.calid()
+    ensures  r.from(this)
+    ensures  AllMapEntriesAreUnique(this.m)
+{
+putin(k,v)
+}
 
 
   opaque function putInside(k : Object, v : Object) : (r : Klon)
@@ -2236,6 +2274,14 @@ lemma widerBoundsNest(o : Object, less : set<Object>, more : set<Object>)
   }
 
 
+
+method {:verify false} XXXCOKput(f : Object, context : set<Object>, n : string, t : Object)
+  ensures f.fields == old(f.fields)[n:=t]
+  ensures  COK(f, context)
+  modifies f`fields
+{
+  COKput(f, context, n, t);
+}
 
 //shoudl this be in another file?
 //should this talk about KLON?

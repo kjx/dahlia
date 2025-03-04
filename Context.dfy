@@ -228,6 +228,15 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
 //should it be within the context?? (or owners are within this heap doe sthat!)
  }
 
+
+method  {:verify false}  XXXCOKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
+  ensures r == a.fields[n]
+  ensures COK(r,context)
+  modifies {}
+{
+  r := COKat(a,n,context);
+}
+
 method COKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
   requires COK(a,context)
   requires CallOK(context)
