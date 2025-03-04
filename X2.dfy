@@ -13,7 +13,7 @@ method Xlone_Via_Map(a : Object, m' : Klon)
 
   print "CALL Clone_Via_Map ", fmtobj(a), "\n";
 
-  print "VARIANT CVM ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys )|, " ", 20, "\n";
+  print "VARIANT CVM ", |(m'.oHeap - m'.m.Keys) - {a}|, " ", |a.AMFO|, " ", |(a.fields.Keys )|, " ", 20, "\n";
 
   if (a in m.m.Keys){ //already cloned, return
     b := m.m[a];
@@ -42,15 +42,21 @@ method Xlone_Via_Map(a : Object, m' : Klon)
 
 method Xlone_Clone_Clone(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
-    decreases |m'.oHeap - m'.m.Keys|, |a.AMFO|, |a.fields.Keys|, 15
+    decreases |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |a.fields.Keys|, 15
 {
+
   m := m';
 
   print "CALL Clone_Clone_CLone of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
-  print "VARIANT CCC ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 15, "\n";
+  print "VARIANT CCC ", |(m'.oHeap - m'.m.Keys - {a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 15, "\n";
 
   print "Clone_Clone_Clone ", fmtobj(a), " calling CAO", fmtown(a.owner) ,"\n";
   printmapping(m.m);
+
+  var aKeys := a.fields.Keys;
+
+assert ( |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |aKeys|, 15
+   decreases to |m.oHeap - m.m.Keys - {a}|, |a.AMFO|, |a.fields.Keys|, 12 );
 
 /////////////////////////////////////////////////////////////////////////////////
   var rm := Xlone_All_Owners(a, m);
@@ -97,15 +103,76 @@ print "BACK FROM MAKE with ",fmtobj(b),"\n";
 
 var amxo := flattenAMFOs(a.owner);
 
-  var xm := rrm.putInside(a,b);
+  var xm := rrm.XXXputInside(a,b);
 
   print "Clone_Clone_Clone map updated ", fmtobj(a), ":=", fmtobj(b) ,"\n";
+
+//£££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
+
+  /////   /////    /////    /////   /////    /////    /////   /////    /////
+  /////   /////    /////    /////   /////    /////    /////   /////    /////
+
+//ths is cos our XXXpurInside doesn't compute allattribut3es
+//and I can find any US targettedversions...
+
+  assume  xm.o     == m'.o;
+  assume  xm.oHeap == m'.oHeap;
+  assume  mapLEQ(m'.m,xm.m);
+  assume  xm.m.Keys >= m'.m.Keys - {a};
+
+  assume   (m'.oHeap - m'.m.Keys - {a}) >= (xm.oHeap - xm.m.Keys - {a});
+  assume   |m'.oHeap - m'.m.Keys - {a}| >= (|xm.oHeap - xm.m.Keys - {a}|);
+
+assume a.fields.Keys == old(a.fields.Keys);
+
+var left :=  (m'.oHeap - m'.m.Keys - {a});
+var right := (xm.oHeap - xm.m.Keys - {a});
+
+assert left >= right;
+SetGEQisGTorEQ(left,right);
+assert ((left >= right) && not(left > right)) ==> (left == right);
+
+if (left >   right) { assert (left decreases to right); }
+   else {
+      assert left == right;
+      assert a.AMFO ==  a.AMFO;
+      assert (a.fields.Keys) == (a.fields.Keys);
+      assert 15 > 10;
+      assert (
+    left,   a.AMFO, (a.fields.Keys), 15
+  decreases to
+    right, a.AMFO, (a.fields.Keys), 10);
+   }
+
+
+assert (
+    left,   a.AMFO, (a.fields.Keys), 15
+  decreases to
+    right, a.AMFO, (a.fields.Keys), 10);
+
+
+assert (
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |old(a.fields.Keys)|, 15
+  decreases to
+    |xm.oHeap - xm.m.Keys - {a}|, |a.AMFO|, fielddiff(a,b), 10)
+    by
+    {
+assert |m'.oHeap - m'.m.Keys - {a}|   >=     |xm.oHeap - xm.m.Keys - {a}|;
+assert |a.AMFO| >=  |a.AMFO|;
+assert |old(a.fields.Keys)| >= fielddiff(a,b);
+assert 15 > 10;
+assert (
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |old(a.fields.Keys)|, 15
+  decreases to
+    |xm.oHeap - xm.m.Keys - {a}|, |a.AMFO|,  fielddiff(a,b), 10);
+    }
+
+//£££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 
    m := Xlone_All_Fields(a,b, xm);
 
   print "RETN Clone_Clone_CLone of ", fmtobj(a), " retuning ", fmtobj(b) ,"\n";
 
-  assert m.m.Values >= m'.m.Values + {b};
 }//end Clone_Clone_Clone
 
 
@@ -133,11 +200,11 @@ var amxo := flattenAMFOs(a.owner);
 
 
  method Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
-  decreases |m'.oHeap - m'.m.Keys + {a}|, |a.AMFO|, |a.fields.Keys|, 12
+  decreases |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |a.fields.Keys|, 12
 
 {
   print "CALL Clone_All_Owner of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
-  print "VARIANT CAO ", |m'.oHeap - m'.m.Keys  + {a}|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 12, "\n";
+  print "VARIANT CAO ", |m'.oHeap - m'.m.Keys  - {a}|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 12, "\n";
   print "ENTRY   CAO ", a.owner - m'.m.Keys ," a in Keys ", (a !in m'.m.Keys), "\n";
 
   var rm := m';
@@ -206,7 +273,7 @@ var amxo := flattenAMFOs(a.owner);
 method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
   returns (m : Klon)
 
-  decreases |m'.oHeap - m'.m.Keys + {a}|, |a.AMFO|, fielddiff(a,b), 10
+  decreases |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, fielddiff(a,b), 10
 
   modifies b`fields
 {
@@ -216,7 +283,7 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
 
 //TUESDAY15DEC2024
 
-  print "VARIANT CAF ", |(m.oHeap - m.m.Keys) + {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 10, "\n";
+  print "VARIANT CAF ", |(m.oHeap - m.m.Keys) - {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 10, "\n";
   print "<<<<<<<<<<<\n";
   print "just cloned ", fmtobj(a), " as ", fmtobj(b), "\n";
   print "<<<<<<<<<<<\n";
@@ -248,7 +315,7 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
     print "  TINV                ", fieldNames[..i], "\n";
     print "  TLOOPINV            ",seq2set(fieldNames[..i]),"\n";
 
-    print "VARIANT*CAF ", |(m.oHeap - m.m.Keys) + {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 10, "\n";
+    print "VARIANT*CAF ", |(m.oHeap - m.m.Keys) - {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 10, "\n";
 
     var OLDFLDS := b.fields.Keys;
 
@@ -281,13 +348,13 @@ print "->WHOOPS ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys
 method Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   returns (m : Klon)
 
-  decreases |m'.oHeap - m'.m.Keys + {a}|, |a.AMFO|, fielddiff(a,b), 5 //Xlone_Field_Map
+  decreases |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, fielddiff(a,b), 5 //Xlone_Field_Map
 
   modifies b`fields
 {
 
   print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
-  print "VARIANT CFM ", |m'.oHeap - m'.m.Keys|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 5, "\n";
+  print "VARIANT CFM ", |m'.oHeap - m'.m.Keys - {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 5, "\n";
 
   m := m';
 
