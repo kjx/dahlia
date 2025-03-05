@@ -6,7 +6,7 @@
 
 method Xlone_Via_Map(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
-  decreases |m'.oHeap - m'.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20 //Klone_Via_Map
+    decreases |m'.oHeap - m'.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20 //Klone_Via_Map
 
 {
   m := m';
@@ -167,7 +167,7 @@ assert (
     |xm.oHeap - xm.m.Keys - {a}|, |a.AMFO|,  fielddiff(a,b), 10);
     }
 
-//£££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
+//££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 
    m := Xlone_All_Fields(a,b, xm);
 
@@ -230,6 +230,12 @@ assert (
     xo :| xo in MX;
 
     MX := MX - {xo};
+
+assume (
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |old(a.fields.Keys)|, 12
+  decreases to
+    |xm.oHeap - xm.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20);
+
 
     rr, rm := Xlone_Via_Map(xo, xm);
 
@@ -331,6 +337,13 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
 print "WHOOPS-> ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys - b.fields.Keys|," 10\n";
 print "->WHOOPS ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys - b.fields.Keys|," 5 \n";
 
+
+assume (
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, old(fielddiff(a,b)), 10
+  decreases to
+    |m.oHeap - m.m.Keys - {a}|, |a.AMFO|, fielddiff(a,b), 5
+ );
+
     m := Xlone_Field_Map(a,n,b,m);
   }
 
@@ -367,6 +380,17 @@ method Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
 
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
   var rfv : Object;
+
+
+assume a in m'.m.Keys;
+assume a in m.m.Keys;
+
+assume (
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, old(fielddiff(a,b)), 15
+  decreases to
+    |m.oHeap -  m.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20
+ );
+
   rfv, m := Xlone_Via_Map(ofv, m);
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
@@ -376,4 +400,4 @@ method Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
 
   print "RETN Clone_Field_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
-} //end Clone: /_Field_Map
+} //end Clone_Field_Map
