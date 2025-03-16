@@ -143,6 +143,7 @@ lemma COKWiderContext(a : Object, context : set<Object>, extra : set<Object>)
 //     ;
 }
 
+//rename to extra context
 lemma CallOKWiderContext(aa: set<Object>, context : set<Object>, extra : set<Object>)
   requires aa <= context
   requires CallOK(aa,context)
