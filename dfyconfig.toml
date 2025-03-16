@@ -5,6 +5,7 @@ excludes = ["dahlia-remainder.dfy", "K2.dfy"] ##doesn't verify Klon verifies 21F
 
 [options]
 verify-included-files=true
+#dont-verify-dependencies=true
 verification-time-limit=20
 cores=8
 isolate-assertions=true
