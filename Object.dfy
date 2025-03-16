@@ -182,7 +182,7 @@ class Object {
     ensures bound == mb
     ensures AMFB == flattenAMFOs(mb) // + {this}  //HMM dunno if "this" should be here, but... --- ABSOLUTELY NOT!
     ensures ntrnl > owner >= bound
-
+    ensures AMFO  > AMFX  >= AMFB
     ensures fieldModes == ks
     ensures fields == map[]
 
@@ -212,9 +212,9 @@ class Object {
 
 
     bound := mb;
-    AMFB  := flattenAMFOs(mb);// + {this}; -- see above
+    AMFB  := flattenAMFOs(mb);
 
-    owner := oo;   ///should be owner for
+    owner := oo;
     AMFX  := flattenAMFOs(oo);
 
     ntrnl := oo + {this};
@@ -229,21 +229,22 @@ class Object {
 
   assert AMFX == AMFO - {this};
 
-    assert AMFXREADY:  (forall b <- AMFX  :: b.Ready());
+    assert (forall b <- AMFX  :: b.Ready());
     forall b <- AMFX, c <-  b.AMFO ensures inside(b,c)  {
       assert b.Ready();
       fucked(b);
       assert inside(b,c);
     }
-    assert AMFXINSIDE: (forall b <- AMFX, c <- b.AMFO :: inside(b,c));
+    assert (forall b <- AMFX, c <- b.AMFO :: inside(b,c));
 
+  assert ntrnl > owner >= bound; //IN-KLON    //or sgiould this have some contexts somnewhere?
+  assert AMFO  > AMFX  >= AMFB;   //IN-KLON
 
 // just can't be done here!!!
 // assert OwnersValid();
 // assert Ready();
 // assert (forall os <- allExternalOwners() :: AMFO >= os.AMFO);
 
-    assert AMFX == AMFO - {this};
 
     assert fieldModes == ks;
     assert fields == map[];
@@ -511,6 +512,20 @@ function allExternalBounds() : set<Object>
  //all o's
  {  AMFB  } //AMFB can't have "this" in it...
 
+
+lemma allExternalOwnersIncludesBounds()
+  requires Ready()
+  ensures  allExternalOwners() >= allExternalBounds()
+{}
+
+lemma allExternalOwnersIncludesKlown(m : Klon)
+  requires Ready()
+  requires allExternalOwners() <= m.m.Keys
+    ensures  m.ownersInKlown(this)
+{
+  assert m.m.Keys >= AMFX >= AMFB;
+
+}
 
 ///*opaque*/
 predicate Valid()
