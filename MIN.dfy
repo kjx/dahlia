@@ -8,7 +8,7 @@ method Clone_Via_Map(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //entry point for Clone - clones a according to map m'
   //call with m' empty
-  decreases |m'.oHeap| - |m'.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20 //Klone_Via_Map
+  decreases |m'.oHeap - m'.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20 //Klone_Via_Map
 
   requires m'.calid()
   requires m'.readyAll()
@@ -57,6 +57,8 @@ method Clone_Via_Map(a : Object, m' : Klon)
 
   ensures b.fieldModes == a.fieldModes
 
+  ensures m.from(m')
+
 //TOHERE
 
   //  ensures  fresh(b)
@@ -64,7 +66,7 @@ method Clone_Via_Map(a : Object, m' : Klon)
   //  modifies m'.ns`fields //argh. pity so wide
   //modifies (set o : Object | o !in (m'.oHeap+m'.ns))`fields
   // modifies (set o : Object | o !in (m'.oHeap+m'.ns))`fields
-  modifies {} // only modifes objecst allocated after this point?
+  modifies {} // just modifes objecst allocated after this point?
 {
   m := m';
 
@@ -206,8 +208,7 @@ method Clone_Clone_Clone(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //actually does the clone....
   // was the old Clone_Inside_Heap
-
-    decreases |m'.oHeap| - |m'.m.Keys|, |a.AMFO|, |a.fields.Keys|, 15
+    decreases |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |a.fields.Keys|, 15
 
   //this case
   requires inside(a,m'.o)
@@ -259,11 +260,16 @@ method Clone_Clone_Clone(a : Object, m' : Klon)
 { //clone inside heap
   m := m';
 
+m'.boundsNestingFromCalid(a, m'.oHeap);
+assert COK(a, m'.oHeap);
+COKWiderContext(a, m'.oHeap, m'.ns );
+assert klonOwnersAreCompatible(a, a, m');
 
 //b := a; return;///FUKOF  //16s!!!
 
   //FUKOF
   assert m.calid();
+  assert MPRIMECALID: m.calid();
   assert inside(a,m.o);
   assert COK(a, m.oHeap);
 //  assert COK(a, m.m.Keys+{a} );
@@ -351,6 +357,15 @@ assert AllTheseOwnersAreFlatOK(a.allExternalOwners()) by {
 //b := a; return;///FUKOF  //16s
 
 
+assert m.m.Keys <= m.oHeap by {
+  reveal MPRIMECALID;
+  assert m.calid();
+  reveal m.calid();
+  assert m.calidObjects();
+  reveal m.calidObjects();
+  assert m.m.Keys <= m.oHeap;
+}
+
   //extraOK        reveal COK(); assert a.owner.extra == {}; //extra not yet cloned
 
 assert ((m'.oHeap - m'.m.Keys),10 decreases to (m.oHeap - m.m.Keys),5);
@@ -361,6 +376,7 @@ assert ((m'.oHeap - m'.m.Keys),10 decreases to (m.oHeap - m.m.Keys),5);
 
   print "Clone_Clone_Clone ", fmtobj(a), " calling CAO", fmtown(a.owner) ,"\n";
   printmapping(m.m);
+
 
 /////////////////////////////////////////////////////////////////////////////////
   var rm := Clone_All_Owners(a, m);
@@ -1094,7 +1110,6 @@ print "BACK FROM MAKE with ",fmtobj(b),"\n";
               assert a.owner <= rrm.m.Keys + {a};
 //              assert klonSatanKV(rrm, a, b);
 
-          assert (b.AMFO >= b.AMFB >= a.AMFB);
               assert klonCanKV(rrm, a, b);
 
 //          assert mapThruKlon(a.owner, rrm)  == mapThruKlonKV(a.owner, rrm, a, b);
@@ -1386,14 +1401,16 @@ assert rrm.AreWeNotMen(a, klonKV(rrm,a,b));
   assert  xm.o     == m'.o;
   assert  xm.oHeap == m'.oHeap;
   assert  mapLEQ(m'.m,xm.m);
-  assert  xm.m.Keys >= m'.m.Keys + {a};
+  assert  xm.m.Keys >= m'.m.Keys - {a};
 
-assert   (m'.oHeap - m'.m.Keys)       >=     (xm.oHeap -    xm.m.Keys  +  {a});
-assert   (|m'.oHeap| - |m'.m.Keys|)   >=     (|xm.oHeap| - |xm.m.Keys| + |{a}|);
+  assert   (m'.oHeap - m'.m.Keys - {a}) >=  (xm.oHeap - xm.m.Keys - {a});
+  BiggerIsBigger( (m'.oHeap - m'.m.Keys - {a}), (xm.oHeap - xm.m.Keys - {a}) );
+  assert   |m'.oHeap - m'.m.Keys - {a}| >= (|xm.oHeap - xm.m.Keys - {a}|);
 
+assert a.fields.Keys == old(a.fields.Keys);
 
-var left :=  (m'.oHeap - m'.m.Keys);
-var right := (xm.oHeap - xm.m.Keys +{a});
+var left :=  (m'.oHeap - m'.m.Keys - {a});
+var right := (xm.oHeap - xm.m.Keys - {a});
 
 assert left >= right;
 SetGEQisGTorEQ(left,right);
@@ -1419,21 +1436,20 @@ assert (
 
 
 assert (
-    (m'.oHeap - m'.m.Keys),      a.AMFO, (a.fields.Keys), 15
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |old(a.fields.Keys)|, 15
   decreases to
-    (xm.oHeap - xm.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10)
+    |xm.oHeap - xm.m.Keys - {a}|, |a.AMFO|, fielddiff(a,b), 10)
     by
     {
-assert   (m'.oHeap - m'.m.Keys)   >=     (xm.oHeap - xm.m.Keys +{a});
-assert    a.AMFO >=  a.AMFO;
-assert (a.fields.Keys) >= (a.fields.Keys);
-assert  15 > 10;
+assert |m'.oHeap - m'.m.Keys - {a}|   >=     |xm.oHeap - xm.m.Keys - {a}|;
+assert |a.AMFO| >=  |a.AMFO|;
+assert |old(a.fields.Keys)| >= fielddiff(a,b);
+assert 15 > 10;
 assert (
-    (m'.oHeap - m'.m.Keys),      a.AMFO, (a.fields.Keys), 15
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |old(a.fields.Keys)|, 15
   decreases to
-    (xm.oHeap - xm.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10);
+    |xm.oHeap - xm.m.Keys - {a}|, |a.AMFO|,  fielddiff(a,b), 10);
     }
-
 
 assert a.AMFO <= xm.m.Keys;
 //assert b.AMFO <= xm.m.Values;  //TUESDAY17DEC2024
@@ -1510,11 +1526,11 @@ assert b.AMFO <= xm.oHeap+xm.ns;
 method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   //adds all thers owners of a into the map
 //31mins
+  decreases |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |a.fields.Keys|, 12
 
   requires m'.m.Keys <= m'.oHeap
   requires a in m'.oHeap
 
-  decreases |m'.oHeap| - |m'.m.Keys|, |a.AMFO|, |a.fields.Keys|, 12
 
   requires a !in m'.m.Keys //mustn't have cloned a yet...
   requires COK(a, m'.oHeap)
@@ -1665,18 +1681,23 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
 
     assert (|a.AMFO| decreases to |xo.AMFO|);
 
-    assert (|m'.oHeap| - |m'.m.Keys|,
+    assert (|m'.oHeap - m'.m.Keys - {a}|,
             |a.AMFO|,
-            |a.fields.Keys|,
+            |old(a.fields.Keys)|,
             (12)
             decreases to
-            |xm.oHeap| - |xm.m.Keys|,
+            |xm.oHeap - xm.m.Keys|,
             |xo.AMFO|,
-            |xo.fields.Keys|,
+            |a.fields.Keys|,
             20);
 
     assert inside(a, xo);
 
+
+assert (
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |old(a.fields.Keys)|, 12
+  decreases to
+    |xm.oHeap - xm.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20);
 
     rr, rm := Clone_Via_Map(xo, xm);
 
@@ -1789,7 +1810,7 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
   //clone all fields a.n into b.n
   //a should be preexisting (in m'.oHeapl); b should be "new"  in m'.ns
 
-  decreases |m'.oHeap| - |m'.m.Keys|, |a.AMFO|, |a.fields.Keys| - |b.fields.Keys|, 10 //Clone_All_Fields
+  decreases |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, fielddiff(a,b), 10
 
   requires MPRIME: m'.calid()
   requires COK(a, m'.oHeap)
@@ -1862,6 +1883,7 @@ method Clone_All_Fields(a : Object, b : Object, m' : Klon)
 
   ensures  forall x <- (m.m.Values - {b}) :: old(allocated( x )) ==> unchanged( x ) //duesb;t veruft....
 
+  ensures m.from(m')
   //  modifies (set o : Object | o !in m'.oHeap)`fields
   // modifies (set o : Object | o !in ((m'.oHeap+m'.ns) - {b}))`fields
   //or can this  be modifies m'.ns?
@@ -2170,22 +2192,12 @@ print "WHOOPS-> ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys
 print "->WHOOPS ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys - b.fields.Keys|," 5 \n";
 
 
-assert 10 decreases to 5;
 
-
-assert fielddiff(a,b) == fielddiff(a,b);
-
-assert (fielddiff(a,b), 10 decreases to  fielddiff(a,b), 5);
-
-assert (a.AMFO, fielddiff(a,b), 10 decreases to a.AMFO, fielddiff(a,b), 5);
-
-
-assert  (m'.oHeap - m'.m.Keys +{a}, a.AMFO, fielddiff(a,b), 10
-    decreases to m'.oHeap - m'.m.Keys +{a}, a.AMFO, fielddiff(a,b), 5);
-
-
-assert  (|m'.oHeap| - |m'.m.Keys| +|{a}|, |a.AMFO|, fielddiff(a,b), 10
-    decreases to |m'.oHeap| - |m'.m.Keys| +|{a}|, |a.AMFO|, fielddiff(a,b), 5);
+assert (
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, old(fielddiff(a,b)), 10
+  decreases to
+    |m.oHeap - m.m.Keys - {a}|, |a.AMFO|, fielddiff(a,b), 5
+ );
 
 ///  decreses (m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 10 //Clone_All_Fields
 ///  decreases (m'.oHeap - m'.m.Keys +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5 //Clone_Field_Map
@@ -2194,9 +2206,9 @@ assert  (|m'.oHeap| - |m'.m.Keys| +|{a}|, |a.AMFO|, fielddiff(a,b), 10
 
 
 
-    rm := Clone_Field_Map(a,n,b,m);
+    m := Clone_Field_Map(a,n,b,m);
 // rm := m;
-// assume b.fields.Keys == OLDFLDS + {n};
+// assuage b.fields.Keys == OLDFLDS + {n};
 
     assert b.fields.Keys == OLDFLDS + {n};
 
@@ -2461,7 +2473,7 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   //clone field a.n into b.n
   //a should be preexisting (in m'.oHeapl); b should be "new" (in m'.ns)
 
-  decreases |m'.oHeap| - |m'.m.Keys|, |a.AMFO|, fielddiff(a,b), 5 //Clone_Field_Map
+  decreases |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, fielddiff(a,b), 5 //Xlone_Field_Map
 
   requires (|m'.oHeap| - |m'.m.Keys| + |{a}|, |a.AMFO|, fielddiff(a,b), 10
     decreases to |m'.oHeap| - |m'.m.Keys| + |{a}|, |a.AMFO|, fielddiff(a,b), 5)
@@ -2624,6 +2636,13 @@ assert klonOwnersAreCompatible(a, b, m);
   assert m'.calid() by { reveal MPRIME; }
 
 
+assert a in m'.m.Keys;
+assert a in m.m.Keys;
+assert (
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, old(fielddiff(a,b)), 15
+  decreases to
+    |m.oHeap -  m.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20
+ );
 
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
   var rfv, rm := Clone_Via_Map(ofv, m);

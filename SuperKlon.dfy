@@ -1,4 +1,3 @@
-
 //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
 //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
 
@@ -16,9 +15,6 @@ reads c'.ns`fields, c'.ns`fieldModes
 
 reads c'.m.Values`fieldModes
 reads c'.m.Keys`fieldModes
-
-
-
 {
   klonKV(c', k, v)
 }
@@ -112,6 +108,15 @@ lemma KLUCKO(o : Object, m : Klon)
 // }
 
 
+predicate preKlownMapOK(o : Object, m : Klon)
+ //predicate collecting preconditions to call klownMapOK. Don't ask.
+{
+  && m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+  && m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+  && m.o_amfo <= m.m.Keys   //KLON-OK
+  && o in m.m.Keys //IN-KLON
+  && m.ownersInKlown(o)
+}
 
 predicate {:isolate_assertions} klownMapOK(o : Object, m : Klon)
 //do all o's owner attributes map through m?
@@ -119,8 +124,8 @@ predicate {:isolate_assertions} klownMapOK(o : Object, m : Klon)
 //kjx: see allklownMapOK for why k & v must be in m already
 
   // requires m.o_amfo <= m.m.Keys   //KLON-OK
-  // requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
-  // requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+   requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+   requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
   // requires o in m.m.Keys  //IN-KLON
 
   requires m.o_amfo <= m.m.Keys   //KLON-OK
@@ -185,12 +190,77 @@ lemma  mapThruKlownMapsOK1(k : Object, v : Object, m : Klon)
 
 
 
+lemma  mapThruKlownMapsOK2(o : Object,  m' : Klon, m : Klon)
+  //given allklownMapOK(m') and klonLEQ(m',m), establish klownMapOK(o,m)
+
+  //reqs from klownMapOK()
+  requires m'.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+  requires m'.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+  requires m'.o_amfo <= m'.m.Keys   //KLON-OK
+  requires o in m'.m.Keys
+  requires m'.ownersInKlown(o) //or could be objectInKlown...
+  //end reqs from klownMapOK()
+
+  requires klownMapOK(o,m')
+  requires klonLEQ(m',m)
+
+  ensures   klownMapOK(o,m)
+  {}
+
+
+lemma mapThruKlownMapsOK3(o : Object, m : Klon)
+  //given allklownMapOK(m), and o in m.m.Keys establish klownMapOK(o,m)
+
+  //reqs from allklownMapOK
+  requires m.readyAll()
+  requires m.o_amfo <= m.m.Keys //KLON-OK
+  requires forall o <- m.m.Keys :: m.readyOK(o)
+  requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
+  //end reqs from allklownMapOK
+
+  requires o in m.m.Keys  //IN-KLON
+  requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+  requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+
+  requires allklownMapOK(m)
+
+  ensures  klownMapOK(o,m)
+{}
+
+lemma mapThruKlownMapsOK4(o : Object, m : Klon)
+  //given allklownMapOK(m), and o in m.m.Keys establish o.Ready()
+
+  //reqs from allklownMapOK
+  requires m.readyAll()
+  requires m.o_amfo <= m.m.Keys //KLON-OK
+  requires forall o <- m.m.Keys :: m.readyOK(o)
+  requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
+  //end reqs from allklownMapOK
+
+  requires o in m.m.Keys  //IN-KLON
+  requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+  requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+
+  requires allklownMapOK(m)
+
+  ensures  o.Ready()
+{
+    assert allklownMapOK(m);
+    assert o in m.m.Keys;
+    mapThruKlownMapsOK3(o, m);
+    assert klownMapOK(o,m);
+    m.ReadyOKDUCKED(o);
+
+    assert o.Ready();
+}
+
+
 predicate {:isolate_assertions} allklownMapOK(m : Klon) : (rv : bool)
 
   requires m.readyAll()
   requires m.o_amfo <= m.m.Keys //KLON-OK
   requires forall o <- m.m.Keys :: m.readyOK(o)
-  requires forall o <- m.m.Keys ::m.ownersInKlown(o)
+  requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
 //
 //   requires forall o <- m.m.Keys :: (
 //         && (m.o_amfo <= m.m.Keys)   //KLON-OK
@@ -235,47 +305,60 @@ lemma AllKlownMapKVRestored(m' : Klon, k : Object, v : Object, m : Klon)
 //ensures m'[k := v] == m
   requires k !in m'.m.Keys
   requires v !in m'.m.Values
+  requires k  in m'.oHeap
   requires m'.ownersInKlown(k)
+  requires klonCanKV(m',k,v)
+  requires m == klonKV(m',k,v)
+  requires m.from(m')
 
   // requires forall k <- m'.m.Keys :: k.owner <= m'.m.Keys   //IN-KLON
   // requires forall k <- m'.m.Keys :: k.AMFO  <= m'.m.Keys   //IN-KLON
 
   requires m'.readyAll()
   requires m'.o_amfo <= m'.m.Keys   //KLON-OK
+  requires forall o <- m'.m.Keys :: m'.readyOK(o)
+  requires forall o <- m'.m.Keys :: m'.ownersInKlown(o) ///coiiudl we be objectsInKnown...
   requires allklownMapOK(m')
 
   requires k.Ready()
 
-requires m.m.Keys >= k.bound
-requires m.m.Keys >= k.ntrnl > k.owner >= k.bound  //IN-KLON
-requires m.m.Keys >= k.AMFO  > k.AMFX  >= k.AMFB   //IN-KLON
-requires k.owner <= m.m.Keys   //IN-KLON
-requires k.AMFO  <= m.m.Keys   //IN-KLON
-
-
-  //preconds or allklownMapOK(m)
-  requires m == klonKV(m',k,v)
+  requires m.m.Keys >= k.bound
+  requires m.m.Keys >= k.ntrnl > k.owner >= k.bound  //IN-KLON
+  requires m.m.Keys >= k.AMFO  > k.AMFX  >= k.AMFB   //IN-KLON
   requires k.owner <= m.m.Keys   //IN-KLON
   requires k.AMFO  <= m.m.Keys   //IN-KLON
-  requires klownMapOK(k,m)
+
+  requires KMOKM: klownMapOK(k,m) //THIS iS A BIT WEIRD as a "requires".. but
+
+  //preconds of allklownMapOK(m)
+  requires m.readyAll()
+  // requires m.o_amfo <= m.m.Keys //KLON-OK
+  // requires forall o <- m.m.Keys :: m.objectInKlown(o)
 
   ensures  allklownMapOK(m)
-
-
 {
-//   assert v == m.m[k];
-//   assert forall mm <- m'.m.Keys :: m'.m[mm]  == m.m[mm];
-//   assert forall mm <- m.m.Keys :: ((mm in m'.m.Keys) ==> (m'.m[mm] == m.m[mm]));
-//
-//   assert m.m.Keys == m'.m.Keys + {k};
-//
-//    assert allklownMapOK(m');
-//    assert forall mm <- m'.m.Keys       :: klownMapOK(mm, m);
-//    assert klownMapOK(k,m);
-//    assert forall mm <- {k}             :: klownMapOK(mm, m);
-//    assert forall mm <- m'.m.Keys + {k} :: klownMapOK(mm, m);
-//    assert forall mm <- m.m.Keys        :: klownMapOK(mm, m);
-//    assert allklownMapOK(m);
+  assert v == m.m[k];
+  assert forall mm <- m'.m.Keys :: m'.m[mm]  == m.m[mm];
+  assert forall mm <- m.m.Keys :: ((mm in m'.m.Keys) ==> (m'.m[mm] == m.m[mm]));
+
+  assert m.m.Keys == m'.m.Keys + {k};
+
+   assert allklownMapOK(m');
+
+   forall mm <- m'.m.Keys ensures klownMapOK(mm, m) //by
+   {
+      assert klownMapOK(mm, m');
+      mapThruKlownMapsOK2(mm, m', m);
+      assert klownMapOK(mm, m);
+   }
+
+   forall mm <- m.m.Keys ensures klownMapOK(mm, m) //by
+   {
+    if (mm == k) { reveal KMOKM; assert klownMapOK(k, m); }
+      else { assert klownMapOK(mm, m); }
+   }
+
+   assert allklownMapOK(m);
 }
 
 
