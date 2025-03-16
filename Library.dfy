@@ -220,7 +220,6 @@ lemma MapGLEQCCommutative<K,V>(left : map<K,V>, right : map<K,V>)
 {}
 
 
-
 lemma BiggerIsBigger<T>(aa : set<T>, bb : set<T>)
      requires aa >= bb
      ensures |aa| >= |bb|
@@ -306,6 +305,20 @@ lemma IAmTheContradictoryOne<T>( t : T,  ts : set<T>)
 
 
 
+
+lemma AddContainedElement<T>(e : T, aa : set<T>, bb : set<T>)
+  //if e in aa, bb == aa + {e} ensures bb == aa
+  requires e in aa
+  requires bb == aa + {e}
+  ensures  bb == aa
+{}
+
+lemma AddEmpty<T>(aa : set<T>, empty : set<T>, bb : set<T>)
+  //empty == {}, aa + {} == bb, ensures bb == aa
+  requires empty == {}
+  requires bb == aa + empty
+  ensures aa == bb
+{}
 
 
 //////////////////////////////////////////////////////////////////////////
