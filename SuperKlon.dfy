@@ -49,7 +49,7 @@ function OOOLDEmapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
 //   requires m.o_amfo <= m.m.Keys   //IN-KLON
 //   requires k.owner <= m.m.Keys   //IN-KLON
 //   requires k.AMFO  <= m.m.Keys   //IN-KLON
-//   reads m.oHeap`fields, m.oHeap`fieldModes
+//   reads m.oHeap`fields,  m.oHeap`fieldModes
 //   reads m.ns`fields, m.ns`fieldModes
 // {
 //   mapThruKlown(k.AMFO, m)
@@ -77,6 +77,25 @@ lemma LEMMAmapThruKlown(k : Owner, m : Klon)
 
   assert  (mapThruKlon(m.o_amfo, m) - OXTRA + CXTRA) == m.c_amfx;
 }
+
+lemma MAP_AMFO_THRU_KLON_IS_NOOP(k : Object, m : Klon, r : set<Object>)
+  requires m.o_amfo <= m.m.Keys
+  requires r == mapThruKlon(m.o_amfo, m) //should ben AMFX innit
+  requires m.calid()
+
+  // ensures  r == m.o_amfo
+  {
+  reveal m.calid(), m.calidObjects(), m.calidOK(), m.calidMap(), m.calidSheep();
+
+   assert forall x <- m.o_amfo :: (x == m.o) != not(inside(x, m.o));
+   assert forall x <- m.o_amfo ::  m.m[x] == x;
+
+
+  }
+
+
+
+
 
 lemma KLUCKO(o : Object, m : Klon)
    requires m.readyOK(o)
