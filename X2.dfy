@@ -97,6 +97,7 @@ print "CALLING MAKE...";
   b := new Object.XXXmake(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rbound);
 print "BACK FROM MAKE with ",fmtobj(b),"\n";
 
+assume klonCanKV(rrm, a, b);
 
       var km := klonKV(rrm,a,b); //there it go4s in!
 
