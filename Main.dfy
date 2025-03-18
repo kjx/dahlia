@@ -32,12 +32,14 @@ method Main(s : seq<string>)
  }
 }
 
-method {:verify false} Main0() {
+method makeDemo() returns (t : Object, a : Object, os : set<Object>)
+  ensures t in os
+  ensures a in os
+  ensures forall o <- os :: (o.AllOwnersAreWithinThisHeap(os))
 
-  print "Main Test for loopback\n";
+{
 
-var t := new Object.make(protoTypes, {}, {}, "t");
-
+t := new Object.make(protoTypes, {}, {}, "t");
 //   t
 //   a      b c
 //   d
@@ -49,7 +51,7 @@ assert COK(t, {t});
 // protoTypes 8-)
 // cat dat eye fucker jat kye lat nxt rat
 
-var a := new Object.make(protoTypes, {t}, {t}, "a");
+a := new Object.make(protoTypes, {t}, {t}, "a");
 
 var b := new Object.make(protoTypes, {t}, {t}, "b");
 
@@ -87,9 +89,8 @@ assert j.Ready();
 assert k.Ready();
 assert l.Ready();
 
-var os : set<Object> := {t,   a, b, c, d, e, f, g, h, i, j, k, l};
+os := {t,   a, b, c, d, e, f, g, h, i, j, k, l};
 
-print "|os| == ", |os|, "\n";
 
 a.fields := map["eye":=d];
 d.fields := map["lat":= e]["dat":=f]["cat":=g]["rat":= h];
@@ -102,8 +103,33 @@ assert d.AllOutgoingReferencesAreOwnership(os);
 assert d.AllOutgoingReferencesWithinThisHeap(os);
 assert COK(d,os);
 
-
 assert CallOK(os);
+
+//////reveal Object.Ready();
+assert t.AllOwnersAreWithinThisHeap(os);
+assert a.AllOwnersAreWithinThisHeap(os);
+assert b.AllOwnersAreWithinThisHeap(os);
+assert c.AllOwnersAreWithinThisHeap(os);
+assert d.AllOwnersAreWithinThisHeap(os);
+assert e.AllOwnersAreWithinThisHeap(os);
+assert f.AllOwnersAreWithinThisHeap(os);
+assert g.AllOwnersAreWithinThisHeap(os);
+assert h.AllOwnersAreWithinThisHeap(os);
+assert i.AllOwnersAreWithinThisHeap(os);
+assert j.AllOwnersAreWithinThisHeap(os);
+assert k.AllOwnersAreWithinThisHeap(os);
+assert l.AllOwnersAreWithinThisHeap(os);
+
+assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
+}
+
+method {:verify false} Main0() {
+
+  print "Main Test for loopback\n";
+
+var t, a, os := makeDemo();
+
+print "|os| == ", |os|, "\n";
 
 print "+++++++++++++\n";
 print "original store (os)\n";
@@ -139,23 +165,6 @@ assert forall o <- os :: o.Ready();
 // return;
 
 print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
-
-//////reveal Object.Ready();
-assert t.AllOwnersAreWithinThisHeap(os);
-assert a.AllOwnersAreWithinThisHeap(os);
-assert b.AllOwnersAreWithinThisHeap(os);
-assert c.AllOwnersAreWithinThisHeap(os);
-assert d.AllOwnersAreWithinThisHeap(os);
-assert e.AllOwnersAreWithinThisHeap(os);
-assert f.AllOwnersAreWithinThisHeap(os);
-assert g.AllOwnersAreWithinThisHeap(os);
-assert h.AllOwnersAreWithinThisHeap(os);
-assert i.AllOwnersAreWithinThisHeap(os);
-assert j.AllOwnersAreWithinThisHeap(os);
-assert k.AllOwnersAreWithinThisHeap(os);
-assert l.AllOwnersAreWithinThisHeap(os);
-
-assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
 
 print "about to Xlone a\n";
 
@@ -207,75 +216,10 @@ method {:verify false} Main1() {
 
   print "Main Test for loopback\n";
 
-var t := new Object.make(protoTypes, {}, {}, "t");
 
-//   t
-//   a      b c
-//   d
-//   e f g h
-
-assert t.Ready();
-assert COK(t, {t});
-
-// protoTypes 8-)
-// cat dat eye fucker jat kye lat nxt rat
-
-var a := new Object.make(protoTypes, {t}, {t}, "a");
-
-var b := new Object.make(protoTypes, {t}, {t}, "b");
-
-var c := new Object.make(protoTypes, {t}, {t}, "c");
-
-var d := new Object.make(protoTypes, {a}, {t,a}, "d");
-
-var e := new Object.make(protoTypes, {d}, {t,a,d}, "e"); //we're gonna clone this one..?
-
-var f := new Object.make(protoTypes, {e}, {t,a,d,e}, "f");
-
-var g := new Object.make(protoTypes, {f},  {t,a,d,e,f},   "g");
-
-var h := new Object.make(protoTypes, {g}, {t,a,d,e,f,g}, "h");
-
-
-var i := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "i");
-var j := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "j");
-var k := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "k");
-var l := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "l");
-
-
-assert t.Ready();
-
-assert a.Ready();
-assert b.Ready();
-assert c.Ready();
-assert d.Ready();
-assert e.Ready();
-assert f.Ready();
-assert g.Ready();
-assert h.Ready();
-assert i.Ready();
-assert j.Ready();
-assert k.Ready();
-assert l.Ready();
-
-var os : set<Object> := {t,   a, b, c, d, e, f, g, h, i, j, k, l};
+var t, a, os := makeDemo();
 
 print "|os| == ", |os|, "\n";
-
-
-a.fields := map["eye":=d];
-d.fields := map["lat":= e]["dat":=f]["cat":=g]["rat":= h];
-
-assert COK(a,os);
-
-assert d.AllFieldsAreDeclared();
-assert d.AllFieldsContentsConsistentWithTheirDeclaration();
-assert d.AllOutgoingReferencesAreOwnership(os);
-assert d.AllOutgoingReferencesWithinThisHeap(os);
-assert COK(d,os);
-
-
-assert CallOK(os);
 
 print "+++++++++++++\n";
 print "original store (os)\n";
@@ -311,23 +255,6 @@ assert forall o <- os :: o.Ready();
 // return;
 
 print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
-
-//////reveal Object.Ready();
-assert t.AllOwnersAreWithinThisHeap(os);
-assert a.AllOwnersAreWithinThisHeap(os);
-assert b.AllOwnersAreWithinThisHeap(os);
-assert c.AllOwnersAreWithinThisHeap(os);
-assert d.AllOwnersAreWithinThisHeap(os);
-assert e.AllOwnersAreWithinThisHeap(os);
-assert f.AllOwnersAreWithinThisHeap(os);
-assert g.AllOwnersAreWithinThisHeap(os);
-assert h.AllOwnersAreWithinThisHeap(os);
-assert i.AllOwnersAreWithinThisHeap(os);
-assert j.AllOwnersAreWithinThisHeap(os);
-assert k.AllOwnersAreWithinThisHeap(os);
-assert l.AllOwnersAreWithinThisHeap(os);
-
-assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
 
 print "about to Clone a\n";
 
