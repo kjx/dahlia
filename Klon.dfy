@@ -844,7 +844,7 @@ c.calidObjectsFromCalid();
 //
 //   assert (forall x <- m0.m.Keys :: m1.m[x] == m0.m[x]);
 //
-// //  m1.widerBoundsNest(v,m0.oHeap+m0.ns, m0.oHeap+m0.ns+{v});
+// //  m1.boundsNestingWiderContext(v,m0.oHeap+m0.ns, m0.oHeap+m0.ns+{v});
 //   assert (forall x <- m0.m.Keys :: (m0.boundsNestingOK(m0.m[x], m0.oHeap+m0.ns)));
 //   assert (forall x <- m0.m.Keys ::
 //     && (m0.boundsNestingOK(m0.m[x], m0.oHeap+m0.ns))
@@ -1066,7 +1066,7 @@ lemma KLUBKLOWN(o : Object)
      // all keys are readyOK
      //kjx: our should this just be ready or calid or somnething??
    {
-      && (o_amfo <=   m.Keys)
+      && (o_amfo <=   m.Keys)   //REDD FLAGGE
       && (forall k <- m.Keys :: readyOK(k))
    }
 
@@ -2710,7 +2710,7 @@ lemma boundsNestingFromCalid(o : Object, context : set<Object>)
     assert  ownerInsideOwner(o.AMFB,o.allExternalBounds());
   }
 
-lemma widerBoundsNest(o : Object, less : set<Object>, more : set<Object>)
+lemma boundsNestingWiderContext(o : Object, less : set<Object>, more : set<Object>)
   requires less <= more
   requires boundsNestingOK(o,less)
   ensures  boundsNestingOK(o,more)
@@ -2720,6 +2720,13 @@ lemma widerBoundsNest(o : Object, less : set<Object>, more : set<Object>)
     assert COK(o, more);
 
   }
+
+lemma boundsNestingFromKlon(o : Object, context : set<Object>, prev : Klon)
+  requires prev.boundsNestingOK(o,context)
+  requires from(prev)
+  ensures  boundsNestingOK(o,context)
+  {}
+
 
 
 
@@ -3845,8 +3852,8 @@ lemma  klonOwnersAreCompatibleWider(o : Object, c : Object, m0 : Klon, m : Klon)
       && (c.AMFO >= c.AMFB >= o.AMFB)
       ;
 
-    m.widerBoundsNest(o, m0.oHeap, m.oHeap);
-    m.widerBoundsNest(c, m0.oHeap+m0.ns, m.oHeap+m.ns);
+    m.boundsNestingWiderContext(o, m0.oHeap, m.oHeap);
+    m.boundsNestingWiderContext(c, m0.oHeap+m0.ns, m.oHeap+m.ns);
 
   assert
       && m.boundsNestingOK(o, m.oHeap)
@@ -3878,8 +3885,8 @@ lemma  klonOwnersAreCompatibleKV(o : Object, c : Object, m0 : Klon, m : Klon)
       && (c.AMFO >= c.AMFB >= o.AMFB)
       ;
 
-    m.widerBoundsNest(o, m0.oHeap, m.oHeap);
-    m.widerBoundsNest(c, m0.oHeap+m0.ns, m.oHeap+m.ns);
+    m.boundsNestingWiderContext(o, m0.oHeap, m.oHeap);
+    m.boundsNestingWiderContext(c, m0.oHeap+m0.ns, m.oHeap+m.ns);
 
   assert
       && m.boundsNestingOK(o, m.oHeap)
@@ -3905,7 +3912,7 @@ lemma klonSameOwnersAreCompatible(o : Object, c : Object, m1 : Klon)
   ensures  klonOwnersAreCompatible(o, c, m1)
 {
   assert m1.boundsNestingOK(o, m1.oHeap);
-  m1.widerBoundsNest(o,  m1.oHeap, m1.oHeap+m1.ns);
+  m1.boundsNestingWiderContext(o,  m1.oHeap, m1.oHeap+m1.ns);
   assert (c.AMFO >= c.AMFB >= o.AMFB);
 
   assert klonOwnersAreCompatible(o, c, m1);
@@ -4933,7 +4940,7 @@ lemma TargetOwnersReallyAreOK(b : Object, m : Klon)
 //
 //
 // assert m.boundsNestingOK(a, m.oHeap);
-// m.widerBoundsNest(a, m.oHeap, m.oHeap+m.ns+{a});
+// m.boundsNestingWiderContext(a, m.oHeap, m.oHeap+m.ns+{a});
 //
 // assert m.boundsNestingOK(a, m.oHeap+m.ns+{a});
 //
