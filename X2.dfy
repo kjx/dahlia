@@ -11,13 +11,13 @@ method Xlone_Via_Map(a : Object, m' : Klon)
 {
   m := m';
 
-  print "CALL Clone_Via_Map ", fmtobj(a), "\n";
+  print "CALL Clone_Via_Map ", fmtobj(a), " m':", m', "\n";
 
   print "VARIANT CVM ", |(m'.oHeap - m'.m.Keys) - {a}|, " ", |a.AMFO|, " ", |(a.fields.Keys )|, " ", 20, "\n";
 
   if (a in m.m.Keys){ //already cloned, return
     b := m.m[a];
-    print "RETN Clone_Via_Map already cloned ", fmtobj(a), "\n";
+    print "RETN Clone_Via_Map already cloned ", fmtobj(a),  " m':", m', "\n";
     return;
   }
 
@@ -28,6 +28,7 @@ method Xlone_Via_Map(a : Object, m' : Klon)
     return; // end outside case
   }
 
+ //start of the Inside case
   b, m := Xlone_Clone_Clone(a, m);
   //end of inside case
 
@@ -97,13 +98,17 @@ print "CALLING MAKE...";
 print "BACK FROM MAKE with ",fmtobj(b),"\n";
 
 
-  //  var km := klonKV(rrm,a,b); //there it go4s in!
+      var km := klonKV(rrm,a,b); //there it go4s in!
 
-  var km := rrm.(ns := rrm.ns + nu(a,b)).(m:= VMapKV(rrm.m,a,b));
+  //  var km := rrm.(ns := rrm.ns + nu(a,b)).(m:= VMapKV(rrm.m,a,b));
+
+print "go4s: ", |km.m|, " ns: ", |km.ns|,"\n";
 
 var amxo := flattenAMFOs(a.owner);
 
-  var xm := rrm.XXXputInside(a,b);
+  //  var xm := rrm.XXXputInside(a,b);
+  //  var xm := rrm.putInside(a,b);
+      var xm :=  km.XXXputInside(a,b);
 
   print "Clone_Clone_Clone map updated ", fmtobj(a), ":=", fmtobj(b) ,"\n";
 
@@ -231,7 +236,18 @@ assert (
 
     MX := MX - {xo};
 
+///////////////////////////////////////////////////////////////////
+
 assume (
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |old(a.fields.Keys)|, 12
+  decreases to
+    |xm.oHeap - xm.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20);
+
+
+
+/////////////////////////////////////////////////////////////////////
+
+assert (
     |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, |old(a.fields.Keys)|, 12
   decreases to
     |xm.oHeap - xm.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20);

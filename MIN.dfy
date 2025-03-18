@@ -7,12 +7,12 @@
 method Clone_Via_Map(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //entry point for Clone - clones a according to map m'
-  //call with m' empty
+  //begin with m' empty
   decreases |m'.oHeap - m'.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20 //Klone_Via_Map
 
   requires m'.calid()
   requires m'.readyAll()
-  requires klonAllRefsOK(m')
+  requires allMapOwnersThruKlownOK(m')
   // requires a in m'.oHeap  //technically redundant given COKx
   requires COK(a, m'.oHeap) //ties owners into OHEAP but not KLON MAP
   requires m'.readyOK(a)
@@ -72,9 +72,9 @@ method Clone_Via_Map(a : Object, m' : Klon)
 
 
 
-print "CALL Clone_Via_Map ", fmtobj(a), "\n";
+print "CALL Clone_Via_Map ", fmtobj(a), " m':", fmtklon(m'), "\n";
 
-  print "VARIANT CVM ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys )|, " ", 20, "\n";
+  print "VARIANT CVM ", |(m'.oHeap - m'.m.Keys)  - {a}|, " ", |a.AMFO|, " ", |(a.fields.Keys )|, " ", 20, "\n";
 
 
   if (a in m.m.Keys){ //already cloned, return
@@ -100,7 +100,7 @@ print "CALL Clone_Via_Map ", fmtobj(a), "\n";
     b := a;
     assert m.readyAll();
     assert klonCanKV(m,a,a);
-    assert klonAllRefsOK(m);
+    assert allMapOwnersThruKlownOK(m);
 
     assert m.AreWeNotMen(a, klonKV(m,a,a));
 
@@ -136,10 +136,11 @@ print "CALL Clone_Via_Map ", fmtobj(a), "\n";
     return; // end outside case
   }
   else
-  { //start of the Inside case
+  {
+    //start of the Inside case
       b, m := Clone_Clone_Clone(a, m);
-   } //end of inside case
-
+    //end of inside case
+  }
   ///////////////////////////////////////////////////////////////
   //tidying up after the cases..
 
@@ -277,7 +278,7 @@ assert klonOwnersAreCompatible(a, a, m');
 
 
   print "CALL Clone_Clone_CLone of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
-  print "VARIANT CCC ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 15, "\n";
+  print "VARIANT CCC ", |(m'.oHeap - m'.m.Keys - {a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 15, "\n";
 
   assert CallOK(a.owner, m.oHeap) by {
     // assert COK(a, m.oHeap);
@@ -1125,6 +1126,10 @@ print "BACK FROM MAKE with ",fmtobj(b),"\n";
 
     var km := klonKV(rrm,a,b); //there it go4s in!
 
+//  var km := rrm.(ns := rrm.ns + nu(a,b)).(m:= VMapKV(rrm.m,a,b));
+
+  print "go4s: ", |km.m|, " ns: ", |km.ns|,"\n";
+
     assert rrm.calid();
    klonCalidKVCalid(rrm,a,b,km);
 //
@@ -1332,7 +1337,8 @@ assert rrm.AreWeNotMen(a, klonKV(rrm,a,b));
 
 
 /////////////////////////////////////////////////////////
-  var xm := rrm.putInside(a,b);
+//  var xm := rrm.putInside(a,b);
+    var xm := km.putInside(a,b);
 /////////////////////////////////////////////////////////
 
 
@@ -1547,7 +1553,7 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   modifies {}
 {
   print "CALL Clone_All_Owner of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
-  print "VARIANT CAO ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 12, "\n";
+  print "VARIANT CAO ", |(m'.oHeap - m'.m.Keys - {a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 12, "\n";
   print "ENTRY   CAO ", a.owner - m'.m.Keys ," a in Keys ", (a !in m'.m.Keys), "\n";
 
 
@@ -1923,7 +1929,7 @@ by
   assert m'.calid() by { reveal MPRIME; }
 
   assert BINNS:  b in m.ns;
-  print "VARIANT CAF ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
+  print "VARIANT CAF ", |(m'.oHeap - m'.m.Keys) - {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 10, "\n";
   print "<<<<<<<<<<<\n";
   print "just cloned ", fmtobj(a), " as ", fmtobj(b), "\n";
   print "<<<<<<<<<<<\n";
@@ -2077,7 +2083,7 @@ by
     print "  TLOOPINV            ",seq2set(fieldNames[..i]),"\n";
 
 
-    print "VARIANT*CAF ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
+    print "VARIANT*CAF ", |(m.oHeap - m.m.Keys) - {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 10, "\n";
 
 
     //   assert (m.oHeap - m.m.Keys) < (m'.oHeap - m'.m.Keys);
@@ -2205,8 +2211,8 @@ assert (
 //////////////////////////////////////////////////////
 
 
-
-    m := Clone_Field_Map(a,n,b,m);
+//INSTEAD OF m that was the BIG BUG
+    rm := Clone_Field_Map(a,n,b,m);
 // rm := m;
 // assuage b.fields.Keys == OLDFLDS + {n};
 
@@ -2572,9 +2578,10 @@ method Clone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   modifies b`fields
 {
 
+var OLDFIELDDIFFAB := fielddiff(a,b);
 
 print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
-print "VARIANT CFM ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys - b.fields.Keys - {n})|, " ", 5, "\n";
+print "VARIANT CFM ", |m'.oHeap - m'.m.Keys - {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 5, "\n";
 
 
   assert m'.calid() by { reveal MPRIME; }
@@ -2638,8 +2645,15 @@ assert klonOwnersAreCompatible(a, b, m);
 
 assert a in m'.m.Keys;
 assert a in m.m.Keys;
+
+  print "VARFROM ", |m'.oHeap - m'.m.Keys  - {a}|, " ", |a.AMFO|, " ", OLDFIELDDIFFAB, " ", 5, "\n";
+
+  print "VARFTO  ", |m.oHeap - m.m.Keys|, " ", |a.AMFO|, " ", |(a.fields.Keys )|, " ", 20, "\n";
+
+assert old(fielddiff(a,b)) == OLDFIELDDIFFAB;
+
 assert (
-    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, old(fielddiff(a,b)), 15
+    |m'.oHeap - m'.m.Keys - {a}|, |a.AMFO|, OLDFIELDDIFFAB, 5
   decreases to
     |m.oHeap -  m.m.Keys|, |a.AMFO|, |a.fields.Keys|, 20
  );
@@ -3090,7 +3104,7 @@ assert COKB4: COK(b, rm.oHeap+rm.ns);
 
     assert klonAllOwnersAreCompatible(m);
     assert m.readyAll();
-    assert klonAllRefsOK(m);
+    assert allMapOwnersThruKlownOK(m);
 
     assert m.calidMap();/////////////////////////
 
@@ -3133,17 +3147,57 @@ IHasCalidSheep(m);
 } //end Clone: /_Field_Map
 
 
+// lemma KERFUCK(k : Object, v : Object, m0 : Klon, m1 : Klon)
+// doesn't quite do whta aI thought it did...
+//    requires klonCanKV(m0, k, v)
+//    requires m1 == klonKV(m0, k, v)
+//    requires m0.readyOK(k)
+//    ensures  m1.readyOK(k)
+//  {}
 
 
 
+lemma KlonKVRestoresReadyAll(k : Object, v : Object, m0 : Klon, m1 : Klon)
+   requires klonCanKV(m0, k, v)
+   requires m1 == klonKV(m0, k, v)
+   requires m0.readyAll()
+   requires m1.readyOK(k)
+   ensures  m1.readyAll()
+  {
+    assert m1.m.Keys == m0.m.Keys + {k};
+    assert m1.from(m0);
 
-lemma KlonKVRestoresReadyAll(a : Object, b : Object, m' : Klon, m : Klon)
-   requires klonCanKV(m', a, b)
-   requires m == klonKV(m', a, b)
-   requires m'.readyAll()
-   requires m'.readyOK(a)
-   ensures  m.readyAll()
-   {}
+    forall x <- m1.m.Keys
+      ensures (m1.readyOK(x)) //by
+      {
+        if (x in m0.m.Keys) {
+          assert x in m0.m.Keys;
+          assert m0.readyOK(x);
+          assert m1.m[x] == m0.m[x];
+          assert m1.readyOK(x) == m0.readyOK(x);
+          assert m1.readyOK(x);
+        } else {
+          assert x !in m0.m.Keys;
+          assert x == k;
+          assert m1.readyOK(k);
+          assert m1.readyOK(x);
+        }
+      }
+
+    // if you write it this way it doesn't work
+    //     if (x == k) {
+    //       assert x !in m0.m.Keys;
+    //       assert m1.readyOK(k);
+    //       assert m1.readyOK(x);
+    //     } else {
+    //       assert x in m0.m.Keys;
+    //       assert m0.readyOK(x);
+    //       assert m1.m[x] == m0.m[x];
+    //       assert m1.readyOK(x);
+    //     }
+
+      assert m1.readyAll();
+   }
 
 
 
@@ -3176,3 +3230,13 @@ lemma nqf<T>(a : T, b : T)
 function fielddiff(a : Object, b : Object) : nat
   reads a, b
   {| a.fields.Keys - b.fields.Keys |}
+
+
+function fmtklon(m : Klon) : string
+ reads m.m.Keys
+ {
+   "K:" + natToString(|m.m.Keys|) +
+     " oH:" +  natToString(|m.oHeap|) +
+     " ns:" +  natToString(|m.ns|) +
+     " ks=" + fmtnickset( m.m.Keys )
+ }
