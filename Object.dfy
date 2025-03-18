@@ -100,11 +100,16 @@ class Object {
 
   constructor {:verify false} XXXmake(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
 
+    requires ownerInsideOwner(oo,mb)
+
     ensures owner == oo
+    ensures AMFX == flattenAMFOs(oo)
+    ensures ntrnl == oo + {this}
     ensures AMFO == flattenAMFOs(oo) + {this}
     ensures bound == mb
     ensures AMFB == flattenAMFOs(mb) // + {this}  //HMM dunno if "this" should be here, but... --- ABSOLUTELY NOT!
     ensures ntrnl > owner >= bound
+    ensures AMFO  > AMFX >= AMFB == flattenAMFOs(mb) >= mb
 
     ensures fieldModes == ks
     ensures fields == map[]
@@ -178,11 +183,13 @@ class Object {
     requires ownerInsideOwner(oo,mb)
 
     ensures owner == oo
+    ensures AMFX == flattenAMFOs(oo)
+    ensures ntrnl == oo + {this}
     ensures AMFO == flattenAMFOs(oo) + {this}
     ensures bound == mb
     ensures AMFB == flattenAMFOs(mb) // + {this}  //HMM dunno if "this" should be here, but... --- ABSOLUTELY NOT!
     ensures ntrnl > owner >= bound
-    ensures AMFO  > AMFX  >= AMFB
+    ensures AMFO  > AMFX  >= AMFB == flattenAMFOs(mb) >= mb
     ensures fieldModes == ks
     ensures fields == map[]
 
