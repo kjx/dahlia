@@ -1549,7 +1549,7 @@ method Clone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
   ensures a.owner <= m.m.Keys
   ensures a.allExternalOwners() <= m.m.Keys
   ensures mapThruKlon(a.allExternalOwners(),m) <= m.m.Values
-     //the above should be OK because it's bascially tautological
+     //the above should be OK because it's bascially tautological - huh???
   modifies {}
 {
   print "CALL Clone_All_Owner of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
