@@ -279,13 +279,6 @@ method mlurk(x: set<string>) returns (r: string)
   r :| r in x;
  }
 
-function flurk(x: set<string>) : string
- requires |x| > 0
- {
-  var r : string :| r in x;
-  r
- }
-
 
 lemma {:axiom} StrLEQ1(a : string,  b : string)
   ensures (strLEQ(a, b) && strLEQ(b, a)) <==> (a == b)
@@ -313,15 +306,152 @@ predicate IAMTheRessurection(s: set<string>, m : string)
   m in s && forall x <- s :: strLEQ(m, x)
 }
 
+predicate OnlyRessurection(s: set<string>, m : string)
+  requires m in s
+  requires IAMTheRessurection(s,m)
+  {
+   forall x <- s | IAMTheRessurection(s,x) :: x == m
+  }
+
+lemma ReallyJustOneRessurection(s: set<string>,  m : string, mm : set<string>)
+  requires m in s
+  requires IAMTheRessurection(s,m)
+  requires mm == set x <- s | IAMTheRessurection(s,x) :: x
+  //ensures |mm| == 1
+  ensures mm == {m}
+  {
+    OneRessurection(s,m);
+  }
+
 lemma OneRessurection(s: set<string>, m : string)
-  requires s == {m}
-  ensures  IAMTheRessurection(s,m)
+  requires m in s
+  requires IAMTheRessurection(s,m)
+  ensures  forall x <- s | IAMTheRessurection(s,x) :: x == m
 {
   assert m in s;
-  StrEQISstrLEQ(m,m);
-  assert strLEQ(m,m);
+  forall x <- s | IAMTheRessurection(s,x)
+    ensures  x == m //by
+      {
+         if (x == m) {
+           assert IAMTheRessurection(s,m);
+           assert strLEQ(x,m);
+           assert strLEQ(m,x);
+           assert IAMTheRessurection(s,x);
+           assert x == m;
+         } else {
+            assert {:contradiction} IAMTheRessurection(s,m);
+            assert {:contradiction} x in s;
+            assert {:contradiction} strLEQ(m,x);
+            assert {:contradiction} IAMTheRessurection(s,x);
+            assert {:contradiction} m in s;
+            assert {:contradiction} strLEQ(x,m);
+            StrLEQLEQIsEQ(x,m);
+            assert {:contradiction} x == m;
+            assert {:contradiction} false;
+         }
+      }
 }
 
+lemma LemmaSTREQ(x : string, y : string)
+ ensures (x == y) ==> strLEQ(x,y)
+ ensures (x == y) ==> strLEQ(y,x)
+{}
+
+lemma MemmaSTREQ(s : set<string>)
+    requires |s| == 1
+  ensures exists m <- s :: m in s
+  ensures exists m <- s :: forall x <- s :: strLEQ(m, x)
+   {
+     //var v : string :| v in s;
+     var v := ExtractFromSingleton(s);
+     assert s == {v};
+     forall x <- s ensures x == v  {
+      if (x == v) {
+          LemmaSTREQ(x,v);
+          assert strLEQ(x,v) && strLEQ(v,x);
+          assert forall x <- {v} :: x == v;
+          assert forall x <- {v} :: strLEQ(v, x);
+          assert forall x <- s :: strLEQ(v, x);
+          assert exists m <- s :: forall x <- s :: strLEQ(m, x);
+          return; }
+      assert x != v;
+      LemmaSingletonEquality(s, x, v);
+      assert {:contradition} x == v;
+      assert {:contradition} false;
+     }
+     assert forall x <- s :: x == v;
+
+    forall x <- s ensures strLEQ(x,v) {
+        assert x == v;
+        LemmaSTREQ(x,v);
+        assert  strLEQ(x,v);
+    }
+   }
+
+
+lemma MummaSTREQ(s : set<string>)
+//unfinished - wasted LOTS of time on this now
+    decreases s
+    requires |s| > 0
+    // ensures  exists m <- s :: m in s
+    // ensures  exists m <- s :: forall x <- s :: strLEQ(m, x)
+   {
+     if (|s| == 1) { MemmaSTREQ(s); return; }
+     assert |s| > 1;
+     var v : string :| v in s;
+     var t := s - {v};
+     MummaSTREQ(t);
+//     assert exists m <- t :: forall x <- s :: strLEQ(m, x);
+
+//     var q  : string :| q in s && forall x <- s :: strLEQ(q, x);
+
+
+
+   }
+
+
+
+
+lemma EveryPlanetHasANorth(s : set<string>)
+  requires |s| > 0
+  // ensures  exists m <- s :: forall x <- s :: strLEQ(m, x)
+  // ensures  forall m <- s, n <- s ::
+  //     (&& (forall x <- s :: strLEQ(m, x))
+  //      && (forall x <- s :: strLEQ(n, x))) ==> (m == n)
+{
+      assert forall x <- s :: x == x;
+      forall x <- s ensures (strLEQ(x,x)) //by
+        {
+         LemmaSTREQ(x,x);
+         assert strLEQ(x,x);
+        }
+      assert forall x <- s :: strLEQ(x,x);
+      assert forall x <- s :: exists y <- s :: x == y;
+      assert forall x <- s :: exists y <- s :: strLEQ(x,y);
+
+}
+
+
+function IAMTheLife(s: set<string>) : (m : string)
+  requires |s| > 0
+  requires exists m <- s :: forall x <- s :: strLEQ(m, x)
+  requires forall m <- s, n <- s |
+      (&& (forall x <- s :: strLEQ(m, x))
+       && (forall x <- s :: strLEQ(n, x))) :: m == n
+
+  ensures  forall x <- s :: strLEQ(m, x)
+  {
+    assert exists m <- s :: forall x <- s :: strLEQ(m, x);
+    var m :| (&& (m in s)
+              && (forall x <- s :: strLEQ(m,x))
+              && (forall m <- s, n <- s |
+                    (&& (forall x <- s :: strLEQ(m, x))
+                     && (forall x <- s :: strLEQ(n, x))) :: m == n)
+             );
+    m
+  }
+
+///      var m :| m in s && (forall x <- s :: strLEQ(m,x);
 
 // ghost function IAMTheLife(s: set<string>) : (m : string)
 //   requires |s| > 0
@@ -391,15 +521,13 @@ ghost function thereIsOneThere(s: set<string>) : string
 
 
 //probalby have to split the bloody thing tand use StrLEQIsTrans to deal with it...
-function fmtsetstr(Y: set<string>) : string
+function {:verify false} fmtsetstr(Y: set<string>) : string
  {
-  "FUCKOFF fmtsetstr"
-  // if (|Y| < 1) then ("") else (
-  //     assert |Y| >= 1;
-  //     assert exists y :: y in Y;
-  //     var ghosty := ExtractFromNonEmptySet(Y);
-  //     var y : string :| y in Y;// && (forall z <- Y :: y <= z) ;
-  //     y + " " + fmtsetstr( Y - {y} ) )
+  if (|Y| < 1) then ("") else (
+      assert |Y| >= 1;
+      assert exists y :: y in Y;
+      var y := IAMTheLife(Y);
+      y + " " + fmtsetstr( Y - {y} ) )
   }
 
 
@@ -441,6 +569,26 @@ lemma StrEQISstrLEQ(l : string, r : string)
   ensures  strLEQ(l,r)
   {}
 
+lemma StrLEQLEQIsEQ(l : string, r : string)
+  requires strLEQ(l,r)
+  requires strLEQ(r,l)
+  //requires (|l| == |r| <= 1)
+  ensures  l == r
+  ensures  r == l
+  {
+    if (|l| == |r| == 0) { assert l == r; return; }
+    if (|l| == 0) { assert |r| > 0; assert not(strLEQ(r,l)); assert false; return; }
+    if (|r| == 0) { assert |l| > 0; assert not(strLEQ(l,r)); assert false; return; }
+    assert (|l| > 0) && (|r| > 0);
+    if (|l| == |r| == 1) {
+       if (l == r) { assert l == r; return; }
+       assert {:contradiction} l != r;
+       assert {:contradiction} strLEQ(l,r) != strLEQ(r,l);
+       assert {:contradiction} false;
+    }
+
+//kjx not sure why I don't need a recursie case, but it seems I don't?
+  }
 
 lemma StrLEQIsTrans(a : string, b : string, c : string)
   requires strLEQ(a,b)
