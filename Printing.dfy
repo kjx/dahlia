@@ -369,7 +369,6 @@ lemma MemmaSTREQ(s : set<string>)
       if (x == v) {
           LemmaSTREQ(x,v);
           assert strLEQ(x,v) && strLEQ(v,x);
-          assert forall x <- {v} :: x == v;
           assert forall x <- {v} :: strLEQ(v, x);
           assert forall x <- s :: strLEQ(v, x);
           assert exists m <- s :: forall x <- s :: strLEQ(m, x);

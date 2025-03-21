@@ -21,7 +21,7 @@ method Main(s : seq<string>)
 
    match (s[1][0]) {
      case '0' =>  Main0();
-     case '1' =>  Main1();
+     case '1' =>  Main0();
      case '2' =>  Main2();
      case '3' =>  Main3();
      case '4' =>  Main4();
@@ -241,7 +241,7 @@ assert forall o <- os :: o.Ready();
 // printobj(e); printobjfields(e);
 
 // print d.region,"\n";
-// print e.region,"\n";
+// print e.region,"\n";k
 
 // assert !d.region.World?;
 // assert !e.region.World?;
@@ -267,9 +267,12 @@ var m := Klon(map[],    //m clonemap
                {}       // ns );
               );
 
-var ra, rm := Clone_Via_Map(a, m);
+print "NOT Cloning because Clone isn't linked\n";
+///
+///
+/// var ra, rm := Clone_Via_Map(a, m);
 
-
+var ra, rm := a, m;
 
 // //
 // //     m : Mapping,  //m : Mapping
@@ -657,13 +660,6 @@ print "\nDone\n\n";
 
 } //end Main3
 
-//by Rustan Leino -
-  function natToString(n: nat): string {
-    match n
-    case 0 => "0" case 1 => "1" case 2 => "2" case 3 => "3" case 4 => "4"
-    case 5 => "5" case 6 => "6" case 7 => "7" case 8 => "8" case 9 => "9"
-    case _ => natToString(n / 10) + natToString(n % 10)
-  }
 
 method {:verify false} Main4() {
 

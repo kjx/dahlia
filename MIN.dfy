@@ -1,6 +1,6 @@
-//Clone_Via_Map -> Clone_Clone_Clone
+//Clone_Via_Map -> Clone_Clone_Clone ✅
 //Clone_Clone_Clone -> Clone_All_Owners, Object.make(), putInside/putOutside, Clone_All_Fields
-//Clone_All_Owners -> Clone_Via_Map
+//Clone_All_Owners -> Clone_Via_Map✅
 //Clone_All_Fields -> Clone_Field_Map
 //Clone_Field_Map ->  Clone_Via_Map
 
@@ -3157,50 +3157,6 @@ IHasCalidSheep(m);
 
 
 
-lemma KlonKVRestoresReadyAll(k : Object, v : Object, m0 : Klon, m1 : Klon)
-   requires klonCanKV(m0, k, v)
-   requires m1 == klonKV(m0, k, v)
-   requires m0.readyAll()
-   requires m1.readyOK(k)
-   ensures  m1.readyAll()
-  {
-    assert m1.m.Keys == m0.m.Keys + {k};
-    assert m1.from(m0);
-
-    forall x <- m1.m.Keys
-      ensures (m1.readyOK(x)) //by
-      {
-        if (x in m0.m.Keys) {
-          assert x in m0.m.Keys;
-          assert m0.readyOK(x);
-          assert m1.m[x] == m0.m[x];
-          assert m1.readyOK(x) == m0.readyOK(x);
-          assert m1.readyOK(x);
-        } else {
-          assert x !in m0.m.Keys;
-          assert x == k;
-          assert m1.readyOK(k);
-          assert m1.readyOK(x);
-        }
-      }
-
-    // if you write it this way it doesn't work
-    //     if (x == k) {
-    //       assert x !in m0.m.Keys;
-    //       assert m1.readyOK(k);
-    //       assert m1.readyOK(x);
-    //     } else {
-    //       assert x in m0.m.Keys;
-    //       assert m0.readyOK(x);
-    //       assert m1.m[x] == m0.m[x];
-    //       assert m1.readyOK(x);
-    //     }
-
-      assert m1.readyAll();
-   }
-
-
-
 
 
 lemma extendSeq<T>(ss : seq<T>, n : nat)
@@ -3227,16 +3183,7 @@ lemma nqf<T>(a : T, b : T)
 
 
 
-function fielddiff(a : Object, b : Object) : nat
-  reads a, b
-  {| a.fields.Keys - b.fields.Keys |}
-
-
-function fmtklon(m : Klon) : string
- reads m.m.Keys
- {
-   "K:" + natToString(|m.m.Keys|) +
-     " oH:" +  natToString(|m.oHeap|) +
-     " ns:" +  natToString(|m.ns|) +
-     " ks=" + fmtnickset( m.m.Keys )
- }
+// function fielddiff(a : Object, b : Object) : nat
+//   reads a, b
+//   {| a.fields.Keys - b.fields.Keys |}
+//
