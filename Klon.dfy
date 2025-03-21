@@ -273,6 +273,7 @@ lemma KlonKVVMapOK(m0 : Klon, k : Object, v : Object, m1 : Klon)
 
 lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
   requires m0.readyAll()
+  requires m0.readyOK(k)
   requires forall o <- m0.m.Keys :: m0.readyOK(o) //more or less m0.readyAll()
   requires allMapOwnersThruKlownOK(m0)  //akq "allMapOwnersThruKlownOK"
   requires klonAllOwnersAreCompatible(m0)
@@ -314,7 +315,7 @@ lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
 //      assert m0.readyOK(k);
       assert k.Ready();
       assert m0.ownersInKlown(k);
-      assume m0.readyOK(k);
+      assert m0.readyOK(k);
 
     KlonKVRestoresReadyAll(k,v,m0,m1);
     //end call
@@ -1431,9 +1432,9 @@ var rv := Klon(VMapKV(m,k,v), o, o_amfo, c_owner, c_amfx, oHeap, ns+nu(k,v));
 
     assert  klonVMapOK(this.m);
 
-    var cdouble := this.(m:= VMapKV(this.m,k,v));
-    var nsv := (cdouble.ns + nu(k,v));
-    var r   := cdouble.(ns:= nsv);
+      var cdouble := this.(m:= VMapKV(this.m,k,v));
+      var nsv := (cdouble.ns + nu(k,v));
+      var r   := cdouble.(ns:= nsv); (
 
       assert (forall k <-  this.m.Keys :: k.AMFO <= this.m.Keys);
 
@@ -1823,7 +1824,7 @@ assert COK(v,oHeap+ns+{v});
     reveal rv.calid(); assert rv.calid();
 
     rv
-    } //END putInside
+    )} //END putInside
 
 //
 //
@@ -2074,7 +2075,7 @@ lemma KlonExtendsCalidObjects(c : Klon, k : Object, v : Object, d : Klon)
     ensures r.from(this)
 
 {
-var r := klonKV(this,k,k);
+    var r := klonKV(this,k,k); (
     reveal calid();
     assert calid();
     assert calidObjects();
@@ -2138,7 +2139,7 @@ klonCalidKVCalid(this, k, k, r);
     IHasCalid(r);
 
     r
-  }
+  )}
 
 
 
@@ -2731,8 +2732,23 @@ lemma boundsNestingFromKlon(o : Object, context : set<Object>, prev : Klon)
 
 
 method {:verify false} XXXCOKput(f : Object, context : set<Object>, n : string, t : Object)
+
   ensures f.fields == old(f.fields)[n:=t]
   ensures  COK(f, context)
+
+  ensures  t.fields.Keys == old(t.fields.Keys) + {n}
+  ensures  (f.fields.Keys - t.fields.Keys) < old(f.fields.Keys - t.fields.Keys)
+  ensures  calid()
+  ensures  old(calid())
+  ensures  readyAll()
+  ensures  readyOK(f)
+
+  ensures  unchanged(f)
+  ensures  unchanged(oHeap)
+  ensures  unchanged(m.Values - {t})
+  ensures  unchanged(m.Keys)
+  ensures  unchanged(ns - {t})
+
   modifies f`fields
 {
   COKput(f, context, n, t);
@@ -5075,637 +5091,637 @@ lemma TargetOwnersReallyAreOK(b : Object, m : Klon)
 // }
 
 
-
-method PLACEHOLDER_Clone_All_Fields(a : Object, b : Object, m0 : Klon)
-  returns (m : Klon)
-  //clone all fields a.n into b.n
-  //a should be preexisting (in m0.oHeapl); b should be "new"  in m0.ns
-
-  decreases (m0.oHeap - m0.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10 //Clone_All_Fields
-
-  requires MPRIME: m0.calid()
-  requires COK(a, m0.oHeap)
-  requires COK(b, m0.oHeap+m0.ns)
-
-  requires b.fields.Keys == {}
-
-  requires a.fields.Keys <= a.fieldModes.Keys
-  requires a.fieldModes == b.fieldModes
-
-
-  requires a in m0.oHeap
-  requires a in m0.m.Keys
-
-  requires b in m0.m.Values
-  requires b in m0.ns
-  requires (a in m0.m.Keys) && m0.m[a] == b
-  requires m0.o    in m0.oHeap
-  requires m0.m.Keys   <= m0.oHeap
-
-  requires a.AMFO <= m0.m.Keys  //seems weird but we are populating m, right...
-//  requires b.AMFO == mapThruKlon(a.AMFO, m0)  //KJXFRIDAY13TH
-//  requires b.AMFO <= m0.m.Values
-  requires b.AMFO <= m0.oHeap+m0.ns
-
-  // requires b.fieldModes[n] == Evil //evilKJX this is actually evil
-  //well not *that* evil as I still must satisfy refOK
-  //
-  // requires forall n <- b.fields :: (n in b.fieldModes) &&
-  //             AssignmentCompatible(b, b.fieldModes[n], b.fields[n])
-
-  //consequently
-  //   requires refOK(a, a.fields[n])
-
-  ensures  m.calid()
-  ensures  old(m0.calid())
-  ensures  klonVMapOK(m.m)
-  ensures  a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...
-
-  //ensures  b.fields.Keys == a.fields.Keys  //FUCK
-  ensures a.fieldModes == b.fieldModes
-
-  ensures  a in m.m.Keys
-  ensures  (a in m.m.Keys) && m.m[a] == b
-
-
-
-  //   ensures  n in b.fields
-  //   ensures  (a.fields[n] in m.m.Keys) && m.m[a.fields[n]] == b.fields[n]
-
-  ensures  b in m.m.Values
-
-  ensures  mapLEQ(m0.m,m.m)
-
-  ensures  CallOK(m.oHeap)
-  ensures  COK(a, m.oHeap)
-  ensures  COK(b, m.oHeap+m.ns)
-  ensures  CallOK(m.m.Values, m.oHeap+m.ns)
-  ensures  CallOK(m.ns, m.oHeap+m.ns)
-
-  ensures  m.o     == m0.o
-  ensures  m.oHeap == m0.oHeap
-  ensures  m.ns    >= m0.ns
-  ensures  m.m.Keys    <= m.oHeap
-
-
-  ensures  unchanged(a)
-  ensures  unchanged(m0.oHeap)
-  ensures  unchanged(m0.ns - {b})  //will this work?
-
-  ensures  forall x <- (m.m.Values - {b}) :: old(allocated( x )) ==> unchanged( x ) //duesb;t veruft....
-
-  //  modifies (set o : Object | o !in m0.oHeap)`fields
-  // modifies (set o : Object | o !in ((m0.oHeap+m0.ns) - {b}))`fields
-  //or can this  be modifies m0.ns?
-  modifies b`fields   ///GGRRR
-{
-  m := m0;
-
-// assert b.AMFO == mapThruKlon(a.AMFO, m0);
-assert b in m0.m.Values;
-assert m0.m[a] == b;  //mmmKJX
-
-//TUESDAY15DEC2024
-
-assert b.AMFO <= (m0.oHeap+m0.ns)
-by
-   {
-      assert COK(b,m0.oHeap+m0.ns);
-      reveal COK();
-   }
-
-// assert (b.AMFO <= m0.m.Values) by {
-//   assert m0.calid() by { reveal MPRIME; }
-//   reveal m0.calid(), m0.calidMap();
-//   assert m0.calidMap();
-//   assert (forall x <- m0.m.Keys ::
-//         && m0.boundsNestingOK(m0.m[x], m0.oHeap+m0.ns));
 //
-//   assert a in m0.m.Keys;
-//   assert b in m0.m.Values;
-// `  assert COK(b,m0.oHeap+m0.ns);`
-//   assert m0.boundsNestingOK(b, m0.oHeap+m0.ns);
-//   assert ownerInsideOwnerInsideOwner(m0.oHeap+m0.ns, b.AMFO, b.AMFB);
+// method PLACEHOLDER_Clone_All_Fields(a : Object, b : Object, m0 : Klon)
+//   returns (m : Klon)
+//   //clone all fields a.n into b.n
+//   //a should be preexisting (in m0.oHeapl); b should be "new"  in m0.ns
+//
+//   decreases (m0.oHeap - m0.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10 //Clone_All_Fields
+//
+//   requires MPRIME: m0.calid()
+//   requires COK(a, m0.oHeap)
+//   requires COK(b, m0.oHeap+m0.ns)
+//
+//   requires b.fields.Keys == {}
+//
+//   requires a.fields.Keys <= a.fieldModes.Keys
+//   requires a.fieldModes == b.fieldModes
+//
+//
+//   requires a in m0.oHeap
+//   requires a in m0.m.Keys
+//
+//   requires b in m0.m.Values
+//   requires b in m0.ns
+//   requires (a in m0.m.Keys) && m0.m[a] == b
+//   requires m0.o    in m0.oHeap
+//   requires m0.m.Keys   <= m0.oHeap
+//
+//   requires a.AMFO <= m0.m.Keys  //seems weird but we are populating m, right...
+// //  requires b.AMFO == mapThruKlon(a.AMFO, m0)  //KJXFRIDAY13TH
+// //  requires b.AMFO <= m0.m.Values
+//   requires b.AMFO <= m0.oHeap+m0.ns
+//
+//   // requires b.fieldModes[n] == Evil //evilKJX this is actually evil
+//   //well not *that* evil as I still must satisfy refOK
+//   //
+//   // requires forall n <- b.fields :: (n in b.fieldModes) &&
+//   //             AssignmentCompatible(b, b.fieldModes[n], b.fields[n])
+//
+//   //consequently
+//   //   requires refOK(a, a.fields[n])
+//
+//   ensures  m.calid()
+//   ensures  old(m0.calid())
+//   ensures  klonVMapOK(m.m)
+//   ensures  a.AMFO <= m.m.Keys  //seems weird but we are populating m, right...
+//
+//   //ensures  b.fields.Keys == a.fields.Keys  //FUCK
+//   ensures a.fieldModes == b.fieldModes
+//
+//   ensures  a in m.m.Keys
+//   ensures  (a in m.m.Keys) && m.m[a] == b
+//
+//
+//
+//   //   ensures  n in b.fields
+//   //   ensures  (a.fields[n] in m.m.Keys) && m.m[a.fields[n]] == b.fields[n]
+//
+//   ensures  b in m.m.Values
+//
+//   ensures  mapLEQ(m0.m,m.m)
+//
+//   ensures  CallOK(m.oHeap)
+//   ensures  COK(a, m.oHeap)
+//   ensures  COK(b, m.oHeap+m.ns)
+//   ensures  CallOK(m.m.Values, m.oHeap+m.ns)
+//   ensures  CallOK(m.ns, m.oHeap+m.ns)
+//
+//   ensures  m.o     == m0.o
+//   ensures  m.oHeap == m0.oHeap
+//   ensures  m.ns    >= m0.ns
+//   ensures  m.m.Keys    <= m.oHeap
+//
+//
+//   ensures  unchanged(a)
+//   ensures  unchanged(m0.oHeap)
+//   ensures  unchanged(m0.ns - {b})  //will this work?
+//
+//   ensures  forall x <- (m.m.Values - {b}) :: old(allocated( x )) ==> unchanged( x ) //duesb;t veruft....
+//
+//   //  modifies (set o : Object | o !in m0.oHeap)`fields
+//   // modifies (set o : Object | o !in ((m0.oHeap+m0.ns) - {b}))`fields
+//   //or can this  be modifies m0.ns?
+//   modifies b`fields   ///GGRRR
+// {
+//   m := m0;
+//
+// // assert b.AMFO == mapThruKlon(a.AMFO, m0);
+// assert b in m0.m.Values;
+// assert m0.m[a] == b;  //mmmKJX
+//
+// //TUESDAY15DEC2024
+//
+// assert b.AMFO <= (m0.oHeap+m0.ns)
+// by
+//    {
+//       assert COK(b,m0.oHeap+m0.ns);
+//       reveal COK();
+//    }
+//
+// // assert (b.AMFO <= m0.m.Values) by {
+// //   assert m0.calid() by { reveal MPRIME; }
+// //   reveal m0.calid(), m0.calidMap();
+// //   assert m0.calidMap();
+// //   assert (forall x <- m0.m.Keys ::
+// //         && m0.boundsNestingOK(m0.m[x], m0.oHeap+m0.ns));
+// //
+// //   assert a in m0.m.Keys;
+// //   assert b in m0.m.Values;
+// // `  assert COK(b,m0.oHeap+m0.ns);`
+// //   assert m0.boundsNestingOK(b, m0.oHeap+m0.ns);
+// //   assert ownerInsideOwnerInsideOwner(m0.oHeap+m0.ns, b.AMFO, b.AMFB);
+// // }
+//
+//   print "CALL Clone_All_Fields: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
+//
+//
+//   assert m0.calid() by { reveal MPRIME; }
+//
+//   assert BINNS:  b in m.ns;
+//   print "VARIANT CAF ", |(m0.oHeap - m0.m.Keys +{a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
+//   print "<<<<<<<<<<<\n";
+//   print "just cloned ", fmtobj(a), " as ", fmtobj(b), "\n";
+//   print "<<<<<<<<<<<\n";
+//
+//
+//   assert unchanged(a) && unchanged(m.oHeap);
+//
+//   assert  m.o == m0.o;
+//   assert  m.oHeap == m0.oHeap;
+//   assert  m.ns == m0.ns;
+//   assert  m.m.Values == m0.m.Values;
+//
+//   assert  m.m.Keys == m0.m.Keys;
+//   assert  a in m0.m.Keys;
+//
+//   assert m.m[a] == b;  //mmmKJX
+//   // assert (a in m.m.Keys) ==> (m[a] == b);  //mmmKJX
+//
+//   assert m.calid();
+//   assert m0.calid() by { reveal MPRIME; }
+//   assert COK(b, m.oHeap+m.ns);
+//   assert HEREB: COK(b, m.oHeap+m.ns);
+//
+//
+//
+//
+//   //assert fresh(b);
+//   assert  b.fields.Keys == {};
+//   assert b in m.m.Values;
+//
+//   //START OF FIELDS…
+//
+//   print "<<<<<<<<<<<\n";
+//   printmapping(m.m);
+//   print "<<<<<<<<<<<\n";
+//
+//   assert m.calid();
+//   assert m0.calid() by { reveal MPRIME; }
+//
+//   var fieldNames : seq<string> := set2seq(a.fields.Keys);
+//
+//   assert forall k <- a.fields.Keys :: (multiset(a.fields.Keys))[k] == 1;
+//   assert forall s <- fieldNames :: (multiset(fieldNames))[s] == 1;
+//   assert forall i | 0 <= i < |fieldNames|, j | 0 <= j < |fieldNames| :: (fieldNames[i] == fieldNames[j]) <==> i == j;
+//   //assert b.fields.Keys == {};
+//   assert b.fields.Keys == seq2set(fieldNames[..0]);
+//
+//
+//   print "Clone_All_Fields fields:", fmtobj(a), " fields=", fmtseqstr(fieldNames), "\n";
+//
+//   //DOING FIELDS≈≈
+//
+//   print "BLOOP BLOOP BLOOP\n";
+//
+//   assert m.calidOK() by {
+//     assert m.calid();
+//     reveal m.calid();
+//     assert m.calidOK();
+//   }
+//
+//   assert COK(b, m.oHeap+m.ns);
+//
+//   assert m0.calid() by { reveal MPRIME; }
+//
+//   label BLOOP:
+//
+//   assert m.calidOK();
+//   reveal m.calidOK();
+//   assert m.calid();
+//   assert CallOK(m.ns, m.oHeap+m.ns);
+//   assert CallOK(m.m.Values, m.oHeap+m.ns);
+//
+//   assert CallOK(m.m.Keys, m.oHeap) by {}
+//
+//
+//
+//   var rm := m;
+//
+//   assert  rm.o     == m.o      == m0.o;
+//   assert  rm.oHeap == m.oHeap  == m0.oHeap;
+//   assert  rm.ns    >= m.ns     >= m0.ns;
+//   assert  rm.m.Values    >= m.m.Values     >= m0.m.Values;
+//   assert  m.m.Keys     <= rm.m.Keys    <= m.oHeap;
+//
+//
+//   COKgetsDeclaredFields(a, m.oHeap);
+//   assert unchanged(a) && unchanged(m.oHeap);
+//   assert CallOK(m.m.Keys, m.oHeap);
+//
+//   assert b.fields.Keys == seq2set(fieldNames[..0]) == {};
+//
+//   for i := 0 to |fieldNames|
+//
+//     invariant  rm.o     == m.o      == m0.o
+//     invariant  rm.oHeap == m.oHeap  == m0.oHeap
+//     invariant  rm.ns    >= m.ns     >= m0.ns
+//     invariant  rm.m.Values    >= m.m.Values     >= m0.m.Values
+//     invariant   m.m.Keys    <= rm.m.Keys    <= m.oHeap
+//
+//     invariant  b in m.ns
+//     invariant  b in m.m.Values
+//
+//     invariant COK(a, m.oHeap)
+//     invariant COK(b, m.oHeap+m.ns)
+//     invariant mapLEQ(m0.m,m.m)
+//     invariant a in m.oHeap
+//     invariant a in m.m.Keys
+//     invariant m.o in m.oHeap
+//     invariant CallOK(m.oHeap)
+//     invariant CallOK(m.m.Keys, m.oHeap)
+//     invariant CallOK(m.ns, m.oHeap+m.ns)
+//     invariant CallOK(m.m.Values, m.oHeap+m.ns)
+//     invariant m.calid()
+//     invariant old(m0.calid())
+//
+//     invariant unchanged(a)
+//     invariant unchanged(m.oHeap)
+//     //invariant forall x <- m.m.Keys :: (not(inside(x,m.o)) ==> (m.at(x) == x))
+//     invariant (m0.oHeap - m0.m.Keys +{a}) >= (m.oHeap - m.m.Keys +{a})
+//     invariant (m0.oHeap - m0.m.Keys) >= (m.oHeap - m.m.Keys)
+//     invariant b.fields.Keys == seq2set(fieldNames[..i])
+//     invariant forall i | 0 <= i < |fieldNames|, j | 0 <= j < |fieldNames| :: (fieldNames[i] == fieldNames[j]) <==> i == j
+//
+//     invariant  m.m[a] == b
+//     invariant  a.fieldModes == b.fieldModes
+//     invariant  a.AllFieldsAreDeclared()
+//
+//
+//     invariant old(m0.calid())
+//   {
+//     assert b.fields.Keys == seq2set(fieldNames[..i]);
+//
+//     assert COK(b, m.oHeap+m.ns);
+//
+//     var n : string := fieldNames[i];
+//     var ofv : Object := a.fields[n];
+//
+//     assert n !in seq2set(fieldNames[..i]);
+//
+//     assert (n !in b.fields.Keys) by {
+//       assert n !in seq2set(fieldNames[..i]);
+//       assert b.fields.Keys == seq2set(fieldNames[..i]);
+//       assert (n !in b.fields.Keys);
+//     }
+//
+//     print "  TLOOP  ",fmtobj(a),".",n," :=", fmtobj(ofv), "\n";
+//     print "  TLOOP  (recurse on field ",n,")\n";
+//     print "  TLOOP m:", |m.oHeap - m.m.Keys|, " m0:", |m0.oHeap - m0.m.Keys|, "\n";
+//     print "  TLOOP b.fieldsKeys==", b.fields.Keys, "\n";
+//     print "  TINV                ", fieldNames[..i], "\n";
+//     print "  TLOOPINV            ",seq2set(fieldNames[..i]),"\n";
+//
+//
+//     print "VARIANT*CAF ", |(m0.oHeap - m0.m.Keys +{a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
+//
+//
+//     //   assert (m.oHeap - m.m.Keys) < (m0.oHeap - m0.m.Keys);
+//
+//     assert  rm.o     == m.o      == m0.o;
+//     assert  rm.oHeap == m.oHeap  == m0.oHeap;
+//     assert  rm.ns    >= m.ns     >= m0.ns;
+//     assert  rm.m.Keys    >= m.m.Keys     >= m0.m.Keys;
+//     assert  rm.m.Values    >= m.m.Values     >= m0.m.Values;
+//     assert  m.m.Keys     <= rm.m.Keys    <= m.oHeap;
+//
+//     assert b in m.ns by { reveal BINNS; assert b in m.ns; }
+//     assert n !in b.fields;
+//     assert refOK(a, a.fields[n])
+//     by {
+//       assert m.calid();  reveal m.calid();
+//       assert m.calidOK(); reveal m.calidOK();
+//       assert COK(a,m.oHeap); reveal COK();
+//       assert a.AllOutgoingReferencesAreOwnership(m.oHeap);
+//       assert  refOK(a, a.fields[n]);
+//       // - inside(f,t.owner);
+//     }
+//
+//     assert a.AllFieldsAreDeclared();
+//     assert a.fields.Keys <= a.fieldModes.Keys;
+//     assert a.fieldModes == b.fieldModes;
+//     assert n in b.fieldModes;
+//
+//
+//     assert forall n <- b.fields ::
+//         && (n in b.fieldModes)
+//         && AssignmentCompatible(b, b.fieldModes[n], b.fields[n])
+//     by {
+//       assert m.calid();
+//       reveal m.calid();
+//
+//       assert old(m0.calid());
+//
+//       assert COK(b, m.oHeap+m.ns);
+//       reveal COK();
+//       assert b.Valid();
+//       assert b.AllFieldsContentsConsistentWithTheirDeclaration();
+//       assert forall n <- b.fields ::
+//           AssignmentCompatible(b, b.fieldModes[n], b.fields[n]);
+//     }
+//
+//     var OLDFLDS := b.fields.Keys;
+//
+//     assert b in m.ns;
+//     assert b in m.m.Values;
+//     assert a in m.m.Keys;
+//
+//
+//
+//     var v_caf := ((m0.oHeap - m0.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10);
+//     var v_cfm := ((m.oHeap - m.m.Keys +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5);//Clone_Field_Map
+//
+//     print "v_caf ", v_caf, "\n";
+//     print "v_cfm ", v_cfm, "\n";
+//
+//     assert b.fields.Keys == seq2set(fieldNames[..i]);
+//     assert a.fields.Keys == seq2set(fieldNames);
+//
+//     print "okaoka ", (m0.oHeap - m0.m.Keys +{a}) >  (m.oHeap - m.m.Keys +{a}), "\n";
+//     print "okaoka ", (m0.oHeap - m0.m.Keys +{a}) == (m.oHeap - m.m.Keys +{a}), "\n";
+//
+//     assert (m0.oHeap - m0.m.Keys +{a}) >= (m.oHeap - m.m.Keys +{a});
+//     assert a.AMFO >= a.AMFO;
+//     assert (a.fields.Keys) >= (a.fields.Keys - b.fields.Keys);
+//     assert 10 > 5;
+//
+//     label B4CLONEFIELD:
+//
+//     assert  old(m0.calid());
+//
+// //////////////////////////////////////////////////////
+// //preconditions for Clone_Field_Map(a,n,b,m);
+// //////////////////////////////////////////////////////
+//
+//   assert m.calid();
+//   assert COK(a, m.oHeap);
+//   assert COK(b, m.oHeap+m.ns);
+//
+//   assert n  in a.fields.Keys;
+//   assert n !in b.fields.Keys;
+//
+//   assert n  in a.fieldModes;
+//   assert n  in b.fieldModes;
+//   assert a.fieldModes == b.fieldModes;
+//   assert FLDMODZ: a.fieldModes == b.fieldModes;
+//   assert a in m.oHeap;
+//   assert a in m.m.Keys;
+//   assert a.AMFO <= m.m.Keys;
+//   assert b in m.ns;
+//   assert b in m.m.Values;
+// //  assert b.AMFO <= m.m.Values;
+//   assert b  in m.oHeap+m.ns; //TUESDAY17DEC2024
+//   assert (a in m.m.Keys) && m.m[a] == b;
+//   assert m.o    in m.oHeap;
+//   assert m.m.Keys   <= m.oHeap;
+//   assert forall n <- b.fields :: (n in b.fieldModes) && AssignmentCompatible(b, b.fieldModes[n], b.fields[n]);
+//   assert refOK(a, a.fields[n]);
+//
+//
+//
+//
+//   assert m.calid();
+//   assert COK(a, m.oHeap);
+//   assert COK(b, m.oHeap+m.ns);
+//
+//   assert n  in a.fields.Keys;
+//   assert n !in b.fields.Keys;
+//
+//   assert n  in a.fieldModes;
+//   assert n  in b.fieldModes;
+//   assert a.fieldModes == b.fieldModes;
+//   assert a.fieldModes == b.fieldModes;
+//   assert a in m.oHeap;
+//   assert a in m.m.Keys;
+//   assert a.AMFO <= m.m.Keys; //KJX should be part of some invariant;
+//   assert b in m.ns;
+//   assert b in m.m.Values;
+//   assert b.AMFO <= m.oHeap+m.ns  ;
+//   assert (a in m.m.Keys) && m.m[a] == b;
+//   assert m.o    in m.oHeap;
+//   assert m.m.Keys   <= m.oHeap;
+//   assert forall n <- b.fields :: (n in b.fieldModes) && AssignmentCompatible(b, b.fieldModes[n], b.fields[n]);
+//   assert refOK(a, a.fields[n]);
+//
+//
+// //////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////
+//
+//
+//     rm := Clone_Field_Map(a,n,b,m);
+//
+//
+// //////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////
+//
+//     assert  old(m0.calid());
+//
+//     assert  rm.o     == m.o      == m0.o;
+//     assert  rm.oHeap == m.oHeap  == m0.oHeap;
+//     assert  rm.ns    >= m.ns     >= m0.ns;
+//     assert  rm.m.Keys    >= m.m.Keys     >= m0.m.Keys;
+//     assert  rm.m.Values    >= m.m.Values     >= m0.m.Values;
+//     assert  m.m.Keys     <= rm.m.Keys    <= m.oHeap;
+//
+//     //   assert old@B4CLONEFIELD(forall x <- m0.m.Keys :: x.fieldModes == m0.m[x].fieldModes);
+//     //   assert (forall x <- m0.m.Keys :: x.fieldModes == old@B4CLONEFIELD(x.fieldModes));
+//     //   assert (forall x <- m0.m.Keys :: m0.m[x].fieldModes == old@B4CLONEFIELD(m0.m[x].fieldModes));
+//     //   assert (forall x <- m0.m.Keys :: x.fieldModes == m0.m[x].fieldModes);
+//     //
+//
+//     assert n == fieldNames[i];
+//     assert n in b.fields.Keys;
+//     assert b.fields.Keys == OLDFLDS + {n};
+//
+//
+//     nqf(n,fieldNames[i]);
+//
+//     assert {n} == {fieldNames[i]} == seq2set([ n ]) == seq2set([ fieldNames[i] ]);
+//     assert {n} == {fieldNames[i]} == seq2set([ fieldNames[i] ]);
+//
+// //    invariant  b.fields.Keys == seq2set(fieldNames[..i])
+//
+//     extendSeqSet(fieldNames, i);
+//
+//   assert  seq2set(fieldNames[..i+1]) == seq2set(fieldNames[..i]) + seq2set([fieldNames[i]]);
+//
+//   assert  seq2set(fieldNames[..i+1]) == seq2set(fieldNames[..i]) + seq2set([n]);
+//
+//   assert b.fields.Keys == seq2set(fieldNames[..i+1]);
+//
+//
+// //    assert b.fields.Keys == seq2set(fieldNames[..i]) + seq2set([fieldNames[i]]);
+//
+// //    assert b.fields.Keys == seq2set(fieldNames[..(i+1)]);
+//
+//     // assert fieldNames[..i] + [fieldNames[i]] == fieldNames[..i+1];
+//     // assert b.fields.Keys == seq2set(fieldNames[..i]) + seq2set([fieldNames[i]]);
+//     // assert b.fields.Keys == seq2set(fieldNames[..i+1]);
+//
+//     assert rm.from(m);
+//     //assert m.from(m0);
+//     //assert rm.from(m0);
+//
+//
+//     assert rm.calid();
+//     //  assert COK(b, m.oHeap+m.ns );
+//     m := rm;
+//     assert m.calid();
+//     assert old(m0.calid());
+//
+//     //  by {
+//     //    reveal MPRIME; reveal m.calid();
+//     //
+//     //    assert m0 == m0;
+//     //    assert mapLEQ(m0.m, m.m);
+//     //
+//     //    assert forall k <- m0.m.Keys :: m0.m[k] == m.m[k];
+//     //    assert forall k <- m0.m.Keys :: m0.m[k].fields == m.m[k].fields;
+//     //    assert forall k <- m0.m.Keys :: m0.m[k] == m.m[k];
+//     //    assert forall k <- m0.m.Keys :: m0.m[k].fields == m.m[k].fields;
+//     //
+//     //             reveal m0.calid();
+//     // //            assert m0.calid();
+//     //
+//     //         assert (m0.o in  m0.oHeap);
+//     //         assert (m0.m.Keys <= m0.oHeap);
+//     //         assert (m0.m.Values <= m0.oHeap+m0.ns);
+//     //         assert COK(m0.o, m0.oHeap);
+//     //         assert CallOK(m0.oHeap);
+//     //         assert CallOK(m0.m.Keys, m0.oHeap);
+//     //
+//     //         assert CallOK(m0.m.Values-{b}, m0.oHeap+m0.ns) by
+//     //           {
+//     //
+//     //           }
+//     //
+//     //         assert CallOK(m0.ns-{b}, m0.oHeap+m0.ns) by
+//     //           {
+//     //
+//     //           }
+//     //
+//     //         // assert CallOK(m0.m.Values, m0.oHeap+m0.ns);
+//     //         // assert CallOK(m0.ns, m0.oHeap+m0.ns);
+//     //
+//     //             reveal m0.calidOK();
+//     //             assert m0.calidOK();
+//     //             reveal m0.calidObjects();
+//     //             // assert m0.calidObjects();
+//     //             reveal m0.calidMap();
+//     //             // assert m0.calidMap();
+//     //             assert m0.m.Keys == m0.m.Keys;
+//     //
+//     //         reveal m0.AreWeNotMen();
+//     //         //reveal UniqueMapEntry();
+//     //
+//     //         assert (forall x <- m0.m.Keys :: m0.AreWeNotMen(x, m0));
+//     //         assert (forall x <- m0.m.Keys :: x.fieldModes == m0.m[x].fieldModes);
+//     //         assert AllMapEntriesAreUnique(m0.m);
+//     //
+//     //             reveal m0.calidSheep();
+//     //             assert m0.calidSheep();
+//     //
+//     //    assert m0.calid(); }
+//     //
+//
+//
+//     assert  CallOK(m.m.Keys, m.oHeap)
+//     by { reveal m.calid();    assert m.calid();
+//          reveal m.calidOK();  assert m.calidOK();
+//        }
+//   } //end of loop
+//
+//   assert unchanged(a) && unchanged(m.oHeap);
+//
+//
+//   //DONE FIELDS
+//
+//   assert COK(b, m.oHeap+m.ns) by { reveal HEREB; }
+//   assert mapLEQ(m0.m,m.m);
+//   //
+//   // assert m0.calid() by { reveal MPRIME; }
+//
+//   reveal m.calid();
+//   assert m.calid();
+//   reveal m.calidObjects();
+//   assert m.calidObjects();
+//
+//   reveal m.calidMap(); assert m.calidMap();
+//   reveal m.calidSheep(); assert m.calidSheep();
+//
+//
+//   assert m.m[a] == b;
+//
+//   assert m.at(a) == b;
+//   assert a in m.m.Keys;
+//   assert b in m.oHeap+m.ns;
+//
+//   assert COK(b, m.oHeap+m.ns);
+//
+//   assert mapLEQ(m0.m,m.m);
+//
+//
+//   assert CallOK(m.oHeap);
+//   assert COK(a, m.oHeap);
+//   assert COK(b, m.oHeap + m.ns);
+//   assert CallOK(m.m.Values, m.oHeap+m.ns);
+//   assert COK(b, m.oHeap  + m.ns);
+//
+//
+//   reveal m.calidObjects(); assert m.calidObjects();
+//
+//
+//   assert COK(m.o, m.oHeap);
+//   assert CallOK(m.oHeap);
+//   assert CallOK(m.m.Keys, m.oHeap);
+//   assert CallOK(m.m.Values, m.oHeap+m.ns);
+//   assert CallOK(m.ns, m.oHeap+m.ns);
+//
+//   reveal m.calidOK(); assert m.calidOK();
+//
+//   reveal m.calidMap(); assert m.calidMap();
+//
+//   assert klonVMapOK(m.m);
+//
+//
+//
+//   assert  rm.o     == m.o      == m0.o;
+//   assert  rm.oHeap == m.oHeap  == m0.oHeap;
+//   assert  rm.ns    >= m.ns     >= m0.ns;
+//   assert  rm.m.Values    >= m.m.Values     >= m0.m.Values;
+//
+//   reveal m.calidObjects(); assert m.calidObjects();
+//   reveal m.calidOK(); assert m.calidOK();
+//   reveal m.calidSheep(); assert m.calidSheep();
+//
+//   assert m.m.Keys == m.m.Keys;
+//
+//   reveal m.AreWeNotMen();
+//   assert forall x <- m.m.Keys :: m.AreWeNotMen(x, m);
+//   assert forall x <- m.m.Keys :: (not(inside(x,m.o)) ==> (m.m[x] == x));
+//
+//   assert  b.fieldModes == a.fieldModes;
+//
+//   reveal m.calid(); assert m.calid();
+//
+//   // assert m0.calid() by { reveal MPRIME; }
+//
+//   assert klonVMapOK(m.m) && a.AMFO <= m.m.Keys;
+//   assert unchanged(a) && unchanged(m.oHeap);
+//   //
+//   //     assert m0.calid() by {
+//   //        assert unchanged(m0.m.Keys);
+//   //        assert unchanged(m0.m.Values - {b});
+//   //        //assuage COK(b, m.oHeap + m.ns);
+//   //        //assuage m0.m.Values - {b} + {b} == m0.m.Values;
+//   // //       assert
+//   //        assert CallOK(m0.m.Values, m.oHeap + m.ns);
+//   //
+//   //         assert m0.calidObjects();
+//   //         assert m0.calidOK();
+//   //         assert m0.calidMap();
+//   //         assert m0.calidSheep();
+//   //
+//   //
+//   assert old(m0.calid());
+//   //     }
+//   print "RETN Clone_All_Fields done ", fmtobj(a), "\n";
+//
+//   return;
 // }
-
-  print "CALL Clone_All_Fields: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
-
-
-  assert m0.calid() by { reveal MPRIME; }
-
-  assert BINNS:  b in m.ns;
-  print "VARIANT CAF ", |(m0.oHeap - m0.m.Keys +{a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
-  print "<<<<<<<<<<<\n";
-  print "just cloned ", fmtobj(a), " as ", fmtobj(b), "\n";
-  print "<<<<<<<<<<<\n";
-
-
-  assert unchanged(a) && unchanged(m.oHeap);
-
-  assert  m.o == m0.o;
-  assert  m.oHeap == m0.oHeap;
-  assert  m.ns == m0.ns;
-  assert  m.m.Values == m0.m.Values;
-
-  assert  m.m.Keys == m0.m.Keys;
-  assert  a in m0.m.Keys;
-
-  assert m.m[a] == b;  //mmmKJX
-  // assert (a in m.m.Keys) ==> (m[a] == b);  //mmmKJX
-
-  assert m.calid();
-  assert m0.calid() by { reveal MPRIME; }
-  assert COK(b, m.oHeap+m.ns);
-  assert HEREB: COK(b, m.oHeap+m.ns);
-
-
-
-
-  //assert fresh(b);
-  assert  b.fields.Keys == {};
-  assert b in m.m.Values;
-
-  //START OF FIELDS…
-
-  print "<<<<<<<<<<<\n";
-  printmapping(m.m);
-  print "<<<<<<<<<<<\n";
-
-  assert m.calid();
-  assert m0.calid() by { reveal MPRIME; }
-
-  var fieldNames : seq<string> := set2seq(a.fields.Keys);
-
-  assert forall k <- a.fields.Keys :: (multiset(a.fields.Keys))[k] == 1;
-  assert forall s <- fieldNames :: (multiset(fieldNames))[s] == 1;
-  assert forall i | 0 <= i < |fieldNames|, j | 0 <= j < |fieldNames| :: (fieldNames[i] == fieldNames[j]) <==> i == j;
-  //assert b.fields.Keys == {};
-  assert b.fields.Keys == seq2set(fieldNames[..0]);
-
-
-  print "Clone_All_Fields fields:", fmtobj(a), " fields=", fmtseqstr(fieldNames), "\n";
-
-  //DOING FIELDS≈≈
-
-  print "BLOOP BLOOP BLOOP\n";
-
-  assert m.calidOK() by {
-    assert m.calid();
-    reveal m.calid();
-    assert m.calidOK();
-  }
-
-  assert COK(b, m.oHeap+m.ns);
-
-  assert m0.calid() by { reveal MPRIME; }
-
-  label BLOOP:
-
-  assert m.calidOK();
-  reveal m.calidOK();
-  assert m.calid();
-  assert CallOK(m.ns, m.oHeap+m.ns);
-  assert CallOK(m.m.Values, m.oHeap+m.ns);
-
-  assert CallOK(m.m.Keys, m.oHeap) by {}
-
-
-
-  var rm := m;
-
-  assert  rm.o     == m.o      == m0.o;
-  assert  rm.oHeap == m.oHeap  == m0.oHeap;
-  assert  rm.ns    >= m.ns     >= m0.ns;
-  assert  rm.m.Values    >= m.m.Values     >= m0.m.Values;
-  assert  m.m.Keys     <= rm.m.Keys    <= m.oHeap;
-
-
-  COKgetsDeclaredFields(a, m.oHeap);
-  assert unchanged(a) && unchanged(m.oHeap);
-  assert CallOK(m.m.Keys, m.oHeap);
-
-  assert b.fields.Keys == seq2set(fieldNames[..0]) == {};
-
-  for i := 0 to |fieldNames|
-
-    invariant  rm.o     == m.o      == m0.o
-    invariant  rm.oHeap == m.oHeap  == m0.oHeap
-    invariant  rm.ns    >= m.ns     >= m0.ns
-    invariant  rm.m.Values    >= m.m.Values     >= m0.m.Values
-    invariant   m.m.Keys    <= rm.m.Keys    <= m.oHeap
-
-    invariant  b in m.ns
-    invariant  b in m.m.Values
-
-    invariant COK(a, m.oHeap)
-    invariant COK(b, m.oHeap+m.ns)
-    invariant mapLEQ(m0.m,m.m)
-    invariant a in m.oHeap
-    invariant a in m.m.Keys
-    invariant m.o in m.oHeap
-    invariant CallOK(m.oHeap)
-    invariant CallOK(m.m.Keys, m.oHeap)
-    invariant CallOK(m.ns, m.oHeap+m.ns)
-    invariant CallOK(m.m.Values, m.oHeap+m.ns)
-    invariant m.calid()
-    invariant old(m0.calid())
-
-    invariant unchanged(a)
-    invariant unchanged(m.oHeap)
-    //invariant forall x <- m.m.Keys :: (not(inside(x,m.o)) ==> (m.at(x) == x))
-    invariant (m0.oHeap - m0.m.Keys +{a}) >= (m.oHeap - m.m.Keys +{a})
-    invariant (m0.oHeap - m0.m.Keys) >= (m.oHeap - m.m.Keys)
-    invariant b.fields.Keys == seq2set(fieldNames[..i])
-    invariant forall i | 0 <= i < |fieldNames|, j | 0 <= j < |fieldNames| :: (fieldNames[i] == fieldNames[j]) <==> i == j
-
-    invariant  m.m[a] == b
-    invariant  a.fieldModes == b.fieldModes
-    invariant  a.AllFieldsAreDeclared()
-
-
-    invariant old(m0.calid())
-  {
-    assert b.fields.Keys == seq2set(fieldNames[..i]);
-
-    assert COK(b, m.oHeap+m.ns);
-
-    var n : string := fieldNames[i];
-    var ofv : Object := a.fields[n];
-
-    assert n !in seq2set(fieldNames[..i]);
-
-    assert (n !in b.fields.Keys) by {
-      assert n !in seq2set(fieldNames[..i]);
-      assert b.fields.Keys == seq2set(fieldNames[..i]);
-      assert (n !in b.fields.Keys);
-    }
-
-    print "  TLOOP  ",fmtobj(a),".",n," :=", fmtobj(ofv), "\n";
-    print "  TLOOP  (recurse on field ",n,")\n";
-    print "  TLOOP m:", |m.oHeap - m.m.Keys|, " m0:", |m0.oHeap - m0.m.Keys|, "\n";
-    print "  TLOOP b.fieldsKeys==", b.fields.Keys, "\n";
-    print "  TINV                ", fieldNames[..i], "\n";
-    print "  TLOOPINV            ",seq2set(fieldNames[..i]),"\n";
-
-
-    print "VARIANT*CAF ", |(m0.oHeap - m0.m.Keys +{a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 10, "\n";
-
-
-    //   assert (m.oHeap - m.m.Keys) < (m0.oHeap - m0.m.Keys);
-
-    assert  rm.o     == m.o      == m0.o;
-    assert  rm.oHeap == m.oHeap  == m0.oHeap;
-    assert  rm.ns    >= m.ns     >= m0.ns;
-    assert  rm.m.Keys    >= m.m.Keys     >= m0.m.Keys;
-    assert  rm.m.Values    >= m.m.Values     >= m0.m.Values;
-    assert  m.m.Keys     <= rm.m.Keys    <= m.oHeap;
-
-    assert b in m.ns by { reveal BINNS; assert b in m.ns; }
-    assert n !in b.fields;
-    assert refOK(a, a.fields[n])
-    by {
-      assert m.calid();  reveal m.calid();
-      assert m.calidOK(); reveal m.calidOK();
-      assert COK(a,m.oHeap); reveal COK();
-      assert a.AllOutgoingReferencesAreOwnership(m.oHeap);
-      assert  refOK(a, a.fields[n]);
-      // - inside(f,t.owner);
-    }
-
-    assert a.AllFieldsAreDeclared();
-    assert a.fields.Keys <= a.fieldModes.Keys;
-    assert a.fieldModes == b.fieldModes;
-    assert n in b.fieldModes;
-
-
-    assert forall n <- b.fields ::
-        && (n in b.fieldModes)
-        && AssignmentCompatible(b, b.fieldModes[n], b.fields[n])
-    by {
-      assert m.calid();
-      reveal m.calid();
-
-      assert old(m0.calid());
-
-      assert COK(b, m.oHeap+m.ns);
-      reveal COK();
-      assert b.Valid();
-      assert b.AllFieldsContentsConsistentWithTheirDeclaration();
-      assert forall n <- b.fields ::
-          AssignmentCompatible(b, b.fieldModes[n], b.fields[n]);
-    }
-
-    var OLDFLDS := b.fields.Keys;
-
-    assert b in m.ns;
-    assert b in m.m.Values;
-    assert a in m.m.Keys;
-
-
-
-    var v_caf := ((m0.oHeap - m0.m.Keys +{a}), a.AMFO, (a.fields.Keys), 10);
-    var v_cfm := ((m.oHeap - m.m.Keys +{a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5);//Clone_Field_Map
-
-    print "v_caf ", v_caf, "\n";
-    print "v_cfm ", v_cfm, "\n";
-
-    assert b.fields.Keys == seq2set(fieldNames[..i]);
-    assert a.fields.Keys == seq2set(fieldNames);
-
-    print "okaoka ", (m0.oHeap - m0.m.Keys +{a}) >  (m.oHeap - m.m.Keys +{a}), "\n";
-    print "okaoka ", (m0.oHeap - m0.m.Keys +{a}) == (m.oHeap - m.m.Keys +{a}), "\n";
-
-    assert (m0.oHeap - m0.m.Keys +{a}) >= (m.oHeap - m.m.Keys +{a});
-    assert a.AMFO >= a.AMFO;
-    assert (a.fields.Keys) >= (a.fields.Keys - b.fields.Keys);
-    assert 10 > 5;
-
-    label B4CLONEFIELD:
-
-    assert  old(m0.calid());
-
-//////////////////////////////////////////////////////
-//preconditions for Clone_Field_Map(a,n,b,m);
-//////////////////////////////////////////////////////
-
-  assert m.calid();
-  assert COK(a, m.oHeap);
-  assert COK(b, m.oHeap+m.ns);
-
-  assert n  in a.fields.Keys;
-  assert n !in b.fields.Keys;
-
-  assert n  in a.fieldModes;
-  assert n  in b.fieldModes;
-  assert a.fieldModes == b.fieldModes;
-  assert FLDMODZ: a.fieldModes == b.fieldModes;
-  assert a in m.oHeap;
-  assert a in m.m.Keys;
-  assert a.AMFO <= m.m.Keys;
-  assert b in m.ns;
-  assert b in m.m.Values;
-//  assert b.AMFO <= m.m.Values;
-  assert b  in m.oHeap+m.ns; //TUESDAY17DEC2024
-  assert (a in m.m.Keys) && m.m[a] == b;
-  assert m.o    in m.oHeap;
-  assert m.m.Keys   <= m.oHeap;
-  assert forall n <- b.fields :: (n in b.fieldModes) && AssignmentCompatible(b, b.fieldModes[n], b.fields[n]);
-  assert refOK(a, a.fields[n]);
-
-
-
-
-  assert m.calid();
-  assert COK(a, m.oHeap);
-  assert COK(b, m.oHeap+m.ns);
-
-  assert n  in a.fields.Keys;
-  assert n !in b.fields.Keys;
-
-  assert n  in a.fieldModes;
-  assert n  in b.fieldModes;
-  assert a.fieldModes == b.fieldModes;
-  assert a.fieldModes == b.fieldModes;
-  assert a in m.oHeap;
-  assert a in m.m.Keys;
-  assert a.AMFO <= m.m.Keys; //KJX should be part of some invariant;
-  assert b in m.ns;
-  assert b in m.m.Values;
-  assert b.AMFO <= m.oHeap+m.ns  ;
-  assert (a in m.m.Keys) && m.m[a] == b;
-  assert m.o    in m.oHeap;
-  assert m.m.Keys   <= m.oHeap;
-  assert forall n <- b.fields :: (n in b.fieldModes) && AssignmentCompatible(b, b.fieldModes[n], b.fields[n]);
-  assert refOK(a, a.fields[n]);
-
-
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-
-
-    rm := Clone_Field_Map(a,n,b,m);
-
-
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-
-    assert  old(m0.calid());
-
-    assert  rm.o     == m.o      == m0.o;
-    assert  rm.oHeap == m.oHeap  == m0.oHeap;
-    assert  rm.ns    >= m.ns     >= m0.ns;
-    assert  rm.m.Keys    >= m.m.Keys     >= m0.m.Keys;
-    assert  rm.m.Values    >= m.m.Values     >= m0.m.Values;
-    assert  m.m.Keys     <= rm.m.Keys    <= m.oHeap;
-
-    //   assert old@B4CLONEFIELD(forall x <- m0.m.Keys :: x.fieldModes == m0.m[x].fieldModes);
-    //   assert (forall x <- m0.m.Keys :: x.fieldModes == old@B4CLONEFIELD(x.fieldModes));
-    //   assert (forall x <- m0.m.Keys :: m0.m[x].fieldModes == old@B4CLONEFIELD(m0.m[x].fieldModes));
-    //   assert (forall x <- m0.m.Keys :: x.fieldModes == m0.m[x].fieldModes);
-    //
-
-    assert n == fieldNames[i];
-    assert n in b.fields.Keys;
-    assert b.fields.Keys == OLDFLDS + {n};
-
-
-    nqf(n,fieldNames[i]);
-
-    assert {n} == {fieldNames[i]} == seq2set([ n ]) == seq2set([ fieldNames[i] ]);
-    assert {n} == {fieldNames[i]} == seq2set([ fieldNames[i] ]);
-
-//    invariant  b.fields.Keys == seq2set(fieldNames[..i])
-
-    extendSeqSet(fieldNames, i);
-
-  assert  seq2set(fieldNames[..i+1]) == seq2set(fieldNames[..i]) + seq2set([fieldNames[i]]);
-
-  assert  seq2set(fieldNames[..i+1]) == seq2set(fieldNames[..i]) + seq2set([n]);
-
-  assert b.fields.Keys == seq2set(fieldNames[..i+1]);
-
-
-//    assert b.fields.Keys == seq2set(fieldNames[..i]) + seq2set([fieldNames[i]]);
-
-//    assert b.fields.Keys == seq2set(fieldNames[..(i+1)]);
-
-    // assert fieldNames[..i] + [fieldNames[i]] == fieldNames[..i+1];
-    // assert b.fields.Keys == seq2set(fieldNames[..i]) + seq2set([fieldNames[i]]);
-    // assert b.fields.Keys == seq2set(fieldNames[..i+1]);
-
-    assert rm.from(m);
-    //assert m.from(m0);
-    //assert rm.from(m0);
-
-
-    assert rm.calid();
-    //  assert COK(b, m.oHeap+m.ns );
-    m := rm;
-    assert m.calid();
-    assert old(m0.calid());
-
-    //  by {
-    //    reveal MPRIME; reveal m.calid();
-    //
-    //    assert m0 == m0;
-    //    assert mapLEQ(m0.m, m.m);
-    //
-    //    assert forall k <- m0.m.Keys :: m0.m[k] == m.m[k];
-    //    assert forall k <- m0.m.Keys :: m0.m[k].fields == m.m[k].fields;
-    //    assert forall k <- m0.m.Keys :: m0.m[k] == m.m[k];
-    //    assert forall k <- m0.m.Keys :: m0.m[k].fields == m.m[k].fields;
-    //
-    //             reveal m0.calid();
-    // //            assert m0.calid();
-    //
-    //         assert (m0.o in  m0.oHeap);
-    //         assert (m0.m.Keys <= m0.oHeap);
-    //         assert (m0.m.Values <= m0.oHeap+m0.ns);
-    //         assert COK(m0.o, m0.oHeap);
-    //         assert CallOK(m0.oHeap);
-    //         assert CallOK(m0.m.Keys, m0.oHeap);
-    //
-    //         assert CallOK(m0.m.Values-{b}, m0.oHeap+m0.ns) by
-    //           {
-    //
-    //           }
-    //
-    //         assert CallOK(m0.ns-{b}, m0.oHeap+m0.ns) by
-    //           {
-    //
-    //           }
-    //
-    //         // assert CallOK(m0.m.Values, m0.oHeap+m0.ns);
-    //         // assert CallOK(m0.ns, m0.oHeap+m0.ns);
-    //
-    //             reveal m0.calidOK();
-    //             assert m0.calidOK();
-    //             reveal m0.calidObjects();
-    //             // assert m0.calidObjects();
-    //             reveal m0.calidMap();
-    //             // assert m0.calidMap();
-    //             assert m0.m.Keys == m0.m.Keys;
-    //
-    //         reveal m0.AreWeNotMen();
-    //         //reveal UniqueMapEntry();
-    //
-    //         assert (forall x <- m0.m.Keys :: m0.AreWeNotMen(x, m0));
-    //         assert (forall x <- m0.m.Keys :: x.fieldModes == m0.m[x].fieldModes);
-    //         assert AllMapEntriesAreUnique(m0.m);
-    //
-    //             reveal m0.calidSheep();
-    //             assert m0.calidSheep();
-    //
-    //    assert m0.calid(); }
-    //
-
-
-    assert  CallOK(m.m.Keys, m.oHeap)
-    by { reveal m.calid();    assert m.calid();
-         reveal m.calidOK();  assert m.calidOK();
-       }
-  } //end of loop
-
-  assert unchanged(a) && unchanged(m.oHeap);
-
-
-  //DONE FIELDS
-
-  assert COK(b, m.oHeap+m.ns) by { reveal HEREB; }
-  assert mapLEQ(m0.m,m.m);
-  //
-  // assert m0.calid() by { reveal MPRIME; }
-
-  reveal m.calid();
-  assert m.calid();
-  reveal m.calidObjects();
-  assert m.calidObjects();
-
-  reveal m.calidMap(); assert m.calidMap();
-  reveal m.calidSheep(); assert m.calidSheep();
-
-
-  assert m.m[a] == b;
-
-  assert m.at(a) == b;
-  assert a in m.m.Keys;
-  assert b in m.oHeap+m.ns;
-
-  assert COK(b, m.oHeap+m.ns);
-
-  assert mapLEQ(m0.m,m.m);
-
-
-  assert CallOK(m.oHeap);
-  assert COK(a, m.oHeap);
-  assert COK(b, m.oHeap + m.ns);
-  assert CallOK(m.m.Values, m.oHeap+m.ns);
-  assert COK(b, m.oHeap  + m.ns);
-
-
-  reveal m.calidObjects(); assert m.calidObjects();
-
-
-  assert COK(m.o, m.oHeap);
-  assert CallOK(m.oHeap);
-  assert CallOK(m.m.Keys, m.oHeap);
-  assert CallOK(m.m.Values, m.oHeap+m.ns);
-  assert CallOK(m.ns, m.oHeap+m.ns);
-
-  reveal m.calidOK(); assert m.calidOK();
-
-  reveal m.calidMap(); assert m.calidMap();
-
-  assert klonVMapOK(m.m);
-
-
-
-  assert  rm.o     == m.o      == m0.o;
-  assert  rm.oHeap == m.oHeap  == m0.oHeap;
-  assert  rm.ns    >= m.ns     >= m0.ns;
-  assert  rm.m.Values    >= m.m.Values     >= m0.m.Values;
-
-  reveal m.calidObjects(); assert m.calidObjects();
-  reveal m.calidOK(); assert m.calidOK();
-  reveal m.calidSheep(); assert m.calidSheep();
-
-  assert m.m.Keys == m.m.Keys;
-
-  reveal m.AreWeNotMen();
-  assert forall x <- m.m.Keys :: m.AreWeNotMen(x, m);
-  assert forall x <- m.m.Keys :: (not(inside(x,m.o)) ==> (m.m[x] == x));
-
-  assert  b.fieldModes == a.fieldModes;
-
-  reveal m.calid(); assert m.calid();
-
-  // assert m0.calid() by { reveal MPRIME; }
-
-  assert klonVMapOK(m.m) && a.AMFO <= m.m.Keys;
-  assert unchanged(a) && unchanged(m.oHeap);
-  //
-  //     assert m0.calid() by {
-  //        assert unchanged(m0.m.Keys);
-  //        assert unchanged(m0.m.Values - {b});
-  //        //assuage COK(b, m.oHeap + m.ns);
-  //        //assuage m0.m.Values - {b} + {b} == m0.m.Values;
-  // //       assert
-  //        assert CallOK(m0.m.Values, m.oHeap + m.ns);
-  //
-  //         assert m0.calidObjects();
-  //         assert m0.calidOK();
-  //         assert m0.calidMap();
-  //         assert m0.calidSheep();
-  //
-  //
-  assert old(m0.calid());
-  //     }
-  print "RETN Clone_All_Fields done ", fmtobj(a), "\n";
-
-  return;
-}
-//end PLACEHOLDER_Clone_All_Fields
-
+// //end PLACEHOLDER_Clone_All_Fields
+//
 
 
 
@@ -7249,3 +7265,66 @@ by
 //   assert klonVMapOK(m.m);
 //
 // } //end Clone: /_Field_Map
+
+
+
+
+
+lemma KlonKVRestoresReadyAll(k : Object, v : Object, m0 : Klon, m1 : Klon)
+   requires klonCanKV(m0, k, v)
+   requires m1 == klonKV(m0, k, v)
+   requires m0.readyAll()
+   requires m1.readyOK(k)
+   ensures  m1.readyAll()
+  {
+    assert m1.m.Keys == m0.m.Keys + {k};
+    assert m1.from(m0);
+
+    forall x <- m1.m.Keys
+      ensures (m1.readyOK(x)) //by
+      {
+        if (x in m0.m.Keys) {
+          assert x in m0.m.Keys;
+          assert m0.readyOK(x);
+          assert m1.m[x] == m0.m[x];
+          assert m1.readyOK(x) == m0.readyOK(x);
+          assert m1.readyOK(x);
+        } else {
+          assert x !in m0.m.Keys;
+          assert x == k;
+          assert m1.readyOK(k);
+          assert m1.readyOK(x);
+        }
+      }
+
+    // if you write it this way it doesn't work
+    //     if (x == k) {
+    //       assert x !in m0.m.Keys;
+    //       assert m1.readyOK(k);
+    //       assert m1.readyOK(x);
+    //     } else {
+    //       assert x in m0.m.Keys;
+    //       assert m0.readyOK(x);
+    //       assert m1.m[x] == m0.m[x];
+    //       assert m1.readyOK(x);
+    //     }
+
+      assert m1.readyAll();
+   }
+
+
+
+
+
+
+
+
+
+function fmtklon(m : Klon) : string
+ reads m.m.Keys
+ {
+   "K:" + natToString(|m.m.Keys|) +
+     " oH:" +  natToString(|m.oHeap|) +
+     " ns:" +  natToString(|m.ns|) +
+     " ks=" + fmtnickset( m.m.Keys )
+ }

@@ -10,9 +10,9 @@ method Xlone_Via_Map(a : Object, m' : Klon)
 
   requires m'.calid()
   requires m'.readyAll()
+  requires m'.readyOK(a)
   requires allMapOwnersThruKlownOK(m')
   requires COK(a, m'.oHeap) //ties owners into OHEAP but not KLON MAP
-  requires m'.readyOK(a)
   requires klonCanKV(m',a,a)  //hmm, interesting... technically not right but
 {
   m := m';
@@ -29,7 +29,7 @@ method Xlone_Via_Map(a : Object, m' : Klon)
 
   if (outside(a,m.o)) { //outside. so just map to itself
     b := a;
-    m := m.XXXputOutside(a);
+    m := m.putOutside(a);
     print "RETN Clone_Via_Map: outside ", fmtobj(a), "\n";
     return; // end outside case
   }
@@ -63,6 +63,7 @@ method Xlone_Clone_Clone(a : Object, m' : Klon)
   requires AOH: a in m'.oHeap
   requires COH: COK(a, m'.oHeap)
   requires MRK: m'.readyOK(a)
+  requires m'.readyAll()
 
   //requires COK(a, m'.m.Keys+{a}) //KJXFUCKEDFRIDAY13TH
   //need to establish this at the end of this method I guess...
@@ -74,10 +75,14 @@ assert m'.calid() by { reveal MCL; }
 assert (inside(a, m'.o)) by { reveal IAO; }
 assert (a !in m'.m.Keys) by { reveal ANK; }
 assert BNK: m'.boundsNestingOK(a, m'.m.Keys+{a}) by { reveal MRK; assert m'.readyOK(a); m'.boundsNestingFromCalid(a, m'.m.Keys+{a}); }
+assert (m'.m.Keys <= m'.oHeap) by { reveal MCL; m'.calidObjectsFromCalid(); }
+
 m := m';
 assert m.from(m');
      assert m'.boundsNestingOK(a, m'.m.Keys+{a}) by { reveal BNK; }
 assert (a.Ready())  by { assert COK(a, m'.oHeap); RVfromCOK(a, m'.oHeap); assert a.Ready(); }
+assert (m.m.Keys <= m.oHeap);
+assert m.readyOK(a) by { reveal MRK; }
 
  assert  a.AMFX == flattenAMFOs(a.owner);
  assert  a.AMFB == flattenAMFOs(a.bound);
@@ -93,6 +98,8 @@ assert (a.Ready())  by { assert COK(a, m'.oHeap); RVfromCOK(a, m'.oHeap); assert
 assert ((m'.oHeap - m'.m.Keys), |a.AMFO|, |aKeys|, 15
    decreases to (m.oHeap - m.m.Keys), |a.AMFO|, |a.fields.Keys|, 12);
 
+assert (m.m.Keys <= m.oHeap);
+assert m.readyOK(a);
 /////////////////////////////////////////////////////////////////////////////////
   var rm := Xlone_All_Owners(a, m);
 /////////////////////////////////////////////////////////////////////////////////
@@ -107,12 +114,14 @@ assert rm.from(m);
  if (a in rm.m.Keys) {
 
     m := rm;
-    b := m.XXXat(a); //HMM
+    b := m.at(a); //HMM
 
 
 assert m.from(rm);
 //END FUCKOFF
     print "RETN Clone_Clone_CLone ", fmtobj(a), " already cloned: abandoning ship!!\n";
+
+
     return;
   } // a in rm.m.Keys - i.e. randomly done while cloning owners
 
@@ -130,7 +139,7 @@ print "Clone_Clone_Clone ", fmtobj(a), " boodle boodle boodle\n";
 
 print "CALLING MAKE...";
 
-  b := new Object.XXXmake(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rbound);
+  b := new Object.make(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rbound);
 print "BACK FROM MAKE with ",fmtobj(b),"\n";
 
 assert CHAIN: b.AMFO  > b.AMFX >= b.AMFB == flattenAMFOs(rbound) >= rbound;
@@ -183,22 +192,22 @@ print "go4s: ", |km.m|, " ns: ", |km.ns|,"\n";
 
 var amxo := flattenAMFOs(a.owner);
 
-  ////WHAT THE FUCK IS GOING ON HERE
-  //  var xm := rrm.XXXputInside(a,b);
+  ////umm this is moved away from
+  //  var xm := rrm.YYY(a,b);
   //  var xm := rrm.putInside(a,b);
-  //   var xm :=  km.XXXputInside(a,b);
+  //   var xm :=  km.YYYputInside(a,YYY
 
   print "Clone_Clone_Clone map updated ", fmtobj(a), ":=", fmtobj(b) ,"\n";
 
 //COK(a, mmKeys) can only be establshed there
 
 
-//£££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
+//££££££££££££££££££££££££££££££££££££££££££££££4£££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 
   /////   /////    /////    /////   /////    /////    /////   /////    /////
   /////   /////    /////    /////   /////    /////    /////   /////    /////
 
-//ths is cos our XXXpurInside doesn't compute allattribut3es
+//ths is cos our purInside doesn't compute allattribut3es
 //and I can find any US targettedversions...
 
   assert  xm.o     == m'.o;
@@ -268,15 +277,26 @@ assert (
 
 
 method Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
+    // clone the ownes of A...
   decreases (m'.oHeap - m'.m.Keys), |a.AMFO|, |a.fields.Keys|, 12
 
   requires m'.calid()
+  requires m'.m.Keys <= m'.oHeap   //calid via calidObjects...
   requires m'.readyAll()
+  requires m'.readyOK(a)
 
-  ensures  m.from(m')  //GRRR
+  requires a in m'.oHeap
+  requires a !in m'.m.Keys //mustn't have cloned a yet...
+  requires COK(a, m'.oHeap)
+
+
+//  requires m'.readyAll()
+  requires a.Ready()
+
+  ensures  m.from(m')
   ensures  m.calid()
 
-  ensures  m.ownersInKlown(a)  //DLUBLE GRRR
+  ensures  m.ownersInKlown(a)
 
 //probably redundant versions
   ensures a.owner <= m.m.Keys
@@ -291,18 +311,41 @@ method Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
 
   var rm := m';
   assert rm.from(m');
+  assert rm.m.Keys <= rm.oHeap;
+  assert a in rm.oHeap;
+  assert COK(a, rm.oHeap);
+
 
   var b : Object;  //do we care..
 
   var xm := rm;
   assert xm.from(rm);
+  assert rm.from(m');
+  assert xm.m.Keys <= xm.oHeap;
+  assert a in xm.oHeap;
+  assert COK(a, xm.oHeap);
 
   var xo : Object;
   var rr : Object;
   var oldmks  : set<Object>;  //dont fucking ask
   var oldmok :=  false;
 
+
+  reveal xm.calid(), xm.calidObjects(), xm.calidOK(), xm.calidMap(), xm.calidSheep();
+
   var MX := a.owner - xm.m.Keys;
+  assert a in xm.oHeap;
+  assert COK(a, xm.oHeap);
+  reveal COK();
+  assert a.owner <= xm.oHeap;
+  assert MX <= xm.oHeap;
+
+  assert forall x <- MX :: inside(a,x);
+
+    assert MX <= xm.oHeap;
+    assert CallOK(xm.oHeap);
+    assert MX <= xm.oHeap;
+
 
      print "PRELOOP ", |MX|," a in Keys ", (a !in xm.m.Keys), "\n";
 
@@ -336,10 +379,11 @@ method Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
 assert (
     (m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, |old(a.fields.Keys)|, 12
   decreases to
-    (xm.oHeap - xm.m.Keys), |a.AMFO|, |a.fields.Keys|, 20);
+    (xm.oHeap - xm.m.Keys),        |a.AMFO|, |a.fields.Keys|, 20);
 
+assert xo.Ready();
 
-    assert xm.readyOK(xo);
+//    assert xm.readyOK(xo);
 
     rr, rm := Xlone_Via_Map(xo, xm);
 
@@ -397,11 +441,55 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
 
   decreases (m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, fielddiff(a,b), 10
 
+  requires m'.calid()
+  requires m'.readyAll()
+  requires m'.readyOK(a)
+  requires m'.readyOK(a)
+  requires allMapOwnersThruKlownOK(m')
+  requires COK(a, m'.oHeap)  //GRRR need to resolve WRT readyOK() and Valid()
+  requires klonCanKV(m',a,a)
+
+  requires m'.m.Keys <= m'.oHeap
+  requires b.fields.Keys == {}
+  requires b in m'.m.Values
+  requires b in m'.ns
+  requires a.fieldModes == b.fieldModes
+
   modifies b`fields
 {
   print "CALL Clone_All_Fields: ", fmtobj(a), " pivot:", fmtobj(m'.o), "\n";
 
   m := m';
+  assert m.from(m');
+  assert m == m';
+  assert m.m.Keys >= m'.m.Keys;
+  assert m.m.Values >= m'.m.Values;
+  assert m.oHeap >= m'.oHeap;
+  assert m.oHeap >= m.m.Keys;
+
+  assert m.o == m'.o;
+  assert m.oHeap == m'.oHeap;
+  assert m.ns == m'.ns;
+  assert m.m.Values == m'.m.Values;
+
+  assert a.fieldModes == b.fieldModes;
+  assert b in m.ns;
+  assert b in m.m.Values;
+
+
+  assert m.calid();
+  assert m.readyAll();
+  assert m.readyOK(a);
+  assert allMapOwnersThruKlownOK(m');
+
+  assert COK(a, m'.oHeap);
+  assert klonCanKV(m',a,a);
+
+
+  assert a.Valid() by { reveal COK(); assert COK(a, m'.oHeap); }
+  assert a.AllFieldsAreDeclared() by { reveal a.Valid();  assert a.Valid(); }
+  assert a.fields.Keys <= a.fieldModes.Keys;
+  assert a.fields.Keys <= b.fieldModes.Keys;
 
 //TUESDAY15DEC2024
 
@@ -416,18 +504,57 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
   print "<<<<<<<<<<<\n";
 
   var fieldNames : seq<string> := set2seq(a.fields.Keys);
+  assert forall n <- fieldNames :: n in a.fields.Keys;
 
+  assert forall k <- a.fields.Keys :: (multiset(a.fields.Keys))[k] == 1;
+  assert forall s <- fieldNames :: (multiset(fieldNames))[s] == 1;
+  assert forall i | 0 <= i < |fieldNames|, j | 0 <= j < |fieldNames| :: (fieldNames[i] == fieldNames[j]) <==> i == j;
+  assert b.fields.Keys == {};
+  assert b.fields.Keys == seq2set(fieldNames[..0]);
 
- print "Clone_All_Fields fields:", fmtobj(a), " fields=", fmtseqstr(fieldNames), "\n";
-
+  print "Clone_All_Fields fields:", fmtobj(a), " fields=", fmtseqstr(fieldNames), "\n";
 
   print "BLOOP BLOOP BLOOP\n";
 
+  assert b.fields.Keys == seq2set(fieldNames[..0]) == {};
+
+  assert  m.o        == m'.o;
+  assert  m.oHeap    == m'.oHeap;
+  assert  m.ns       >= m'.ns;
+  assert  m.m.Keys >= m'.m.Keys ;
+  assert  m.m.Values >= m'.m.Values;
+  assert  m.oHeap    >= m.m.Keys      >= m'.m.Keys;
+
+  assert a.fieldModes == b.fieldModes;
+  assert b in m.ns;
+  assert b in m.m.Values;
+
   for i := 0 to |fieldNames|
 
+    invariant m.o        == m'.o
+    invariant m.oHeap    == m'.oHeap
+    invariant m.ns       >= m'.ns
+    invariant m.m.Keys >= m'.m.Keys
+    invariant m.m.Values >= m'.m.Values
+    invariant m.oHeap    >= m.m.Keys      >= m'.m.Keys
+
+    invariant a.fieldModes        == b.fieldModes
+    invariant seq2set(fieldNames) <= a.fieldModes.Keys
+    invariant b in m.ns
+    invariant b in m.m.Values
+
+    invariant m.calid()
+    invariant m.readyAll()
+    invariant m.readyOK(a)
+
+    invariant ((m.oHeap - m.m.Keys +{a}) <= (m'.oHeap - m'.m.Keys +{a}))
+    invariant ((m.oHeap - m.m.Keys) <= (m'.oHeap - m'.m.Keys))
+    invariant b.fields.Keys == seq2set(fieldNames[..i])
+    invariant forall i | 0 <= i < |fieldNames|, j | 0 <= j < |fieldNames| :: (fieldNames[i] == fieldNames[j]) <==> i == j
   {
     var n : string := fieldNames[i];
-    assume n in a.fields.Keys;
+    assert n in a.fields.Keys;
+    assert b.fields.Keys == seq2set(fieldNames[..i]);
     var ofv : Object := a.fields[n];
 
     print "  TLOOP  ",fmtobj(a),".",n," :=", fmtobj(ofv), "\n";
@@ -453,15 +580,42 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
 print "WHOOPS-> ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys - b.fields.Keys|," 10\n";
 print "->WHOOPS ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys - b.fields.Keys|," 5 \n";
 
+assert m.oHeap  == m'.oHeap;
+assert m.m.Keys >= m'.m.Keys;
+assert fielddiff(a,b) <= old(fielddiff(a,b));
+assert 5 < 10;
+
+ //a.fieldModes == b.fieldModes
 
 assert (
     (m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, old(fielddiff(a,b)), 10
   decreases to
-    (m.oHeap -  m.m.Keys),        |a.AMFO|, fielddiff(a,b), 5
+    (m.oHeap -  m.m.Keys  + {a}), |a.AMFO|, fielddiff(a,b), 5
  );
 
+  assert m.calid();
+  assert m.readyAll();
+  assert m.readyOK(a);
+  assert allMapOwnersThruKlownOK(m);
+
+  assert COK(a, m'.oHeap);
+  assert klonCanKV(m',a,a);
+
+  assert n  in a.fields.Keys;
+  assert n !in b.fields.Keys;
+
+  assert n  in a.fieldModes;
+  assert n  in b.fieldModes;
+  assert a.fieldModes == b.fieldModes;
+  assert b in m.ns;
+  assert b in m.m.Values;
+
     m := Xlone_Field_Map(a,n,b,m);
-  }
+
+  assert m.oHeap == m'.oHeap;
+  assert b.fields.Keys == seq2set(fieldNames[..i+1]);
+
+  }//end loop
 
   print "RETN Clone_All_Fields done ", fmtobj(a), "\n";
 
@@ -474,10 +628,59 @@ assert (
 
 
 
-method Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
-  returns (m : Klon)
+method Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon) returns (m : Klon)
 
-  decreases (m'.oHeap - m'.m.Keys - {a}), |a.AMFO|, fielddiff(a,b), 5 //Xlone_Field_Map
+  decreases (m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, fielddiff(a,b), 5 //Xlone_Field_Map
+
+  requires m'.calid()
+  requires m'.readyAll()
+  requires m'.readyOK(a)
+
+  requires allMapOwnersThruKlownOK(m')
+  requires COK(a, m'.oHeap)
+  requires klonCanKV(m',a,a)
+
+  requires n  in a.fields.Keys
+  requires n !in b.fields.Keys
+
+  requires n  in a.fieldModes
+  requires n  in b.fieldModes
+  requires a.fieldModes == b.fieldModes
+  requires b in m'.ns
+  requires b in m'.m.Values
+
+  ensures  b.fields.Keys == old(b.fields.Keys) + {n}
+  ensures  (a.fields.Keys - b.fields.Keys) < old(a.fields.Keys - b.fields.Keys)
+  ensures  m.calid()
+  ensures  old(m'.calid())
+  ensures  m.readyAll()
+  ensures  m.readyOK(a)
+
+  ensures  unchanged(a)
+  ensures  unchanged(m'.oHeap)
+  ensures  unchanged(m'.m.Values - {b})
+  ensures  unchanged(m'.m.Keys)
+  ensures  unchanged(m'.ns - {b})  //will this work?
+
+  ensures  m.oHeap  == m'.oHeap
+  ensures  m.m.Keys >= m'.m.Keys
+
+  ensures m.o        == m'.o
+  ensures m.oHeap    == m'.oHeap
+  ensures m.ns       >= m'.ns
+  ensures m.m.Keys   >= m'.m.Keys
+  ensures m.m.Values >= m'.m.Values
+  ensures m.oHeap    >= m.m.Keys      >= m'.m.Keys
+
+///////
+  // ensures m.calid()
+  // ensures m.readyAll()
+  // ensures m.readyOK(a)
+  // ensures allMapOwnersThruKlownOK(m)
+  // ensures COK(a, m.oHeap) //ties owners into OHEAP but not KLON MAP
+  // ensures klonCanKV(m,a,a)
+//////
+
 
   modifies b`fields
 {
@@ -487,33 +690,90 @@ method Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
 
   m := m';
 
+  assert m.calid();
+  assert m.readyAll();
+  assert m.readyOK(a);
+  assert allMapOwnersThruKlownOK(m);
+  assert COK(a, m.oHeap);
+  assert klonCanKV(m,a,a);
+
+
+
   var v_cfm := ((m.oHeap - m.m.Keys + {a}), a.AMFO, (a.fields.Keys - b.fields.Keys), 5);//Xlone_Field_Map *vxriant for dxcreases clause*
 
   var onb := m.ns - {b};
   var ctx := (m.oHeap+m.ns);
 
-  var ofv := XXXCOKat(a,n,m.oHeap);
+  var ofv := COKat(a,n,m.oHeap);
 
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
   var rfv : Object;
 
 
-assert a in m'.m.Keys;
-assert a in m.m.Keys;
+// assert a in m'.m.Keys;
+// assert a in m.m.Keys;
 
 assert
-    ((m'.oHeap - m'.m.Keys - {a}), |a.AMFO|, old(fielddiff(a,b)), 15
+    ((m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, old(fielddiff(a,b)), 5
   decreases to
     (m.oHeap -  m.m.Keys), |a.AMFO|, |a.fields.Keys|, 20
  );
 
+
+  assert m.calid();
+  assert m.readyAll();
+  assert m.readyOK(a);
+  assert allMapOwnersThruKlownOK(m);
+  assert COK(a, m.oHeap);
+  assert klonCanKV(m,a,a);
+
   rfv, m := Xlone_Via_Map(ofv, m);
+
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
-  m.XXXCOKput(b, m.oHeap+m.ns, n, rfv);
+  label B4:
+  m.COKput(b, m.oHeap+m.ns, n, rfv);
+  assert b.fields == old@B4(b.fields)[n:=rfv];
 
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
   print "RETN Clone_Field_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
+
+//
+//   assume  b.fields.Keys == old(b.fields.Keys) + {n};
+//   assume  (a.fields.Keys - b.fields.Keys) < old(a.fields.Keys - b.fields.Keys);
+//   assume  m.calid();
+//   assume  old(m'.calid());
+//   assume  m.readyAll();
+//   assume  m.readyOK(a);
+//   assume  unchanged(a);
+//   assume  unchanged(m'.oHeap);
+//   assume  unchanged(m'.m.Values - {b});
+//   assume  unchanged(m'.m.Keys);
+//   assume  unchanged(m'.ns - {b});
+//   assume  m.oHeap  == m'.oHeap;
+//   assume  m.m.Keys >= m'.m.Keys;
+//   assume m.o        == m'.o;
+//   assume m.oHeap    == m'.oHeap;
+//   assume m.ns       >= m'.ns;
+//   assume m.m.Keys   >= m'.m.Keys;
+//   assume m.m.Values >= m'.m.Values;
+//   assume m.oHeap    >= m.m.Keys      >= m'.m.Keys;
+
 } //end Clone_Field_Map
+
+
+
+
+
+
+
+
+
+
+
+
+function fielddiff(a : Object, b : Object) : nat
+  reads a, b
+  {| a.fields.Keys - b.fields.Keys |}
