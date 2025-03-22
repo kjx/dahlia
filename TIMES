@@ -1,0 +1,109 @@
+
+.for i in *.dfy; do echo $i;  date;  time nightly verify  dfyconfig.toml --filter-position=$i >/dev/null  ; done 
+Context.dfy
+Fri 21 Mar 2025 20:18:14 NZDT
+;
+real	1m3.855s
+user	1m11.769s
+sys	0m3.363s
+Cut.dfy
+Fri 21 Mar 2025 20:19:18 NZDT
+^R
+
+real	0m29.394s
+user	0m39.844s
+sys	0m1.964s
+Edges.dfy
+Fri 21 Mar 2025 20:19:47 NZDT
+
+real	0m32.510s
+user	0m40.380s
+sys	0m2.067s
+Heap.dfy
+Fri 21 Mar 2025 20:20:20 NZDT
+
+real	0m21.382s
+user	0m27.864s
+sys	0m1.108s
+Incoming.dfy
+Fri 21 Mar 2025 20:20:41 NZDT
+
+real	0m22.186s
+user	0m30.205s
+sys	0m1.255s
+K2.dfy
+Fri 21 Mar 2025 20:21:03 NZDT
+
+real	0m3.417s
+user	0m3.501s
+sys	0m0.091s
+Klon.dfy
+Fri 21 Mar 2025 20:21:07 NZDT
+
+
+
+real	6m21.244s
+user	12m53.900s
+sys	0m49.435s
+Library.dfy
+Fri 21 Mar 2025 20:27:28 NZDT
+
+real	0m26.763s
+user	0m32.980s
+sys	0m1.548s
+MIN.dfy
+Fri 21 Mar 2025 20:27:55 NZDT
+
+real	0m3.839s
+user	0m3.984s
+sys	0m0.138s
+Main.dfy
+Fri 21 Mar 2025 20:27:58 NZDT
+
+real	2m46.755s
+user	4m49.167s
+sys	0m10.105s
+Object.dfy
+Fri 21 Mar 2025 20:30:45 NZDT
+
+real	1m59.376s
+user	2m29.678s
+sys	0m8.211s
+Ownership.dfy
+Fri 21 Mar 2025 20:32:45 NZDT
+
+real	0m40.163s
+user	0m50.500s
+sys	0m2.296s
+Predicates.dfy
+Fri 21 Mar 2025 20:33:25 NZDT
+
+real	0m21.537s
+user	0m24.618s
+sys	0m0.717s
+Printing.dfy
+Fri 21 Mar 2025 20:33:46 NZDT
+
+real	0m28.079s
+user	0m33.345s
+sys	0m1.183s
+ScratchMonkey.dfy
+Fri 21 Mar 2025 20:34:14 NZDT
+
+real	0m38.055s
+user	0m46.724s
+sys	0m1.883s
+SuperKlon.dfy
+Fri 21 Mar 2025 20:34:52 NZDT
+
+real	1m19.522s
+user	1m36.329s
+sys	0m5.255s
+X2.dfy
+Fri 21 Mar 2025 20:36:12 NZDT
+
+real	3m41.321s
+user	4m42.856s
+sys	0m11.239s
+.
+.
