@@ -162,10 +162,10 @@ class Object {
     requires forall o <- oo :: o.Ready()  //hmmm
     requires oo >= mb
 //for OvenReady()
-  requires forall o <- mb :: o.Ready()
-  requires forall o <- oo :: o.Ready()
-  requires forall o <- oo, ooo <- o.AMFO :: o.AMFO > ooo.AMFO
-  requires forall o <- oo, ooo <- o.AMFO :: ooo.Ready()
+    requires forall o <- mb :: o.Ready()
+    requires forall o <- oo :: o.Ready()
+    requires forall o <- oo, ooo <- o.AMFO :: o.AMFO > ooo.AMFO
+    requires forall o <- oo, ooo <- o.AMFO :: ooo.Ready()
 
 //end OverReady()
     requires CallOK(oo, context)
@@ -176,12 +176,9 @@ class Object {
     //KJX shouldn't there be some topological restriction on where or when
     //you can create new objects/contexts / regions?
     //what sgoiuld they be?
-
-//    requires CallOK(flattenAMFOs(oo), context) //KJX is this right?
-    requires CallOK(oo, context) //KJX is this right?
-
     requires ownerInsideOwner(oo,mb)
 
+    //requires CallOK(flattenAMFOs(oo), context) //KJX is this right?
     ensures owner == oo
     ensures AMFX == flattenAMFOs(oo)
     ensures ntrnl == oo + {this}

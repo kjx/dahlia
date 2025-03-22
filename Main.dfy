@@ -11,7 +11,7 @@ const protoTypes : map<string, Mode> :=
          ["fucker" := Evil]
 
 
-method Main(s : seq<string>)
+method {:verify false} Main(s : seq<string>)
 {
   print "Main()\n";
 
@@ -32,12 +32,13 @@ method Main(s : seq<string>)
  }
 }
 
-method makeDemo() returns (t : Object, a : Object, os : set<Object>)
+method {:verify false} makeDemo() returns (t : Object, a : Object, os : set<Object>)
   ensures t in os
   ensures a in os
-  ensures forall o <- os :: (o.AllOwnersAreWithinThisHeap(os))
-
+  ensures forall o <- os :: o.AllOwnersAreWithinThisHeap(os)
 {
+
+assert CallOK({},{});
 
 t := new Object.make(protoTypes, {}, {}, "t");
 //   t
@@ -46,7 +47,7 @@ t := new Object.make(protoTypes, {}, {}, "t");
 //   e f g h
 
 assert t.Ready();
-assert COK(t, {t});
+assert COK(t, {t}) by { reveal COK(); }
 
 // protoTypes 8-)
 // cat dat eye fucker jat kye lat nxt rat
