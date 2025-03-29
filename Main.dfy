@@ -26,10 +26,10 @@ method {:verify false} Main(s : seq<string>)
      case '3' =>  Main3();
      case '4' =>  Main4();
      case _ => {}
- }
-
+  }
   print "Exit, pursued by a bear\n";
  }
+
 }
 
 method {:verify false} makeDemo() returns (t : Object, a : Object, os : set<Object>)
@@ -92,7 +92,6 @@ assert l.Ready();
 
 os := {t,   a, b, c, d, e, f, g, h, i, j, k, l};
 
-
 a.fields := map["eye":=d];
 d.fields := map["lat":= e]["dat":=f]["cat":=g]["rat":= h];
 
@@ -122,6 +121,22 @@ assert k.AllOwnersAreWithinThisHeap(os);
 assert l.AllOwnersAreWithinThisHeap(os);
 
 assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
+
+
+print "\n=============================================================\n";
+////
+var oq := [t,   a, b, c, d, e, f, g, h, i, j, k, l];
+
+  for i := 0 to |oq|
+    {
+      var o : Object := oq[i];
+
+      assert o.Ready();
+
+      printobject(o);
+    }
+   print "\n=============================================================\n";
+   print "\n\n";
 }
 
 method {:verify false} Main0() {
