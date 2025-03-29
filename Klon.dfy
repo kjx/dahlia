@@ -2729,6 +2729,26 @@ lemma boundsNestingFromKlon(o : Object, context : set<Object>, prev : Klon)
   {}
 
 
+lemma boundsNestingFromCOK(o : Object, context : set<Object>)
+  requires COK(o, context)
+  ensures  boundsNestingOK(o, context)
+  {
+    reveal COK();
+
+    // assert  ownerInsideOwner(o.owner, o.bound);
+    // assert  ownerInsideOwner(o.AMFO, o.AMFB);
+    // assert  ownerInsideOwner(o.AMFB, o.bound);
+    // assert  ownerInsideOwner(o.AMFO, o.bound);
+    // assert  ownerInsideOwnerInsideOwner(context, o.owner, o.bound);
+    // assert  ownerInsideOwnerInsideOwner(context, o.AMFO, o.AMFB);
+    // assert  ownerInsideOwner(o.allExternalOwners(),o.allExternalBounds());
+    // assert  ownerInsideOwner(o.AMFO,o.allExternalOwners());
+    // assert  ownerInsideOwner(o.AMFB,o.allExternalBounds());
+
+    assert boundsNestingOK(o, context);
+  }
+
+
 
 
 method {:verify false} XXXCOKput(f : Object, context : set<Object>, n : string, t : Object)
@@ -3839,7 +3859,7 @@ lemma KlonVMapOKfromCalid(m : Klon)
 
 predicate klonAllOwnersAreCompatible( m : Klon, ks: set<Object> := m.m.Keys)
 //
-requires ks <= m.m. Keys
+requires ks <= m.m.Keys
 
 reads m.oHeap`fields,      m.oHeap`fieldModes
 reads m.ns`fields,         m.ns`fieldModes
