@@ -93,7 +93,7 @@ class Object {
 
   var nick : string //nickname
 
-
+  var randomAxMShit : bool
 
 
 
@@ -151,6 +151,8 @@ class Object {
     fieldModes := ks;
     fields := map[];
     nick := name;
+
+    randomAxMShit := false;
     new;
 
   }//end XXXmake()j
@@ -204,6 +206,8 @@ class Object {
 
     ensures COK(this, context+{this})
     ensures nick == name
+    ensures randomAxMShit == false
+
 
     //ensures CallOK({this} + {oo}+oo.AMFO, {this} + context)
 
@@ -227,6 +231,8 @@ class Object {
     fieldModes := ks;
     fields := map[];
     nick := name;
+
+    randomAxMShit := false;
     new;
 
   assert this !in AMFX;
