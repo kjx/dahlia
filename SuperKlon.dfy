@@ -683,8 +683,7 @@ lemma INSIDE_CAN_POUNT_OUT(m' : Klon, f : Object, t : Object, o : Object, c : Ob
   // assert refOK(f,t);
 }
 
-lemma
- MOVING_ON_IN(m' : Klon, f : Object, t : Object, o : Object, c : Object)
+lemma MOVING_ON_IN(m' : Klon, f : Object, t : Object, o : Object, c : Object)
 /// can move an object down; doesn't lose access
  requires f.Ready()
  requires o.Ready()
