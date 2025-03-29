@@ -382,26 +382,77 @@ lemma IAmInsideMyOwnersAndAMFO(a : Object, o : Object)
 {
 }
 
+// all thsi shit commented out
+// because collectAllOwners over in SuperKlon.dfy does the same thing
+// only far far better!
+//
+// lemma AMFOsmaller(a : Object)
+//   requires a.Ready() && a.Valid()
+//   ensures  forall oo <- a.AMFX :: strictlyInside(a,oo)
+// {}
+//
+// function AllMyConcievableOwners(a : Object) : (amco : Owner)
+//   decreases a.AMFO
+//   requires a.Ready()
+// //ensures amco == a.AMFX
+//   ensures a !in amco
+//   ensures amco <= a.AMFX
+//   {
+//     assert a.Ready();
+//     a.ReadyGetsOwnersValid();
+//     assert a.OwnersValid();
+//     assert forall oo <- a.AMFX :: a.AMFO > oo.AMFO;
+//     assert forall oo <- a.AMFX :: oo.Ready();
+// //    set oo <- a.AMFX, ooo <- (AllMyConcievableOwners(oo) + {oo}) :: ooo
+//     set oo <- a.AMFX, ooo <- (AllMyConcievableOwners(oo) + {oo}) :: ooo
+//   }
+//
+// lemma AllMyConcievableOwnersAreFUCKINGFlat1(a : Object)
+//   decreases a.AMFO
+//   requires a.Ready()
+//   ensures  AllMyConcievableOwners(a) <= a.AMFO
+//   ensures AllMyConcievableOwners(a) <= a.AMFX
+//   {}
+//
+// lemma AllMyConcievableOwnersAreFUCKINGFlat2(a : Object)
+//   decreases a.AMFO
+//   requires a.Ready()
+//   // ensures  AllMyConcievableOwners(a) <= a.AMFO
+//    ensures AllMyConcievableOwners(a) >= a.AMFX
+//   {
+//   //  assert forall oo <- a.AMFX :: a in AllMyConcievableOwners(a);
+//
+//   if (AllMyConcievableOwners(a) >= a.AMFX)
+//    { assert true;
+//      return;
+//    } else {
+//      assert not(AllMyConcievableOwners(a) >= a.AMFX);
+//      assert    (AllMyConcievableOwners(a) <  a.AMFX);
+//      assert exists x <- a.AMFX :: x !in AllMyConcievableOwners(a);
+//      assert exists x <- a.AMFX :: (x !in (set oo <- a.AMFX :: oo));
+//      assert exists x <- a.AMFX :: (x !in
+//               (set oo <- a.AMFX, ooo <- (AllMyConcievableOwners(oo) + {oo}) :: ooo));
+//      assert {:contradiction} forall x <- a.AMFX :: (x in
+//               (set oo <- a.AMFX, ooo <- (AllMyConcievableOwners(oo) + {oo}) :: ooo));
+//      assert {:contradiction} false;
+//      return;
+//    }
+//   }
+//
+// lemma AllMyConcievableOwnersAreOKInThisKlown(a : Object, m : Klon, allMyConcievableOwnersExceptMe : Owner)
+//   requires a.Ready()
+//   requires allMyConcievableOwnersExceptMe == (AllMyConcievableOwners(a) - {a})
+//   requires m.ownersInKlown(a)
+//   ensures  allMyConcievableOwnersExceptMe <= m.m.Keys
+// {}
 
-
-
-function AllMyConcievableOwners(a : Object) : Owner
+lemma AMFXabreOK(a : Object, m : Klon)
   decreases a.AMFO
-  requires a.Ready()
-  {
-    assert a.Ready();
-    a.ReadyGetsOwnersValid();
-    assert a.OwnersValid();
-    assert forall oo <- a.AMFX :: a.AMFO > oo.AMFO;
-    assert forall oo <- a.AMFX :: oo.Ready();
-    set oo <- a.AMFX, ooo <- AllMyConcievableOwners(oo) :: ooo
-  }
 
-lemma AllMyConcievableOwnersAreFUCKINGFlat(a : Object)
-  decreases a.AMFO
-  requires a.Ready()
-  ensures AllMyConcievableOwners(a) <= a.AMFO
-  {}
+  requires  a.Ready()
+  requires  m.ownersInKlown(a)
+  ensures   forall oo <- a.AMFX :: m.ownersInKlown(oo)
+{}
 
 
 
