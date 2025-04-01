@@ -628,7 +628,7 @@ assert OwnersValid();
 
 
 
-predicate  OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec2024}
+predicate OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec2024}
   decreases AMFO, 10
   reads {}
   {
@@ -675,12 +675,14 @@ lemma AMFOsisAMFOs1()
 {}
 
 lemma AMFOsisAMFOs2()
+//my AMFO encompasses or equals my owners' owners' AMFOs (equals if its me)
    requires Ready()
    requires OwnersValid()
    ensures forall x <- AMFO, oo <- x.AMFO :: oo.AMFO <= AMFO
 {}
 
 lemma AMFOsisAMFOs3()
+   // AMFX is flattern (externa) owners and works OK
    requires Ready()
    requires OwnersValid()
    ensures allExternalOwners() == flattenAMFOs(owner) == AMFX
@@ -700,7 +702,6 @@ ensures
   && (forall o <- AMFO :: inside(this, o))  // {todo could move   this out}
   && (AMFX == AMFO - {this})
   && (AMFO >= AMFB)
-
 {}
 
 
@@ -1200,7 +1201,7 @@ set o <- os, v <- o.fields.Values | o != xo :: v
 
 
 
-lemma FEWERFIELDS(a : Object)
+ lemma FEWERFIELDS(a : Object)
    requires a.Ready()
    ensures  mapLEQ(a.fields, old(a.fields))
    ensures  a.Ready()

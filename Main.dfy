@@ -29,7 +29,6 @@ method {:verify false} Main(s : seq<string>)
   }
   print "Exit, pursued by a bear\n";
  }
-
 }
 
 method {:verify false} makeDemo() returns (t : Object, a : Object, os : set<Object>)

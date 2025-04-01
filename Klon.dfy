@@ -928,6 +928,8 @@ datatype Klon = Klon
   c_owner : Owner,             //prooposed owner of
   c_amfx  : Owner,             //amfx of clone... - can't have AMFO cos c likely hasn't been created yet.
 
+//wboops need the  NEW BOUND too HUH?
+
   oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts
   ns : set<Object>      //ns - new objects  (must be !! oHeap,   m.Values <= oHeap + ns
   )
@@ -1067,7 +1069,7 @@ lemma KLUBKLOWN(o : Object)
      // all keys are readyOK
      //kjx: our should this just be ready or calid or somnething??
    {
-      && (o_amfo <=   m.Keys)   //REDD FLAGGE
+    //  && (o_amfo <=   m.Keys)   //REDD FLAGGE
       && (forall k <- m.Keys :: readyOK(k))
    }
 
@@ -2659,6 +2661,7 @@ predicate fieldMappingsOK(k : Object, v : Object, context : set<Object>)
 // }
 
 //should be renamed - refactored...
+//really DOES NOT need to be inide Klon!!
 predicate boundsNestingOK(o : Object, context : set<Object>)
   reads oHeap`fields, oHeap`fieldModes
   reads ns`fields, ns`fieldModes
@@ -2729,7 +2732,7 @@ lemma boundsNestingFromKlon(o : Object, context : set<Object>, prev : Klon)
   {}
 
 
-lemma boundsNestingFromCOK(o : Object, context : set<Object>)
+lemma BoundsNestingFromCOK(o : Object, context : set<Object>)
   requires COK(o, context)
   ensures  boundsNestingOK(o, context)
   {
