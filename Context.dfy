@@ -354,3 +354,11 @@ lemma RVfromCallOK(aa : set<Object>, context : set<Object>)
   {
     reveal COK(), CallOK();
   }
+
+
+lemma NothingShallComeOfNothing(aa : set<Object>, context : set<Object>)
+  requires aa == {}
+  ensures  CallOK(aa,context)
+  {
+    reveal CallOK();
+  }
