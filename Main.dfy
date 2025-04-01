@@ -183,25 +183,19 @@ print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
 
 print "about to Xlone a\n";
 
+  var m : Klon := seed(a, a.owner, os);
 
-var m := Klon(map[],    //m clonemap
-               a,       // o - object to be cloned / pivot / top object
-               a.AMFO,  // o_amfo AMFO of o
-               a.owner,  // c_owner - proposewd owner of clone
-               a.AMFX,   // c_amfx - AMFX of clone
-               os,      // oHeap
-               {}       // ns;
-              );
+// var m := Klon(map[],    //m clonemap
+//                a,       // o - object to be cloned / pivot / top object
+//                a.AMFX,  // o_amfo AMFO of o
+//                a.owner,  // c_owner - proposewd owner of clone
+//                a.AMFX,   // c_amfx - AMFX of clone
+//                os,      // oHeap
+//                {}       // ns;
+//               );
 
 var ra, rm := Xlone_Via_Map(a, m);
 
-// //
-// //     m : Mapping,  //m : Mapping
-// //     ks : set<Object>, //ks - set, keys of the mapping   (must be m.Keys, subset of oHeap)
-// //     vs : set<Object>, //vs - set, values or the mapping (must be m.Values, subset of oHeap + ns)
-// //     o : Object,  //o - Owner within which the clone is being performaed, in oHeap
-// //     oHeap : set<Object>,  //oHeap - original (sub)heap contianing the object being cloned and all owners and parts
-// //     ns : set<Object>)
 
 print "+++++++++++++\n";
 print "original store (os)\n";
@@ -273,19 +267,21 @@ print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
 
 print "about to Clone a\n";
 
-var m := Klon(map[],    //m clonemap
-               a,       // o - object to be cloned / pivot / top object
-               a.AMFO,  // o_amfo AMFO of o
-               a.owner,  // c_owner - proposewd owner of clone
-               a.AMFX,   // c_amfx - AMFX of clone
-               os,      // oHeap
-               {}       // ns );
-              );
+// var m : Klon := Klon(map[],    //m clonemap
+//                a,       // o - object to be cloned / pivot / top object
+//                a.AMFO,  // o_amfo AMFO of o
+//                a.owner,  // c_owner - proposewd owner of clone
+//                a.AMFX,   // c_amfx - AMFX of clone
+//                os,      // oHeap
+//                {}       // ns );
+//               );
+
+
+  var m : Klon := seed(a, a.owner, os);
+
+//  var ra, rm := Clone_Via_Map(a, m);
 
 print "NOT Cloning because Clone isn't linked\n";
-///
-///
-/// var ra, rm := Clone_Via_Map(a, m);
 
 var ra, rm := a, m;
 

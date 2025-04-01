@@ -9,9 +9,11 @@ predicate klonEQ(c' : Klon, c : Klon)
 {
   && (c'.m == c.m)
   && (c'.o == c.o)
-  && (c'.o_amfo  == c.o_amfo)
-  && (c'.c_owner  == c.c_owner)
+  && (c'.o_amfx  == c.o_amfx)
+  && (c'.c_owner == c.c_owner)
   && (c'.c_amfx  == c.c_amfx)
+  && (c'.oxtra   == c.oxtra)
+  && (c'.cxtra   == c.cxtra)
   && (c'.oHeap == c.oHeap)
   && (c'.ns == c.ns)
 }
@@ -20,9 +22,11 @@ predicate klonLEQ(c' : Klon, c : Klon)
 {
   && (mapLEQ(c'.m, c.m))
   && (c'.o == c.o)
-  && (c'.o_amfo  == c.o_amfo)
+  && (c'.o_amfx  == c.o_amfx)
   && (c'.c_owner  == c.c_owner)
   && (c'.c_amfx  == c.c_amfx)
+  && (c'.oxtra   == c.oxtra)
+  && (c'.cxtra   == c.cxtra)
   && (c'.oHeap == c.oHeap)
   && (c'.ns <= c.ns)
 }
@@ -43,7 +47,7 @@ function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
   ensures  klonLEQ(c',c)
   ensures  mapLEQ(c'.m,c.m)
   ensures  c.o == c'.o
-  ensures  c.o_amfo  == c'.o_amfo
+  ensures  c.o_amfx  == c'.o_amfx
   ensures  c.c_owner == c'.c_owner
   ensures  c.c_amfx  == c'.c_amfx
   ensures  mapLEQ(c'.m,c.m)
@@ -371,7 +375,7 @@ lemma {:verify false} OLDklonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 
   assert m1 == klonKV(m0,k,v);
   assert m1.from(m0);
   assert m0.readyAll();
-  assert m0.o_amfo <= m0.m.Keys ;
+  assert m0.o_amfx <= m0.m.Keys ;
   assert forall o <- m0.m.Keys :: m0.readyOK(o);
   assert forall o <- m0.m.Keys :: m0.ownersInKlown(o);
   assert allMapOwnersThruKlownOK(m0);
@@ -390,9 +394,9 @@ lemma {:verify false} OLDklonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 
 
 assert m1.readyAll() by {
   assert m0.readyAll();
-  assert m0.o_amfo <= m0.m.Keys;
+  assert m0.o_amfx <= m0.m.Keys;
   assert klonLEQ(m0, m1);
-  assert m1.o_amfo <= m1.m.Keys;
+  assert m1.o_amfx <= m1.m.Keys;
   assert m1.readyOK(k);
 
   forall kk <- m1.m.Keys ensures m1.readyOK(kk) //by
@@ -650,9 +654,9 @@ c.calidObjectsFromCalid();
 //
 // assert m1.readyAll() by {
 //   assert m0.readyAll();
-//   assert m0.o_amfo <= m0.m.Keys;
+//   assert m0.o_amfx <= m0.m.Keys;
 //   assert klonLEQ(m0, m1);
-//   assert m1.o_amfo <= m1.m.Keys;
+//   assert m1.o_amfx <= m1.m.Keys;
 //   assert m1.readyOK(k);
 //
 //   forall kk <- m1.m.Keys ensures m1.readyOK(kk) //by
@@ -924,9 +928,12 @@ datatype Klon = Klon
       // or rather is the fucking OBJECT to be CLONED???
   //    p : Object,  // Owner of the new (target) clone.  needs to be inside the source object's movement
 
-  o_amfo  : Owner,             //was o. so the AMFO of o
-  c_owner : Owner,             //prooposed owner of
+  o_amfx  : Owner,             //was o. so the AMFO of o
+  c_owner : Owner,             //prooposed owner of c
   c_amfx  : Owner,             //amfx of clone... - can't have AMFO cos c likely hasn't been created yet.
+
+  oxtra   : Owner,
+  cxtra   : Owner,
 
 //wboops need the  NEW BOUND too HUH?
 
@@ -943,7 +950,7 @@ datatype Klon = Klon
 // {
 //   && (mapLEQ(c'.m, c.m))
 //   && (c'.o == c.o)
-//   && (c'.o_amfo  == c.o_amfo)
+//   && (c'.o_amfx  == c.o_amfx)
 //   && (c'.c_owner  == c.c_owner)
 //   && (c'.c_amfx  == c.c_amfx)
 //   && (c'.oHeap == c.oHeap)
@@ -965,7 +972,7 @@ datatype Klon = Klon
     reveal calid(), calidObjects(), calidOK(), calidMap(), calidSheep();
     && mapGEQ(m, prev.m)
     && o       == prev.o
-    && o_amfo  == prev.o_amfo
+    && o_amfx  == prev.o_amfx
     && c_owner == prev.c_owner
     && c_amfx  == prev.c_amfx
     && oHeap   == prev.oHeap
@@ -1039,7 +1046,7 @@ lemma ReadyOKDUCKED(o : Object)
 lemma KLOWNAMFO(o : Object)
   requires o.Ready()
   requires o.AMFO <= m.Keys
-  requires o_amfo <= m.Keys
+  requires o_amfx <= m.Keys
 
   ensures  objectInKlown(o)
   ensures  ownersInKlown(o)
@@ -1066,12 +1073,25 @@ lemma KLUBKLOWN(o : Object)
 
 
    predicate readyAll()
+   //should be called "klownMapOK"e
      // all keys are readyOK
-     //kjx: our should this just be ready or calid or somnething??
+     //should be called calldReady????
+     //or calidKlown, or klownMapOK...
    {
-    //  && (o_amfo <=   m.Keys)   //REDD FLAGGE
+      && (o_amfx <= m.Keys)
+      && (oxtra == mapThruKlon(o_amfx, this) - c_amfx)
+      && (cxtra == c_amfx - mapThruKlon(o_amfx, this))
+
       && (forall k <- m.Keys :: readyOK(k))
    }
+
+//
+// predicate klownMapOK()
+// {
+//   && (o_amfx <= m.Keys)
+//   && (cxtra == c_amfx - mapThruKlon(o_amfx, this))
+//   && (oxtra == mapThruKlon(o_amfx, this) - c_amfx)
+// }
 
 
 
@@ -1425,8 +1445,13 @@ assert (forall x <- oHeap :: (x.Ready() && x.AllOutgoingReferencesWithinThisHeap
 
 
 
+
     // reveal calid(); assert calid();
-var rv := Klon(VMapKV(m,k,v), o, o_amfo, c_owner, c_amfx, oHeap, ns+nu(k,v));
+var OLDrv := Klon(VMapKV(m,k,v), o, o_amfx, c_owner, c_amfx, oxtra, cxtra, oHeap, ns+nu(k,v));
+
+var rv := this.(m := VMapKV(m,k,v), ns := ns+nu(k,v));
+
+assert rv == OLDrv;
 
 //////////////////////////////////////////////////////////////////////////////////////
 // unpkacing KlonKV
@@ -2893,7 +2918,7 @@ assert DEREK: COK(f, context) by {
 //     ensures  r.from(this)
     // ensures  AllMapEntriesAreUnique(this.m)
   {
-    var rv := Klon(VMapKV(m,k,v), o, o_amfo, c_owner, c_amfx, oHeap, ns+nu(k,v));
+    var rv := Klon(VMapKV(m,k,v), o, o_amfx, c_owner, c_amfx, oxtra, cxtra, oHeap, ns+nu(k,v));
    // var rv := klonKV(this,k,v);
     rv
     } //END putin
@@ -2932,7 +2957,7 @@ assert DEREK: COK(f, context) by {
     // ensures  r == klonKV(this,k,k)
     // ensures  klonVMapOK(r.m)
     // ensures  klonVMapOK(m)
-    ensures  r == Klon(VMapKV(m,k,k), o, o_amfo,  {}, c_amfx, oHeap, ns)
+    ensures  r == Klon(VMapKV(m,k,k), o, o_amfx,  {}, c_amfx, oxtra, cxtra, oHeap, ns)
 
 //     ensures  v in r.ns
     ensures  k in r.m.Keys && r.m[k] == k
@@ -2949,7 +2974,7 @@ assert DEREK: COK(f, context) by {
 //     ensures  r.from(this)
     // ensures  AllMapEntriesAreUnique(this.m)
   {
-    var rv := Klon(VMapKV(m,k,k), o, o_amfo, {},  c_amfx, oHeap, ns);
+    var rv := Klon(VMapKV(m,k,k), o, o_amfx, c_owner,  c_amfx, oxtra, cxtra, oHeap, ns);
     rv
     } //END putout
 

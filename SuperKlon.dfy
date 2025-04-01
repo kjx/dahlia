@@ -46,7 +46,7 @@ function OOOLDEmapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
 //   requires k in m.m.Keys
 //   // requires v in m.m.Values
 //   // requires m.m[k] == v
-//   requires m.o_amfo <= m.m.Keys   //IN-KLON
+//   requires m.readyAll()   //IN-KLON
 //   requires k.owner <= m.m.Keys   //IN-KLON
 //   requires k.AMFO  <= m.m.Keys   //IN-KLON
 //   reads m.oHeap`fields,  m.oHeap`fieldModes
@@ -55,31 +55,38 @@ function OOOLDEmapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
 //   mapThruKlown(k.AMFO, m)
 // }
 
-function mapThruKlown(k : set<Object>, m : Klon) : Owner
-  requires m.o_amfo <= m.m.Keys   //KLON-OK
+function OLDmapThruKlown(k : set<Object>, m : Klon) : set<Object>
+//note that this OLD version now looks at amfx not amfo
+  requires m.readyAll()
   requires k <= m.m.Keys
 {
-  var CXTRA := m.c_amfx - mapThruKlon(m.o_amfo, m);
-  var OXTRA := mapThruKlon(m.o_amfo, m) - m.c_amfx;
+  var CXTRA := m.c_amfx - mapThruKlon(m.o_amfx, m);
+  var OXTRA := mapThruKlon(m.o_amfx, m) - m.c_amfx;
 
 //  assert  (mapThruKlon(m.o_amfo, m) - OXTRA + CXTRA) == m.c_amfx;
 
   (mapThruKlon(k,m) - OXTRA + CXTRA )
 }
 
+function mapThruKlown(k : set<Object>, m : Klon) : set<Object>
+  requires k <= m.m.Keys
+  requires m.readyAll()
+    { mapThruKlon(k,m) - m.oxtra + m.cxtra }
+
+
 
 lemma LEMMAmapThruKlown(k : Owner, m : Klon)
-  requires m.o_amfo <= m.m.Keys   //IN-KLON
+  requires m.readyAll()   //IN-KLON
   requires k <= m.m.Keys
 {
-  var CXTRA := m.c_amfx - mapThruKlon(m.o_amfo, m);
-  var OXTRA := mapThruKlon(m.o_amfo, m) - m.c_amfx;
+  var CXTRA := m.c_amfx - mapThruKlon(m.o_amfx, m);
+  var OXTRA := mapThruKlon(m.o_amfx, m) - m.c_amfx;
 
-  assert  (mapThruKlon(m.o_amfo, m) - OXTRA + CXTRA) == m.c_amfx;
+  assert  (mapThruKlon(m.o_amfx, m) - OXTRA + CXTRA) == m.c_amfx;
 }
 //
 // lemma MAP_AMFO_THRU_KLON_IS_NOOP(k : Object, m : Klon, r : set<Object>)
-//   requires m.o_amfo <= m.m.Keys
+//   requires m.readyAll()
 //   requires r == mapThruKlon(m.o_amfo, m) //should ben AMFX innit
 //   requires m.calid()
 //
@@ -109,7 +116,7 @@ lemma KLUCKO(o : Object, m : Klon)
 // //nicer? version of mappingOwnersThruKlownOK?
 // //do all o's owner attribute map to m.m[o]'s attributes
 // //not currently needed?
-//   requires m.o_amfo <= m.m.Keys   //KLON-OK
+//   requires m.readyAll()   //KLON-OK
 //   requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
 //   requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
 //   requires o in m.m.Keys  //IN-KLON
@@ -132,7 +139,7 @@ predicate canMapOwnersThruKlown(o : Object, m : Klon)
 {
   && m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
   && m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
-  && m.o_amfo <= m.m.Keys   //KLON-OK
+  && m.readyAll()   //KLON-OK
   && o in m.m.Keys //IN-KLON
   && m.ownersInKlown(o)
 }
@@ -142,12 +149,12 @@ predicate {:isolate_assertions} mappingOwnersThruKlownOK(o : Object, m : Klon)
 //kjx: don't really need that v parameter do we?
 //kjx: see allMapOwnersThruKlownOK for why k & v must be in m already
 
-  // requires m.o_amfo <= m.m.Keys   //KLON-OK
+  // requires m.readyAll()   //KLON-OK
    requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
    requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
   // requires o in m.m.Keys  //IN-KLON
 
-  requires m.o_amfo <= m.m.Keys   //KLON-OK
+  requires m.readyAll()   //KLON-OK
   requires o in m.m.Keys
   requires m.ownersInKlown(o)
 //   requires m.readyOK(o)
@@ -177,7 +184,8 @@ predicate {:isolate_assertions} mappingOwnersThruKlownOK(o : Object, m : Klon)
 
 
 lemma  mapThruKlownMapsOK1(k : Object, v : Object, m : Klon)
-  requires m.o_amfo <= m.m.Keys   //KLON-OK
+  //again moved from m.o+amfo to m.o_amfx
+  requires m.readyAll()   //KLON-OK
   requires m.readyOK(k)
   requires k in m.m.Keys
   requires m.m[k] == v
@@ -191,14 +199,14 @@ lemma  mapThruKlownMapsOK1(k : Object, v : Object, m : Klon)
   requires k.AMFO  <= m.m.Keys   //IN-KLON
   requires mappingOwnersThruKlownOK(k,m)
   ensures (
-    var mTKoA := mapThruKlon(m.o_amfo, m);
+    var mTKoA := mapThruKlon(m.o_amfx, m);
     var CXTRA := m.c_amfx - mTKoA;
     var OXTRA := mTKoA - m.c_amfx;
     && ((mTKoA - OXTRA + CXTRA) == m.c_amfx)
     && (v.AMFO == mapThruKlown(k.AMFO,m))
   )
 {
-    var mTKoA := mapThruKlon(m.o_amfo, m);
+    var mTKoA := mapThruKlon(m.o_amfx, m);
     var CXTRA := m.c_amfx - mTKoA;
     var OXTRA := mTKoA - m.c_amfx;
     assert
@@ -215,7 +223,7 @@ lemma  mapThruKlownMapsOK2(o : Object,  m' : Klon, m : Klon)
   //reqs from mappingOwnersThruKlownOK()
   requires m'.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
   requires m'.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
-  requires m'.o_amfo <= m'.m.Keys   //KLON-OK
+  requires m'.o_amfx <= m'.m.Keys   //KLON-OK
   requires o in m'.m.Keys
   requires m'.ownersInKlown(o) //or could be objectInKlown...
   //end reqs from mappingOwnersThruKlownOK()
@@ -232,7 +240,7 @@ lemma mapThruKlownMapsOK3(o : Object, m : Klon)
 
   //reqs from allMapOwnersThruKlownOK
   requires m.readyAll()
-  requires m.o_amfo <= m.m.Keys //KLON-OK
+  requires m.readyAll() //KLON-OK
   requires forall o <- m.m.Keys :: m.readyOK(o)
   requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
   //end reqs from allMapOwnersThruKlownOK
@@ -251,7 +259,7 @@ lemma mapThruKlownMapsOK4(o : Object, m : Klon)
 
   //reqs from allMapOwnersThruKlownOK
   requires m.readyAll()
-  requires m.o_amfo <= m.m.Keys //KLON-OK
+  requires m.readyAll() //KLON-OK
   requires forall o <- m.m.Keys :: m.readyOK(o)
   requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
   //end reqs from allMapOwnersThruKlownOK
@@ -277,12 +285,12 @@ lemma mapThruKlownMapsOK4(o : Object, m : Klon)
 predicate {:isolate_assertions} allMapOwnersThruKlownOK(m : Klon) : (rv : bool)
 
   requires m.readyAll()
-  requires m.o_amfo <= m.m.Keys //KLON-OK
+  requires m.readyAll() //KLON-OK
   requires forall o <- m.m.Keys :: m.readyOK(o)
   requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
 //
 //   requires forall o <- m.m.Keys :: (
-//         && (m.o_amfo <= m.m.Keys)   //KLON-OK
+//         && (m.readyAll())   //KLON-OK
 //         && (m.readyOK(o))
 //         && (KLUCKO(o,m); o.Ready())//BUGGY!
 //         && (o.Ready())
@@ -333,7 +341,7 @@ lemma allMapOwnersThruKlownKV(m' : Klon, k : Object, v : Object, m : Klon)
   // requires forall k <- m'.m.Keys :: k.AMFO  <= m'.m.Keys   //IN-KLON
 
   requires m'.readyAll()
-  requires m'.o_amfo <= m'.m.Keys   //KLON-OK
+  requires m'.o_amfx <= m'.m.Keys   //KLON-OK
   requires forall o <- m'.m.Keys :: m'.readyOK(o)
   requires forall o <- m'.m.Keys :: m'.ownersInKlown(o) ///coiiudl we be objectsInKnown...
   requires allMapOwnersThruKlownOK(m')
@@ -351,7 +359,7 @@ lemma allMapOwnersThruKlownKV(m' : Klon, k : Object, v : Object, m : Klon)
 
   //preconds of allMapOwnersThruKlownOK(m)
   requires m.readyAll()
-  // requires m.o_amfo <= m.m.Keys //KLON-OK
+  // requires m.readyAll() //KLON-OK
   // requires forall o <- m.m.Keys :: m.objectInKlown(o)
 
   ensures  allMapOwnersThruKlownOK(m)
@@ -384,13 +392,12 @@ lemma allMapOwnersThruKlownKV(m' : Klon, k : Object, v : Object, m : Klon)
 lemma {:isolate_assertions} AllKlownPreservesOwnership(m : Klon)
 
   //preconds or allMapOwnersThruKlownOK(m)
-  requires m.readyAll()
-  requires m.o_amfo <= m.m.Keys //KLON-OK
+  requires m.readyAll() //KLON-OK
 
   requires allMapOwnersThruKlownOK(m)
   requires forall k <- m.m.Keys :: k.owner <= m.m.Keys   //IN-KLON
   requires forall k <- m.m.Keys :: k.AMFO  <= m.m.Keys   //IN-KLON
-  requires m.o_amfo <= m.m.Keys//KLON-OK
+  requires m.readyAll()//KLON-OK
 
 
   ensures forall i <- m.m.Keys, j <- m.m.Keys ::  (insideCompatible(i,j,m.m[i],m.m[j],m))
@@ -420,12 +427,12 @@ lemma {:isolate_assertions} AllKlownPreservesReferences(m : Klon)
 
   //preconds or allMapOwnersThruKlownOK(m)
   requires m.readyAll()
-  requires m.o_amfo <= m.m.Keys //KLON-OK
+  requires m.readyAll() //KLON-OK
 
   requires allMapOwnersThruKlownOK(m)
   requires forall k <- m.m.Keys :: k.owner <= m.m.Keys   //IN-KLON
   requires forall k <- m.m.Keys :: k.AMFO  <= m.m.Keys   //IN-KLON
-  requires m.o_amfo <= m.m.Keys//KLON-OK
+  requires m.readyAll()//KLON-OK
 
   requires forall i <- m.m.Keys, j <- m.m.Keys ::  (insideCompatible(i,j,m.m[i],m.m[j],m))
 

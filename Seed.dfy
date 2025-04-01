@@ -1,18 +1,20 @@
 
 
 method clone(a : Object, context : set<Object>,  into : Owner := a.owner)
-  returns (b : Object, subtext : set<Object>)
+    returns (b : Object, subtext : set<Object>)
 
   requires COK(a, context)
   requires flatten(into) >= a.AMFB
   requires CallOK(context)
   requires forall x <- context :: x.Ready() && x.AllOutgoingReferencesWithinThisHeap(context)
 {
-  var m' := Klon(map[],    //m clonemap
+  var m' : Klon := Klon(map[],    //m clonemap
                a,       // o - object to be cloned / pivot / top object
                a.AMFO,  // o_amfo AMFO of o
                into,    // c_owner - proposewd owner of clone
                flatten(into),   // c_amfx - AMFX of clone
+               {},
+               {},
                context,      // oHeap
                {}            // ns );
               );
@@ -53,8 +55,12 @@ method clone(a : Object, context : set<Object>,  into : Owner := a.owner)
 
   assert klonCanKV(m',a,a);  //hmm, interesting... technically not right but;
 
-  var m : Klon;
+  var m0 : Klon := seed(a, into, context);
+  var m1 : Klon;
 
+  b, m1 := Xlone_Via_Map(a, m0);
+
+  subtext := m1.ns;
 }
 
 
@@ -67,19 +73,30 @@ function seed(o : Object, clowner : Owner, oHeap : set<Object>) : (m : Klon)
     reads oHeap`fields, oHeap`fieldModes
     {
 
-    var mep := map x <- o.AMFX :: x;
+    var mep0 := map x <- o.AMFX :: x;
 
+    var clamfx := flatten(clowner);
 
     reveal UniqueMapEntry();
-    assert forall i <- mep.Keys :: UniqueMapEntry(mep, i);
-    assert AllMapEntriesAreUnique(mep);
+    assert forall i <- mep0.Keys :: UniqueMapEntry(mep0, i);
+    assert AllMapEntriesAreUnique(mep0);
+
+    var mep : vmap<Object,Object> := mep0;
+
     assert mep.Keys == mep.Values == o.AMFX <= oHeap by  { reveal COK(); }
 
-    var m := Klon(mep,
+    var mTKoA := mapThruVMap(o.AMFX, mep);
+    var cxtra := clamfx - mTKoA;
+    var oxtra := mTKoA - clamfx;
+
+
+    var m : Klon := Klon(mep,
         o,
-        o.AMFO,
+        o.AMFX,
         clowner,
-        flatten(clowner),
+        clamfx,
+        oxtra,
+        cxtra,
         oHeap,
         {} );
 
