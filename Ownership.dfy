@@ -26,8 +26,9 @@ predicate outside(part : Object, whole : Object) : (rv : bool)
     not(inside(part,whole))
   }
 
-///inside BUT NOT equal to
+
 predicate strictlyInside(part : Object, whole : Object) : (rv : bool)
+ //inside BUT NOT equal to
  // reads part, whole
  {
 // || whole.region.World?
@@ -59,6 +60,7 @@ lemma reallyDirectlyInside(part : Object, whole : Object)
 predicate directlyBounded(part : Object, bound : Object) : (rv : bool)
  {
    part.AMFB  == bound.AMFO //?yeah - what if there are stack owners around?
+   // or part.bound == bound ??
  }
 
  predicate insideOwner(part : Object, whole : Object) : (rv : bool)
@@ -471,8 +473,35 @@ predicate fefBI(f : Object, t : Object) {flatten(f.bound) >= flatten(t.owner)}
 
 ///// lemmata
 
-lemma reallyRefOK(f : Object, t : Object)
-  ensures refOK(f,t) == oldyRefOK(f,t)
-  ensures refBI(f,t) == boundInsideOwner(f,t)
-  ensures refDI(f,t) == directlyInside(t,f)
+lemma canWeSimplify1(f : Object, t : Object, context : set<Object>, m : Klon)
+ //no we can't :-(
+  requires m.boundsNestingOK(f, context)
+  requires m.boundsNestingOK(t, context)
+  ensures  refOK(f,t) == ((f==t) || refBI(f,t) || refDI(f,t))
+  ensures  refOK(f,t) == ((f==t) || (f.AMFB >= t.AMFX) || (f.AMFO == t.AMFX))
+  //ensures  refOK(f,t) == ((f.AMFO == t.AMFO) || (f.AMFB >= t.AMFX) || (f.AMFO == t.AMFX))
+{}
+
+lemma COKandReadyGetsAMFOandAMFX(f : Object, context : set<Object>, m : Klon)
+    requires COK(f,context)
+    requires f.Ready()
+    ensures  (f.AMFO - f.AMFX) == {f}
+    {}
+
+lemma EmptyBoundMeansNoOutgoingReferences(f : Object, t : Object, context : set<Object>, m : Klon)
+  //if the "from" object's bound is "empty {}" i.e top T - then there can be NO outgoing revernecs
+  //(so that is full alias encqpsuation aka a capsule)
+  //(well almost no outgoing references, assuming the target doesn't have owner {}.  And no real object should!)
+  requires f.Ready()
+  requires t.Ready()
+  requires m.boundsNestingOK(f, context)
+  requires m.boundsNestingOK(t, context)
+  requires not(f==t)
+  requires not((f.AMFO == t.AMFX))
+  // ensures  refOK(f,t) == refBI(f,t) == (f.AMFB >= t.AMFX)
+  requires f.AMFB == {} //FROM bounds is nothing
+  requires t.AMFX >  {} //to onwer is more than nothing :-)
+  // ensures  refOK(f,t) == refBI(f,t) == (f.AMFB >= t.AMFX)
+  // ensures  refOK(f,t) == refBI(f,t) == ({} >= t.AMFX)
+  ensures  not(refOK(f,t))
 {}
