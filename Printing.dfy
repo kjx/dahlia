@@ -158,8 +158,12 @@ method printmappingIsIsomorphic(m: vmap<Object,Object>, o : Object, os : set<Obj
 }
 
 
-
-
+method jeSuisClone(src : Object, m : Klon, context : set<Object>) returns (rv : bool)
+  requires src in m.m.Keys
+  requires src in context
+  requires m.m.Keys   <= context
+  requires m.m.Values <= context
+{ return false; }
 
 
 //iterative clone-checker, most likely only dynamic at this point
