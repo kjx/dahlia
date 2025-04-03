@@ -101,7 +101,13 @@ lemma LEMMAmapThruKlown(k : Owner, m : Klon)
 //   }
 
 
+lemma MapThruIdentityKlon(o : Owner, m : Klon)
+  requires o <= m.m.Keys
+  requires forall x <- m.m.Keys :: m.m[x] == x
+  ensures mapThruKlon(o, m) == o
+  {}
 
+///  MAPPED - (MTKA - CX)  + (CX - MTKA)
 
 
 lemma KLUCKO(o : Object, m : Klon)
@@ -284,7 +290,6 @@ lemma mapThruKlownMapsOK4(o : Object, m : Klon)
 
 predicate {:isolate_assertions} allMapOwnersThruKlownOK(m : Klon) : (rv : bool)
 
-  requires m.readyAll()
   requires m.readyAll() //KLON-OK
   requires forall o <- m.m.Keys :: m.readyOK(o)
   requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
