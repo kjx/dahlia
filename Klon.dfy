@@ -997,7 +997,7 @@ datatype Klon = Klon
   }
 
 
-    predicate readyOK(o : Object)
+  predicate readyOK(o : Object)
      //o is Ready, in m.Keys, and all owners are in m.Keys...
   {
     && o.Ready()
@@ -1070,6 +1070,11 @@ lemma KLUBKLOWN(o : Object)
   ensures  ownersInKlown(o)
   {}
 
+
+  // lemma AllMys(o : Object)
+  //   requires readyOK(o)
+  //   ensures  forall oo <- o.AMFX :: readyOK(oo)
+  //   {}
 
 
    predicate readyAll()
