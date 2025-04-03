@@ -10,11 +10,15 @@ method Xlone_Via_Map(a : Object, m' : Klon)
 
   requires m'.calid()
   requires m'.readyAll()
-  requires m'.readyOK(a)
   requires allMapOwnersThruKlownOK(m')
   requires COK(a, m'.oHeap) //ties owners into OHEAP but not KLON MAP
   requires klonCanKV(m',a,a)  //hmm, interesting... technically not right but
-{
+
+  ensures  a in m.m.Keys
+  ensures  m.from(m')
+  ensures  m.calid()
+  ensures  m.ownersInKlown(a)
+  {
   m := m';
 
   print "CALL Clone_Via_Map ", fmtobj(a), " m':", m', "\n";
