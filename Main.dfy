@@ -31,13 +31,20 @@ method {:verify false} Main(s : seq<string>)
  }
 }
 
-method {:verify false} makeDemo() returns (t : Object, a : Object, os : set<Object>)
+
+//{:verify false} //{:only}
+method makeDemo() returns (t : Object, a : Object, os : set<Object>)
   ensures t in os
   ensures a in os
+  ensures forall o <- os :: o.Ready()
   ensures forall o <- os :: o.AllOwnersAreWithinThisHeap(os)
+  ensures forall o <- os :: o.AllOutgoingReferencesWithinThisHeap(os)
+  ensures forall o <- os :: o.fieldModes == protoTypes
+  ensures COK(a, os)
+  ensures CallOK(os)
 {
 
-assert CallOK({},{});
+assert CallOK({}, {}) by { NothingShallComeOfNothing({}, {}); }
 
 t := new Object.make(protoTypes, {}, {}, "t");
 //   t
@@ -49,7 +56,12 @@ assert t.Ready();
 assert COK(t, {t}) by { reveal COK(); }
 
 // protoTypes 8-)
-// cat dat eye fucker jat kye lat nxt rat
+// cat dat eye fucker jat kye lat nxt rat/
+
+assert t.AMFX == {};
+assert forall o <- {t}, ooo <- o.AMFO :: o.AMFO >= ooo.AMFO;
+
+assert CallOK({t},{t}) by { reveal COK(), CallOK(); }
 
 a := new Object.make(protoTypes, {t}, {t}, "a");
 
@@ -57,20 +69,29 @@ var b := new Object.make(protoTypes, {t}, {t}, "b");
 
 var c := new Object.make(protoTypes, {t}, {t}, "c");
 
+reveal CallOK(), COK();
+assert CallOK({a}, {t,a});
 var d := new Object.make(protoTypes, {a}, {t,a}, "d");
 
+assert CallOK({d}, {t,a,d});
 var e := new Object.make(protoTypes, {d}, {t,a,d}, "e"); //we're gonna clone this one..?
 
+assert CallOK({e}, {t,a,d,e});
 var f := new Object.make(protoTypes, {e}, {t,a,d,e}, "f");
 
+assert CallOK({f},  {t,a,d,e,f});
 var g := new Object.make(protoTypes, {f},  {t,a,d,e,f},   "g");
 
+assert CallOK({g}, {t,a,d,e,f,g});
 var h := new Object.make(protoTypes, {g}, {t,a,d,e,f,g}, "h");
 
-
-var i := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "i");
+assert CallOK({g}, {t,a,d,e,f,g});
+var i := new Object.make(protoTypes, {g}, {t,a,d,e,f,g}, "i");
+assert CallOK({e}, {t,a,d,e,f,g,h});
 var j := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "j");
+assert CallOK({e}, {t,a,d,e,f,g,h});
 var k := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "k");
+assert CallOK({e},  {t,a,d,e,f,g,h});
 var l := new Object.make(protoTypes, {e}, {t,a,d,e,f,g,h}, "l");
 
 
@@ -122,27 +143,32 @@ assert l.AllOwnersAreWithinThisHeap(os);
 assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
 
 
-print "\n=============================================================\n";
-////
-var oq := [t,   a, b, c, d, e, f, g, h, i, j, k, l];
-
-  for i := 0 to |oq|
-    {
-      var o : Object := oq[i];
-
-      assert o.Ready();
-
-      printobject(o);
-    }
-   print "\n=============================================================\n";
-   print "\n\n";
+// print "\n=============================================================\n";
+// ////
+// var oq := [t,   a, b, c, d, e, f, g, h, i, j, k, l];
+//
+//   for i := 0 to |oq|
+//     {
+//       var o : Object := oq[i];
+//
+//       assert o.Ready();
+//
+//       printobject(o);
+//     }
+//    print "\n=============================================================\n";
+//    print "\n\n";
 }
 
+// {:verify false} //{:only}
 method {:verify false} Main0() {
 
   print "Main Test for loopback\n";
 
 var t, a, os := makeDemo();
+
+assert forall o <- os :: (o.Ready());
+assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
+
 
 print "|os| == ", |os|, "\n";
 
@@ -183,7 +209,18 @@ print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
 
 print "about to Xlone a\n";
 
-  var m : Klon := seed(a, a.owner, os);
+assert CallOK(os);
+assert COK(a, os);
+assert CallOK(a.owner,os) by { reveal COK(), CallOK(); }
+
+
+assert forall o <- os :: (o.Ready());
+assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
+
+assert forall x <- os ::  x.AllOutgoingReferencesWithinThisHeap(os);
+
+
+var m : Klon := seed(a, a.owner, os);
 
 // var m := Klon(map[],    //m clonemap
 //                a,       // o - object to be cloned / pivot / top object
@@ -194,8 +231,18 @@ print "about to Xlone a\n";
 //                {}       // ns;
 //               );
 
-var ra, rm := Xlone_Via_Map(a, m);
+  assert m.calid();
+  assert m.readyAll();
+  assert allMapOwnersThruKlownOK(m);
+  assert COK(a, m.oHeap);
+  assert klonCanKV(m,a,a);
 
+ var ra, rm := Xlone_Via_Map(a, m);
+
+assert a in rm.m.Keys;
+assert rm.from(m);
+assert m.calid();
+assert m.ownersInKlown(a);
 
 print "+++++++++++++\n";
 print "original store (os)\n";
@@ -210,7 +257,20 @@ printmapping(rm.m);
 
 print "\n\n\n\nwaiting...\\n\n";
 
-var result : bool :=  istEinKlon(a, rm, (os + rm.m.Values + rm.ns));
+var context : set<Object> := rm.oHeap + rm.ns;
+assert os <= context;
+
+
+// assume a in rm.m.Keys;
+// assume a in context;
+// assume m.m.Keys   <= context;
+// assume m.m.Values <= context;
+
+// var result : bool :=  jeSuisClone(a, rm, context);
+
+var result : bool :=  istEinKlon(a, rm, context);
+
+
 print "istEinKlon = ", result;
 
 print "\n\n";
