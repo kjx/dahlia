@@ -1,0 +1,712 @@
+Seed.dfy(133,4): Warning: unusual indentation in body of let-expression (which ends at line 337, column 5); do you perhaps need parentheses?
+    |
+133 |     var m : Klon :=
+    |     ^^^
+
+Context.dfy(255,25): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+255 | method  {:verify false}  XXXCOKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
+    |                          ^^^^^^^^
+
+Edges.dfy(183,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+183 |  lemma {:verify false} edgesFromWholeSetOfSetsOfDisjointObjects(ooo : set<set<Object>>)
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Main.dfy(14,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+   |
+14 | method {:verify false} Main(s : seq<string>)
+   |                        ^^^^
+
+Main.dfy(178,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+178 | method {:verify false} Main0() {
+    |                        ^^^^^
+
+Main.dfy(370,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+370 | method {:verify false} Main1() {
+    |                        ^^^^^
+
+Main.dfy(471,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+471 | method {:verify false} Main2() {
+    |                        ^^^^^
+
+Main.dfy(707,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+707 | method {:verify false} Main3() {
+    |                        ^^^^^
+
+Main.dfy(821,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+821 | method {:verify false} Main4() {
+    |                        ^^^^^
+
+Ownership.dfy(459,22): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+459 | lemma {:verify false} AMFOSareOK(a : Object, context : set<Object>)
+    |                       ^^^^^^^^^^
+
+Printing.dfy(190,24): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+190 | method {:verify false}  istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : bool)
+    |                         ^^^^^^^^^^
+
+Printing.dfy(562,25): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+    |
+562 | function {:verify false} fmtsetstr(Y: set<string>) : string
+    |                          ^^^^^^^^^
+
+SuperKlon.dfy(162,22): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+162 | lemma {:verify false} redundantShit_canMapOwnersThruKlown(o : Object, m : Klon)
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Klon.dfy(1138,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1138 |   opaque function {:verify false} XXXat(k : Object) : (v : Object)
+     |                                   ^^^^^
+
+Klon.dfy(1305,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1305 |   opaque function {:verify false} XXXputInside(k : Object, v : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^
+
+Klon.dfy(1403,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1403 |   opaque function {:verify false} OLDputInside(k : Object, v : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^
+
+Klon.dfy(2081,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+2081 |   opaque function {:verify false} XXXputOutside(k : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^^
+
+Klon.dfy(2099,36): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+2099 |   opaque function  {:verify false}  OLDputOutside(k : Object) : (r : Klon)
+     |                                     ^^^^^^^^^^^^^
+
+Klon.dfy(2867,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+     |
+2867 | method {:verify false} XXXCOKput(f : Object, context : set<Object>, n : string, t : Object)
+     |                        ^^^^^^^^^
+
+Object.dfy(100,30): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless constructor together with the {:axiom} attribute instead
+    |
+100 |   constructor {:verify false} XXXmake(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
+    |                               ^^^^^^^
+
+Klon.dfy(82,3): Error: a postcondition could not be proved on this return path
+   |
+82 |    c
+   |    ^
+
+Klon.dfy(56,16): Related location: this is the postcondition that could not be proved
+   |
+56 |   ensures  c.ns !! c'.ns
+   |                 ^^
+
+Klon.dfy(284,37): Error: Verification of 'klonCalidKVCalid' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+Klon.dfy(284,37): Error: Verification of 'klonCalidKVCalid' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(513,13): Related location: this proposition could not be proved
+    |
+513 |     && (AMFB == flatten(bound))
+    |              ^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(514,13): Related location: this proposition could not be proved
+    |
+514 |     && (AMFX == flatten(owner))
+    |              ^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(515,13): Related location: this proposition could not be proved
+    |
+515 |     && (AMFO == (flatten(ntrnl - {this}) + {this}))
+    |              ^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(516,13): Related location: this proposition could not be proved
+    |
+516 |     && (AMFO == (flatten(owner) + {this}))
+    |              ^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(517,13): Related location: this proposition could not be proved
+    |
+517 |     && (AMFO == AMFX + {this})
+    |              ^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(518,13): Related location: this proposition could not be proved
+    |
+518 |     && (AMFX == AMFO - {this})
+    |              ^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(521,12): Related location: this proposition could not be proved
+    |
+521 |   && (owner >= bound)
+    |             ^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(522,6): Related location: this proposition could not be proved
+    |
+522 |   && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
+    |       ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(525,13): Related location: this proposition could not be proved
+    |
+525 |     && (this !in AMFB)
+    |              ^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(526,13): Related location: this proposition could not be proved
+    |
+526 |     && (this !in AMFX)
+    |              ^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(527,14): Related location: this proposition could not be proved
+    |
+527 |     && (this  in AMFO)
+    |               ^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(529,13): Related location: this proposition could not be proved
+    |
+529 |     && ntrnl > owner >= bound  //IN-KLON    //or sgiould this have some contexts somnewhere?
+    |              ^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(529,21): Related location: this proposition could not be proved
+    |
+529 |     && ntrnl > owner >= bound  //IN-KLON    //or sgiould this have some contexts somnewhere?
+    |                      ^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(530,13): Related location: this proposition could not be proved
+    |
+530 |     && AMFO  > AMFX  >= AMFB   //IN-KLON
+    |              ^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(530,21): Related location: this proposition could not be proved
+    |
+530 |     && AMFO  > AMFX  >= AMFB   //IN-KLON
+    |                      ^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(532,8): Related location: this proposition could not be proved
+    |
+532 |     && (forall oo <- owner :: AMFO > oo.AMFO)
+    |         ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(533,8): Related location: this proposition could not be proved
+    |
+533 |     && (forall oo <- bound :: AMFO > oo.AMFO)
+    |         ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(534,8): Related location: this proposition could not be proved
+    |
+534 |     && (forall oo <- owner :: oo.Ready())
+    |         ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(535,8): Related location: this proposition could not be proved
+    |
+535 |     && (forall oo <- bound :: oo.Ready())
+    |         ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(536,8): Related location: this proposition could not be proved
+    |
+536 |     && (forall oo <- AMFX  :: AMFO > oo.AMFO)
+    |         ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(537,8): Related location: this proposition could not be proved
+    |
+537 |     && (forall oo <- AMFX  :: oo.Ready())
+    |         ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(539,8): Related location: this proposition could not be proved
+    |
+539 |     && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
+    |         ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(540,8): Related location: this proposition could not be proved
+    |
+540 |     && (forall oo <- (AMFO - {this}) :: (AMFO > oo.AMFO) && oo.Ready())
+    |         ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(542,8): Related location: this proposition could not be proved
+    |
+542 |     && (forall oo <- AMFO :: AMFO >= oo.AMFO)
+    |         ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(543,8): Related location: this proposition could not be proved
+    |
+543 |     && (forall o <- owner, ooo <- o.AMFO :: AMFO >  o.AMFO >= ooo.AMFO)
+    |         ^^^^^^
+
+Klon.dfy(284,37): Error: function precondition could not be proved
+    |
+284 |   requires checkClownershipAllObjects(m0)
+    |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(544,8): Related location: this proposition could not be proved
+    |
+544 |     && (forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+    |         ^^^^^^
+
+Klon.dfy(306,35): Error: Verification of 'klonCalidKVCalid' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+306 |   requires mappingOwnersThruKlownOK(k,m1) //THIS iS A BIT WEIRD as a "requires".. but
+    |                                    ^
+
+Klon.dfy(306,35): Error: Verification of 'klonCalidKVCalid' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+306 |   requires mappingOwnersThruKlownOK(k,m1) //THIS iS A BIT WEIRD as a "requires".. but
+    |                                    ^
+
+Klon.dfy(306,35): Error: Verification of 'klonCalidKVCalid' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+306 |   requires mappingOwnersThruKlownOK(k,m1) //THIS iS A BIT WEIRD as a "requires".. but
+    |                                    ^
+
+Klon.dfy(315,11): Error: Verification of 'klonCalidKVCalid' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+315 |     calidKV(m0,k,v,m1);
+    |            ^
+
+Klon.dfy(324,23): Error: Verification of 'klonCalidKVCalid' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+324 |       assert m0.readyOK(k);
+    |                        ^
+
+SuperKlon.dfy(520,6): Error: Verification of 'whereAreTheClowners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+520 |       assert clowner <= m.m.Values;
+    |       ^^^^^^
+
+SuperKlon.dfy(714,37): Error: Verification of 'allMapOwnersThruKlownKV' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+714 |       assert mappingOwnersThruKlownOK(mm, m);
+    |                                      ^
+
+SuperKlon.dfy(714,37): Error: Verification of 'allMapOwnersThruKlownKV' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+714 |       assert mappingOwnersThruKlownOK(mm, m);
+    |                                      ^
+
+SuperKlon.dfy(714,37): Error: Verification of 'allMapOwnersThruKlownKV' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+714 |       assert mappingOwnersThruKlownOK(mm, m);
+    |                                      ^
+
+SuperKlon.dfy(714,37): Error: Verification of 'allMapOwnersThruKlownKV' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+714 |       assert mappingOwnersThruKlownOK(mm, m);
+    |                                      ^
+
+SuperKlon.dfy(714,37): Error: Verification of 'allMapOwnersThruKlownKV' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+714 |       assert mappingOwnersThruKlownOK(mm, m);
+    |                                      ^
+
+SuperKlon.dfy(714,37): Error: Verification of 'allMapOwnersThruKlownKV' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+714 |       assert mappingOwnersThruKlownOK(mm, m);
+    |                                      ^
+
+Klon.dfy(1085,32): Error: Verification of 'Klon.KLOWNAMFO' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1085 |   ensures  canMapOwnersThruKlown(o, this)
+     |                                 ^
+
+Klon.dfy(1085,32): Error: Verification of 'Klon.KLOWNAMFO' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1085 |   ensures  canMapOwnersThruKlown(o, this)
+     |                                 ^
+
+Klon.dfy(1085,32): Error: Verification of 'Klon.KLOWNAMFO' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1085 |   ensures  canMapOwnersThruKlown(o, this)
+     |                                 ^
+
+Klon.dfy(2037,18): Error: Verification of 'Klon.putOutside' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+2037 |     requires calid()
+     |                   ^
+
+Klon.dfy(2043,22): Error: Verification of 'Klon.putOutside' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+2043 |     requires klonCanKV(this,k,k)
+     |                       ^
+
+Klon.dfy(2044,24): Error: Verification of 'Klon.putOutside' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+2044 |     requires AreWeNotMen(k, klonKV(this,k,k))
+     |                         ^
+
+Klon.dfy(2044,34): Error: Verification of 'Klon.putOutside' timed out after 22 seconds. (the limit can be increased using --verification-time-limit)
+     |
+2044 |     requires AreWeNotMen(k, klonKV(this,k,k))
+     |                                   ^
+
+Klon.dfy(2065,41): Error: Verification of 'Klon.putOutside' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+2065 |     requires canKlown(this, k, k,  klonKV(this,k,k))
+     |                                          ^
+
+Klon.dfy(2075,19): Error: Verification of 'Klon.putOutside' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+2075 |     var r := klonKV(this,k,k);
+     |                    ^
+
+Klon.dfy(2504,26): Error: Verification of 'Klon.calidMap' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+2504 |         && boundsNestingOK(m[x], oHeap+ns)
+     |                           ^
+
+Klon.dfy(2857,4): Error: Verification of 'Klon.BoundsNestingFromReady' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+2857 |     assert (forall oo <- (o.AMFX), ooo <- oo.AMFO :: o.AMFO >= oo.AMFO > ooo.AMFO);
+     |     ^^^^^^
+
+Klon.dfy(2915,4): Error: Verification of 'Klon.COKput' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+2915 |     assert (forall o <- (f.AMFO - {f}), ooo <- o.AMFO :: f.AMFO >= o.AMFO > ooo.AMFO);
+     |     ^^^^^^
+
+Klon.dfy(3063,4): Error: a postcondition could not be proved on this return path
+     |
+3063 |     rv
+     |     ^^
+
+Klon.dfy(3045,15): Related location: this is the postcondition that could not be proved
+     |
+3045 |     ensures  r == Klon(VMapKV(m,k,k), o, o_amfx,  {}, c_amfx, oxtra, cxtra, oHeap, ns)
+     |                ^^
+
+Klon.dfy(3322,4): Error: Verification of 'calidMapKV' timed out after 25 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3322 |     assert (forall x <- m1.m.Keys ::
+     |     ^^^^^^
+
+Klon.dfy(3326,34): Error: Verification of 'calidMapKV' timed out after 25 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3326 |        ensures (m1.boundsNestingOK(m1.m[x], m1.oHeap+m1.ns))
+     |                                   ^
+
+Klon.dfy(3326,34): Error: Verification of 'calidMapKV' timed out after 26 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3326 |        ensures (m1.boundsNestingOK(m1.m[x], m1.oHeap+m1.ns))
+     |                                   ^
+
+Klon.dfy(3326,34): Error: Verification of 'calidMapKV' timed out after 25 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3326 |        ensures (m1.boundsNestingOK(m1.m[x], m1.oHeap+m1.ns))
+     |                                   ^
+
+Klon.dfy(3326,34): Error: Verification of 'calidMapKV' timed out after 25 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3326 |        ensures (m1.boundsNestingOK(m1.m[x], m1.oHeap+m1.ns))
+     |                                   ^
+
+Klon.dfy(3326,34): Error: Verification of 'calidMapKV' timed out after 25 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3326 |        ensures (m1.boundsNestingOK(m1.m[x], m1.oHeap+m1.ns))
+     |                                   ^
+
+Klon.dfy(3326,34): Error: Verification of 'calidMapKV' timed out after 25 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3326 |        ensures (m1.boundsNestingOK(m1.m[x], m1.oHeap+m1.ns))
+     |                                   ^
+
+Klon.dfy(3326,34): Error: Verification of 'calidMapKV' timed out after 26 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3326 |        ensures (m1.boundsNestingOK(m1.m[x], m1.oHeap+m1.ns))
+     |                                   ^
+
+Klon.dfy(3345,0): Error: Verification of 'calidMapKV' timed out after 25 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3345 | assert       m0.oHeap+m0.ns+{v} == m1.oHeap+m1.ns;
+     | ^^^^^^
+
+Klon.dfy(3366,37): Error: Verification of 'calidMapKV' timed out after 25 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3366 |     assert klonAllOwnersAreCompatible(m1);
+     |                                      ^
+
+Klon.dfy(3380,14): Error: Verification of 'calidMapKV' timed out after 25 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3380 |               assert ((v==k) == (outside(k, m1.o)));
+     |               ^^^^^^
+
+Klon.dfy(3389,4): Error: Verification of 'calidMapKV' timed out after 25 seconds. (the limit can be increased using --verification-time-limit)
+     |
+3389 |     assert m1.calidMap();  //dunno if/why this 4rrors out
+     |     ^^^^^^
+
+Klon.dfy(7445,24): Error: Verification of 'KlonKVRestoresReadyAll' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+7445 |       assert m1.readyAll();
+     |                         ^
+
+Klon.dfy(7445,24): Error: Verification of 'KlonKVRestoresReadyAll' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+7445 |       assert m1.readyAll();
+     |                         ^
+
+
+Dafny program verifier finished with 7095 verified, 28 errors, 40 time outs

@@ -1,0 +1,110 @@
+Context.dfy
+Fri 18 Apr 2025 14:27:46 NZST
+
+real	0m48.870s
+user	1m40.519s
+sys	0m13.498s
+Cut.dfy
+Fri 18 Apr 2025 14:28:35 NZST
+
+real	0m19.754s
+user	0m24.852s
+sys	0m1.481s
+Edges.dfy
+Fri 18 Apr 2025 14:28:54 NZST
+
+real	0m23.098s
+user	0m27.165s
+sys	0m1.588s
+Heap.dfy
+Fri 18 Apr 2025 14:29:18 NZST
+
+real	0m15.327s
+user	0m19.481s
+sys	0m1.093s
+Incoming.dfy
+Fri 18 Apr 2025 14:29:33 NZST
+
+real	0m14.662s
+user	0m18.165s
+sys	0m0.863s
+K2.dfy
+Fri 18 Apr 2025 14:29:48 NZST
+
+real	0m2.368s
+user	0m2.322s
+sys	0m0.079s
+Klon.dfy
+Fri 18 Apr 2025 14:29:50 NZST
+
+
+real	6m2.698s
+user	21m35.294s
+sys	4m8.821s
+Library.dfy
+Fri 18 Apr 2025 14:35:53 NZST
+
+real	0m16.766s
+user	0m20.117s
+sys	0m1.161s
+MIN.dfy
+Fri 18 Apr 2025 14:36:09 NZST
+
+real	0m2.193s
+user	0m2.183s
+sys	0m0.054s
+Main.dfy
+Fri 18 Apr 2025 14:36:12 NZST
+
+real	2m44.022s
+user	9m43.688s
+sys	0m56.400s
+Object.dfy
+Fri 18 Apr 2025 14:38:56 NZST
+
+real	1m4.172s
+user	1m23.092s
+sys	0m5.909s
+Ownership.dfy
+Fri 18 Apr 2025 14:40:00 NZST
+
+real	0m19.868s
+user	0m25.103s
+sys	0m1.374s
+Predicates.dfy
+Fri 18 Apr 2025 14:40:20 NZST
+
+real	0m10.996s
+user	0m12.581s
+sys	0m0.441s
+Printing.dfy
+Fri 18 Apr 2025 14:40:31 NZST
+
+real	0m15.704s
+user	0m19.225s
+sys	0m0.936s
+ScratchMonkey.dfy
+Fri 18 Apr 2025 14:40:46 NZST
+
+real	0m33.875s
+user	0m22.799s
+sys	0m1.311s
+Seed.dfy
+Fri 18 Apr 2025 14:41:20 NZST
+
+real	1m14.517s
+user	3m5.657s
+sys	0m12.914s
+SuperKlon.dfy
+Fri 18 Apr 2025 14:42:35 NZST
+
+real	1m2.253s
+user	3m6.533s
+sys	0m36.314s
+X2.dfy
+Fri 18 Apr 2025 14:43:37 NZST
+
+real	16m35.437s
+user	63m41.342s
+sys	17m41.409s
+.

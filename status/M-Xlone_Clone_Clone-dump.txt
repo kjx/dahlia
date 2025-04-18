@@ -1,0 +1,377 @@
+Seed.dfy(133,4): Warning: unusual indentation in body of let-expression (which ends at line 337, column 5); do you perhaps need parentheses?
+    |
+133 |     var m : Klon :=
+    |     ^^^
+
+Context.dfy(255,25): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+255 | method  {:verify false}  XXXCOKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
+    |                          ^^^^^^^^
+
+Edges.dfy(183,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+183 |  lemma {:verify false} edgesFromWholeSetOfSetsOfDisjointObjects(ooo : set<set<Object>>)
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Main.dfy(14,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+   |
+14 | method {:verify false} Main(s : seq<string>)
+   |                        ^^^^
+
+Main.dfy(178,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+178 | method {:verify false} Main0() {
+    |                        ^^^^^
+
+Main.dfy(370,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+370 | method {:verify false} Main1() {
+    |                        ^^^^^
+
+Main.dfy(471,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+471 | method {:verify false} Main2() {
+    |                        ^^^^^
+
+Main.dfy(707,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+707 | method {:verify false} Main3() {
+    |                        ^^^^^
+
+Main.dfy(821,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+821 | method {:verify false} Main4() {
+    |                        ^^^^^
+
+Ownership.dfy(459,22): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+459 | lemma {:verify false} AMFOSareOK(a : Object, context : set<Object>)
+    |                       ^^^^^^^^^^
+
+Printing.dfy(190,24): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+190 | method {:verify false}  istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : bool)
+    |                         ^^^^^^^^^^
+
+Printing.dfy(562,25): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+    |
+562 | function {:verify false} fmtsetstr(Y: set<string>) : string
+    |                          ^^^^^^^^^
+
+SuperKlon.dfy(162,22): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+162 | lemma {:verify false} redundantShit_canMapOwnersThruKlown(o : Object, m : Klon)
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Klon.dfy(1138,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1138 |   opaque function {:verify false} XXXat(k : Object) : (v : Object)
+     |                                   ^^^^^
+
+Klon.dfy(1305,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1305 |   opaque function {:verify false} XXXputInside(k : Object, v : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^
+
+Klon.dfy(1403,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1403 |   opaque function {:verify false} OLDputInside(k : Object, v : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^
+
+Klon.dfy(2081,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+2081 |   opaque function {:verify false} XXXputOutside(k : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^^
+
+Klon.dfy(2099,36): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+2099 |   opaque function  {:verify false}  OLDputOutside(k : Object) : (r : Klon)
+     |                                     ^^^^^^^^^^^^^
+
+Klon.dfy(2867,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+     |
+2867 | method {:verify false} XXXCOKput(f : Object, context : set<Object>, n : string, t : Object)
+     |                        ^^^^^^^^^
+
+Object.dfy(100,30): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless constructor together with the {:axiom} attribute instead
+    |
+100 |   constructor {:verify false} XXXmake(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
+    |                               ^^^^^^^
+
+X2.dfy(258,28): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+258 |   var rm := Xlone_All_Owners(a, m');
+    |                             ^
+
+X2.dfy(288,2): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+288 |   assert a.fields.Keys == old(a.fields.Keys);  //unchanged?Q
+    |   ^^^^^^
+
+X2.dfy(332,0): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+332 | assert CallOK(rowner, context);
+    | ^^^^^^
+
+X2.dfy(334,16): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+334 | b := new Object.make(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rbound);
+    |                 ^^^^
+
+X2.dfy(389,37): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+389 |   assert (b.AMFO  > b.AMFX >= b.AMFB >= a.AMFB == flattenAMFOs(rbound) >= rbound) by { reveal CHAIN; }
+    |                                      ^^
+
+X2.dfy(389,47): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+389 |   assert (b.AMFO  > b.AMFX >= b.AMFB >= a.AMFB == flattenAMFOs(rbound) >= rbound) by { reveal CHAIN; }
+    |                                                ^^
+
+X2.dfy(404,44): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+404 |   forall oo <- xm.m.Keys ensures (xm.readyOK(oo)) //by jjj
+    |                                             ^
+
+X2.dfy(439,20): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+439 |   assert xm.readyAll();
+    |                     ^
+
+X2.dfy(439,20): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+439 |   assert xm.readyAll();
+    |                     ^
+
+X2.dfy(471,2): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |   ^^^^^^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 23 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,53): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                      ^
+
+X2.dfy(472,35): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+472 |   assert checkClownershipAllObjects(xm);
+    |                                    ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(486,13): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+486 |     && xm.ns !! xm.oHeap
+    |              ^^
+
+X2.dfy(493,31): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+493 |   reveal xm.calidOK();         assert xm.calidOK();
+    |                                ^^^^^^
+
+X2.dfy(494,31): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+494 |   reveal xm.calidMap();        assert xm.calidMap();
+    |                                ^^^^^^
+
+X2.dfy(495,31): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+495 |   reveal xm.calidSheep();      assert xm.calidSheep();
+    |                                ^^^^^^
+
+
+Dafny program verifier finished with 1580 verified, 0 errors, 55 time outs

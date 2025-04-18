@@ -1,0 +1,103 @@
+Seed.dfy(133,4): Warning: unusual indentation in body of let-expression (which ends at line 337, column 5); do you perhaps need parentheses?
+    |
+133 |     var m : Klon :=
+    |     ^^^
+
+Context.dfy(255,25): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+255 | method  {:verify false}  XXXCOKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
+    |                          ^^^^^^^^
+
+Edges.dfy(183,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+183 |  lemma {:verify false} edgesFromWholeSetOfSetsOfDisjointObjects(ooo : set<set<Object>>)
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Main.dfy(14,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+   |
+14 | method {:verify false} Main(s : seq<string>)
+   |                        ^^^^
+
+Main.dfy(178,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+178 | method {:verify false} Main0() {
+    |                        ^^^^^
+
+Main.dfy(370,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+370 | method {:verify false} Main1() {
+    |                        ^^^^^
+
+Main.dfy(471,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+471 | method {:verify false} Main2() {
+    |                        ^^^^^
+
+Main.dfy(707,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+707 | method {:verify false} Main3() {
+    |                        ^^^^^
+
+Main.dfy(821,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+821 | method {:verify false} Main4() {
+    |                        ^^^^^
+
+Ownership.dfy(459,22): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+459 | lemma {:verify false} AMFOSareOK(a : Object, context : set<Object>)
+    |                       ^^^^^^^^^^
+
+Printing.dfy(190,24): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+190 | method {:verify false}  istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : bool)
+    |                         ^^^^^^^^^^
+
+Printing.dfy(562,25): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+    |
+562 | function {:verify false} fmtsetstr(Y: set<string>) : string
+    |                          ^^^^^^^^^
+
+SuperKlon.dfy(162,22): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+162 | lemma {:verify false} redundantShit_canMapOwnersThruKlown(o : Object, m : Klon)
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Klon.dfy(1138,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1138 |   opaque function {:verify false} XXXat(k : Object) : (v : Object)
+     |                                   ^^^^^
+
+Klon.dfy(1305,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1305 |   opaque function {:verify false} XXXputInside(k : Object, v : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^
+
+Klon.dfy(1403,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1403 |   opaque function {:verify false} OLDputInside(k : Object, v : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^
+
+Klon.dfy(2081,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+2081 |   opaque function {:verify false} XXXputOutside(k : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^^
+
+Klon.dfy(2099,36): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+2099 |   opaque function  {:verify false}  OLDputOutside(k : Object) : (r : Klon)
+     |                                     ^^^^^^^^^^^^^
+
+Klon.dfy(2867,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+     |
+2867 | method {:verify false} XXXCOKput(f : Object, context : set<Object>, n : string, t : Object)
+     |                        ^^^^^^^^^
+
+Object.dfy(100,30): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless constructor together with the {:axiom} attribute instead
+    |
+100 |   constructor {:verify false} XXXmake(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
+    |                               ^^^^^^^
+
+
+Dafny program verifier finished with 61 verified, 0 errors
+Compilation failed because warnings were found and --allow-warnings is false

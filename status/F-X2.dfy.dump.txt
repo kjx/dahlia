@@ -1,0 +1,2352 @@
+Seed.dfy(133,4): Warning: unusual indentation in body of let-expression (which ends at line 337, column 5); do you perhaps need parentheses?
+    |
+133 |     var m : Klon :=
+    |     ^^^
+
+Context.dfy(255,25): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+255 | method  {:verify false}  XXXCOKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
+    |                          ^^^^^^^^
+
+Edges.dfy(183,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+183 |  lemma {:verify false} edgesFromWholeSetOfSetsOfDisjointObjects(ooo : set<set<Object>>)
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Main.dfy(14,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+   |
+14 | method {:verify false} Main(s : seq<string>)
+   |                        ^^^^
+
+Main.dfy(178,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+178 | method {:verify false} Main0() {
+    |                        ^^^^^
+
+Main.dfy(370,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+370 | method {:verify false} Main1() {
+    |                        ^^^^^
+
+Main.dfy(471,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+471 | method {:verify false} Main2() {
+    |                        ^^^^^
+
+Main.dfy(707,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+707 | method {:verify false} Main3() {
+    |                        ^^^^^
+
+Main.dfy(821,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+821 | method {:verify false} Main4() {
+    |                        ^^^^^
+
+Ownership.dfy(459,22): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+459 | lemma {:verify false} AMFOSareOK(a : Object, context : set<Object>)
+    |                       ^^^^^^^^^^
+
+Printing.dfy(190,24): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+    |
+190 | method {:verify false}  istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : bool)
+    |                         ^^^^^^^^^^
+
+Printing.dfy(562,25): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+    |
+562 | function {:verify false} fmtsetstr(Y: set<string>) : string
+    |                          ^^^^^^^^^
+
+SuperKlon.dfy(162,22): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless lemma together with the {:axiom} attribute instead
+    |
+162 | lemma {:verify false} redundantShit_canMapOwnersThruKlown(o : Object, m : Klon)
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Klon.dfy(1138,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1138 |   opaque function {:verify false} XXXat(k : Object) : (v : Object)
+     |                                   ^^^^^
+
+Klon.dfy(1305,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1305 |   opaque function {:verify false} XXXputInside(k : Object, v : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^
+
+Klon.dfy(1403,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+1403 |   opaque function {:verify false} OLDputInside(k : Object, v : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^
+
+Klon.dfy(2081,34): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+2081 |   opaque function {:verify false} XXXputOutside(k : Object) : (r : Klon)
+     |                                   ^^^^^^^^^^^^^
+
+Klon.dfy(2099,36): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless function together with the {:axiom} attribute instead
+     |
+2099 |   opaque function  {:verify false}  OLDputOutside(k : Object) : (r : Klon)
+     |                                     ^^^^^^^^^^^^^
+
+Klon.dfy(2867,23): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless method together with the {:axiom} attribute instead
+     |
+2867 | method {:verify false} XXXCOKput(f : Object, context : set<Object>, n : string, t : Object)
+     |                        ^^^^^^^^^
+
+Object.dfy(100,30): Warning: The {:verify false} attribute should only be used during development. Consider using a bodyless constructor together with the {:axiom} attribute instead
+    |
+100 |   constructor {:verify false} XXXmake(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
+    |                               ^^^^^^^
+
+X2.dfy(13,37): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+X2.dfy(13,37): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(513,13): Related location: this proposition could not be proved
+    |
+513 |     && (AMFB == flatten(bound))
+    |              ^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(514,13): Related location: this proposition could not be proved
+    |
+514 |     && (AMFX == flatten(owner))
+    |              ^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(515,13): Related location: this proposition could not be proved
+    |
+515 |     && (AMFO == (flatten(ntrnl - {this}) + {this}))
+    |              ^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(516,13): Related location: this proposition could not be proved
+    |
+516 |     && (AMFO == (flatten(owner) + {this}))
+    |              ^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(517,13): Related location: this proposition could not be proved
+    |
+517 |     && (AMFO == AMFX + {this})
+    |              ^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(518,13): Related location: this proposition could not be proved
+    |
+518 |     && (AMFX == AMFO - {this})
+    |              ^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(521,12): Related location: this proposition could not be proved
+    |
+521 |   && (owner >= bound)
+    |             ^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(522,6): Related location: this proposition could not be proved
+    |
+522 |   && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
+    |       ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(525,13): Related location: this proposition could not be proved
+    |
+525 |     && (this !in AMFB)
+    |              ^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(526,13): Related location: this proposition could not be proved
+    |
+526 |     && (this !in AMFX)
+    |              ^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(527,14): Related location: this proposition could not be proved
+    |
+527 |     && (this  in AMFO)
+    |               ^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(529,13): Related location: this proposition could not be proved
+    |
+529 |     && ntrnl > owner >= bound  //IN-KLON    //or sgiould this have some contexts somnewhere?
+    |              ^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(529,21): Related location: this proposition could not be proved
+    |
+529 |     && ntrnl > owner >= bound  //IN-KLON    //or sgiould this have some contexts somnewhere?
+    |                      ^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(530,13): Related location: this proposition could not be proved
+    |
+530 |     && AMFO  > AMFX  >= AMFB   //IN-KLON
+    |              ^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(530,21): Related location: this proposition could not be proved
+    |
+530 |     && AMFO  > AMFX  >= AMFB   //IN-KLON
+    |                      ^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(532,8): Related location: this proposition could not be proved
+    |
+532 |     && (forall oo <- owner :: AMFO > oo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(533,8): Related location: this proposition could not be proved
+    |
+533 |     && (forall oo <- bound :: AMFO > oo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(534,8): Related location: this proposition could not be proved
+    |
+534 |     && (forall oo <- owner :: oo.Ready())
+    |         ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(535,8): Related location: this proposition could not be proved
+    |
+535 |     && (forall oo <- bound :: oo.Ready())
+    |         ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(536,8): Related location: this proposition could not be proved
+    |
+536 |     && (forall oo <- AMFX  :: AMFO > oo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(537,8): Related location: this proposition could not be proved
+    |
+537 |     && (forall oo <- AMFX  :: oo.Ready())
+    |         ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(539,8): Related location: this proposition could not be proved
+    |
+539 |     && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
+    |         ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(540,8): Related location: this proposition could not be proved
+    |
+540 |     && (forall oo <- (AMFO - {this}) :: (AMFO > oo.AMFO) && oo.Ready())
+    |         ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(542,8): Related location: this proposition could not be proved
+    |
+542 |     && (forall oo <- AMFO :: AMFO >= oo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(543,8): Related location: this proposition could not be proved
+    |
+543 |     && (forall o <- owner, ooo <- o.AMFO :: AMFO >  o.AMFO >= ooo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(13,37): Error: function precondition could not be proved
+   |
+13 |   requires checkClownershipAllObjects(m')
+   |                                      ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(544,8): Related location: this proposition could not be proved
+    |
+544 |     && (forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(57,35): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+57 |   assert checkClownershipAllObjects(m');
+   |                                    ^
+
+X2.dfy(84,37): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+84 |     assert checkClownershipAllObjects(m);
+   |                                      ^
+
+X2.dfy(86,20): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+86 |     assert klonCanKV(m,k,k);
+   |                     ^
+
+X2.dfy(86,20): Error: Verification of 'Xlone_Via_Map' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+   |
+86 |     assert klonCanKV(m,k,k);
+   |                     ^
+
+X2.dfy(87,4): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+87 |     assert m.AreWeNotMen(k, m);//*
+   |     ^^^^^^
+
+X2.dfy(87,24): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+87 |     assert m.AreWeNotMen(k, m);//*
+   |                         ^
+
+X2.dfy(98,19): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+98 |     assert canKlown(m, k, k,  klonKV(m,k,k));
+   |                    ^
+
+X2.dfy(98,19): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+98 |     assert canKlown(m, k, k,  klonKV(m,k,k));
+   |                    ^
+
+X2.dfy(98,19): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+98 |     assert canKlown(m, k, k,  klonKV(m,k,k));
+   |                    ^
+
+X2.dfy(98,19): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+98 |     assert canKlown(m, k, k,  klonKV(m,k,k));
+   |                    ^
+
+X2.dfy(98,19): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+98 |     assert canKlown(m, k, k,  klonKV(m,k,k));
+   |                    ^
+
+X2.dfy(98,19): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+98 |     assert canKlown(m, k, k,  klonKV(m,k,k));
+   |                    ^
+
+X2.dfy(98,19): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+98 |     assert canKlown(m, k, k,  klonKV(m,k,k));
+   |                    ^
+
+X2.dfy(98,19): Error: Verification of 'Xlone_Via_Map' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+   |
+98 |     assert canKlown(m, k, k,  klonKV(m,k,k));
+   |                    ^
+
+X2.dfy(98,19): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+   |
+98 |     assert canKlown(m, k, k,  klonKV(m,k,k));
+   |                    ^
+
+X2.dfy(101,21): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+101 |     m := m.putOutside(a);
+    |                      ^
+
+X2.dfy(101,21): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+101 |     m := m.putOutside(a);
+    |                      ^
+
+X2.dfy(101,21): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+101 |     m := m.putOutside(a);
+    |                      ^
+
+X2.dfy(101,21): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+101 |     m := m.putOutside(a);
+    |                      ^
+
+X2.dfy(109,25): Error: assertion might not hold
+    |
+109 |   assert m'.ownersInKlown(a);
+    |                          ^
+
+Klon.dfy(1069,15): Related location: this proposition could not be proved
+     |
+1069 |     && (o.AMFB <= m.Keys)
+     |                ^^
+
+X2.dfy(109,25): Error: assertion might not hold
+    |
+109 |   assert m'.ownersInKlown(a);
+    |                          ^
+
+Klon.dfy(1070,15): Related location: this proposition could not be proved
+     |
+1070 |     && (o.AMFX <= m.Keys)
+     |                ^^
+
+X2.dfy(109,25): Error: assertion might not hold
+    |
+109 |   assert m'.ownersInKlown(a);
+    |                          ^
+
+Klon.dfy(1073,16): Related location: this proposition could not be proved
+     |
+1073 |     && (o.bound <= m.Keys)
+     |                 ^^
+
+X2.dfy(109,25): Error: assertion might not hold
+    |
+109 |   assert m'.ownersInKlown(a);
+    |                          ^
+
+Klon.dfy(1074,16): Related location: this proposition could not be proved
+     |
+1074 |     && (o.owner <= m.Keys)
+     |                 ^^
+
+X2.dfy(111,27): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(111,27): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(111,27): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(111,27): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(111,27): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(111,27): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(111,27): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(111,27): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(111,27): Error: a precondition for this call could not be proved
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(139,17): Related location: this is the precondition that could not be proved
+    |
+139 |   requires CallOK(m'.oHeap)
+    |                  ^
+
+X2.dfy(111,27): Error: a precondition for this call could not be proved
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(143,18): Related location: this is the precondition that could not be proved
+    |
+143 |   requires a.Ready()
+    |                   ^
+
+Object.dfy(515,13): Related location: this proposition could not be proved
+    |
+515 |     && (AMFO == (flatten(ntrnl - {this}) + {this}))
+    |              ^^
+
+X2.dfy(111,27): Error: a precondition for this call could not be proved
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(144,21): Related location: this is the precondition that could not be proved
+    |
+144 |   requires m'.o.Ready()
+    |                      ^
+
+Object.dfy(513,13): Related location: this proposition could not be proved
+    |
+513 |     && (AMFB == flatten(bound))
+    |              ^^
+
+X2.dfy(111,27): Error: a precondition for this call could not be proved
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(144,21): Related location: this is the precondition that could not be proved
+    |
+144 |   requires m'.o.Ready()
+    |                      ^
+
+Object.dfy(514,13): Related location: this proposition could not be proved
+    |
+514 |     && (AMFX == flatten(owner))
+    |              ^^
+
+X2.dfy(111,27): Error: a precondition for this call could not be proved
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(144,21): Related location: this is the precondition that could not be proved
+    |
+144 |   requires m'.o.Ready()
+    |                      ^
+
+Object.dfy(515,13): Related location: this proposition could not be proved
+    |
+515 |     && (AMFO == (flatten(ntrnl - {this}) + {this}))
+    |              ^^
+
+X2.dfy(111,27): Error: a precondition for this call could not be proved
+    |
+111 |   b, m := Xlone_Clone_Clone(a, m');
+    |                            ^
+
+X2.dfy(145,36): Related location: this is the precondition that could not be proved
+    |
+145 |   requires m'.alternateObjectInKlown(m'.o)
+    |                                     ^
+
+Klon.dfy(1064,12): Related location: this proposition could not be proved
+     |
+1064 |     (o.AMFO <= m.Keys)
+     |             ^^
+
+X2.dfy(115,2): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+115 |   assert  a in m.m.Keys;
+    |   ^^^^^^
+
+X2.dfy(116,16): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+116 |   assert  m.from(m');
+    |                 ^
+
+X2.dfy(116,16): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+116 |   assert  m.from(m');
+    |                 ^
+
+X2.dfy(116,16): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+116 |   assert  m.from(m');
+    |                 ^
+
+X2.dfy(116,16): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+116 |   assert  m.from(m');
+    |                 ^
+
+X2.dfy(116,16): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+116 |   assert  m.from(m');
+    |                 ^
+
+X2.dfy(116,16): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+116 |   assert  m.from(m');
+    |                 ^
+
+X2.dfy(116,16): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+116 |   assert  m.from(m');
+    |                 ^
+
+X2.dfy(116,16): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+116 |   assert  m.from(m');
+    |                 ^
+
+X2.dfy(116,16): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+116 |   assert  m.from(m');
+    |                 ^
+
+X2.dfy(117,2): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+117 |   assert  m.calid();
+    |   ^^^^^^
+
+X2.dfy(118,25): Error: Verification of 'Xlone_Via_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+118 |   assert  m.objectInKlown(a);
+    |                          ^
+
+X2.dfy(258,28): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+258 |   var rm := Xlone_All_Owners(a, m');
+    |                             ^
+
+X2.dfy(288,2): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+288 |   assert a.fields.Keys == old(a.fields.Keys);  //unchanged?Q
+    |   ^^^^^^
+
+X2.dfy(332,0): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+332 | assert CallOK(rowner, context);
+    | ^^^^^^
+
+X2.dfy(334,16): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+334 | b := new Object.make(a.fieldModes, rowner, rrm.oHeap+rrm.ns, "clone of " + a.nick, rbound);
+    |                 ^^^^
+
+X2.dfy(389,37): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+389 |   assert (b.AMFO  > b.AMFX >= b.AMFB >= a.AMFB == flattenAMFOs(rbound) >= rbound) by { reveal CHAIN; }
+    |                                      ^^
+
+X2.dfy(389,47): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+389 |   assert (b.AMFO  > b.AMFX >= b.AMFB >= a.AMFB == flattenAMFOs(rbound) >= rbound) by { reveal CHAIN; }
+    |                                                ^^
+
+X2.dfy(404,44): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+404 |   forall oo <- xm.m.Keys ensures (xm.readyOK(oo)) //by jjj
+    |                                             ^
+
+X2.dfy(439,20): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+439 |   assert xm.readyAll();
+    |                     ^
+
+X2.dfy(439,20): Error: Verification of 'Xlone_Clone_Clone' timed out after 24 seconds. (the limit can be increased using --verification-time-limit)
+    |
+439 |   assert xm.readyAll();
+    |                     ^
+
+X2.dfy(471,2): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |   ^^^^^^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 22 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 22 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 28 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,50): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                   ^
+
+X2.dfy(471,53): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+471 |   assert forall o <- xm.m.Keys :: checkClownership(o,m);
+    |                                                      ^
+
+X2.dfy(472,35): Error: Verification of 'Xlone_Clone_Clone' timed out after 26 seconds. (the limit can be increased using --verification-time-limit)
+    |
+472 |   assert checkClownershipAllObjects(xm);
+    |                                    ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(476,18): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+476 |   klonCalidKVCalid(rrm,                                                                                                                                                                                                                       a,b,xm);
+    |                   ^
+
+X2.dfy(486,13): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+486 |     && xm.ns !! xm.oHeap
+    |              ^^
+
+X2.dfy(493,31): Error: Verification of 'Xlone_Clone_Clone' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+493 |   reveal xm.calidOK();         assert xm.calidOK();
+    |                                ^^^^^^
+
+X2.dfy(494,31): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+494 |   reveal xm.calidMap();        assert xm.calidMap();
+    |                                ^^^^^^
+
+X2.dfy(495,31): Error: Verification of 'Xlone_Clone_Clone' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+495 |   reveal xm.calidSheep();      assert xm.calidSheep();
+    |                                ^^^^^^
+
+X2.dfy(618,43): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(513,13): Related location: this proposition could not be proved
+    |
+513 |     && (AMFB == flatten(bound))
+    |              ^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(514,13): Related location: this proposition could not be proved
+    |
+514 |     && (AMFX == flatten(owner))
+    |              ^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(515,13): Related location: this proposition could not be proved
+    |
+515 |     && (AMFO == (flatten(ntrnl - {this}) + {this}))
+    |              ^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(516,13): Related location: this proposition could not be proved
+    |
+516 |     && (AMFO == (flatten(owner) + {this}))
+    |              ^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(517,13): Related location: this proposition could not be proved
+    |
+517 |     && (AMFO == AMFX + {this})
+    |              ^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(518,13): Related location: this proposition could not be proved
+    |
+518 |     && (AMFX == AMFO - {this})
+    |              ^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(521,12): Related location: this proposition could not be proved
+    |
+521 |   && (owner >= bound)
+    |             ^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(522,6): Related location: this proposition could not be proved
+    |
+522 |   && (forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c))
+    |       ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(525,13): Related location: this proposition could not be proved
+    |
+525 |     && (this !in AMFB)
+    |              ^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(526,13): Related location: this proposition could not be proved
+    |
+526 |     && (this !in AMFX)
+    |              ^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(527,14): Related location: this proposition could not be proved
+    |
+527 |     && (this  in AMFO)
+    |               ^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(529,13): Related location: this proposition could not be proved
+    |
+529 |     && ntrnl > owner >= bound  //IN-KLON    //or sgiould this have some contexts somnewhere?
+    |              ^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(529,21): Related location: this proposition could not be proved
+    |
+529 |     && ntrnl > owner >= bound  //IN-KLON    //or sgiould this have some contexts somnewhere?
+    |                      ^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(530,13): Related location: this proposition could not be proved
+    |
+530 |     && AMFO  > AMFX  >= AMFB   //IN-KLON
+    |              ^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(530,21): Related location: this proposition could not be proved
+    |
+530 |     && AMFO  > AMFX  >= AMFB   //IN-KLON
+    |                      ^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(532,8): Related location: this proposition could not be proved
+    |
+532 |     && (forall oo <- owner :: AMFO > oo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(533,8): Related location: this proposition could not be proved
+    |
+533 |     && (forall oo <- bound :: AMFO > oo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(534,8): Related location: this proposition could not be proved
+    |
+534 |     && (forall oo <- owner :: oo.Ready())
+    |         ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(535,8): Related location: this proposition could not be proved
+    |
+535 |     && (forall oo <- bound :: oo.Ready())
+    |         ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(536,8): Related location: this proposition could not be proved
+    |
+536 |     && (forall oo <- AMFX  :: AMFO > oo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(537,8): Related location: this proposition could not be proved
+    |
+537 |     && (forall oo <- AMFX  :: oo.Ready())
+    |         ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(539,8): Related location: this proposition could not be proved
+    |
+539 |     && (forall oo <- owner :: (AMFO > oo.AMFO) && oo.Ready())
+    |         ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(540,8): Related location: this proposition could not be proved
+    |
+540 |     && (forall oo <- (AMFO - {this}) :: (AMFO > oo.AMFO) && oo.Ready())
+    |         ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(542,8): Related location: this proposition could not be proved
+    |
+542 |     && (forall oo <- AMFO :: AMFO >= oo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(543,8): Related location: this proposition could not be proved
+    |
+543 |     && (forall o <- owner, ooo <- o.AMFO :: AMFO >  o.AMFO >= ooo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(618,43): Error: function precondition could not be proved
+    |
+618 |   requires CCAO: checkClownershipAllObjects(m')
+    |                                            ^
+
+SuperKlon.dfy(491,20): Related location: this proposition could not be proved
+    |
+491 |   requires m.o.Ready()
+    |                     ^
+
+Object.dfy(544,8): Related location: this proposition could not be proved
+    |
+544 |     && (forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+    |         ^^^^^^
+
+X2.dfy(630,21): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+630 |   ensures  m.readyAll()
+    |                      ^
+
+X2.dfy(630,21): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+630 |   ensures  m.readyAll()
+    |                      ^
+
+X2.dfy(630,21): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+630 |   ensures  m.readyAll()
+    |                      ^
+
+X2.dfy(643,24): Error: Verification of 'Xlone_All_Owners' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+643 |   ensures old(a.fields) == a.fields
+    |                         ^^
+
+X2.dfy(643,24): Error: Verification of 'Xlone_All_Owners' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+643 |   ensures old(a.fields) == a.fields
+    |                         ^^
+
+X2.dfy(644,28): Error: Verification of 'Xlone_All_Owners' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+644 |   ensures old(a.fieldModes) == a.fieldModes
+    |                             ^^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(656,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+656 |   assert checkClownershipAllObjects(rm) by { reveal CCAO; }
+    |                                    ^
+
+X2.dfy(696,2): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+696 |   while ((MX != {}) && (a !in xm.m.Keys))
+    |   ^^^^^
+
+X2.dfy(698,17): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+698 |     invariant MX == a.owner - xm.m.Keys
+    |                  ^^
+
+X2.dfy(708,25): Error: Verification of 'Xlone_All_Owners' timed out after 22 seconds. (the limit can be increased using --verification-time-limit)
+    |
+708 |     invariant xm.readyAll()
+    |                          ^
+
+X2.dfy(708,25): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+708 |     invariant xm.readyAll()
+    |                          ^
+
+X2.dfy(708,25): Error: Verification of 'Xlone_All_Owners' timed out after 22 seconds. (the limit can be increased using --verification-time-limit)
+    |
+708 |     invariant xm.readyAll()
+    |                          ^
+
+X2.dfy(712,36): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+712 |     invariant oldmok ==> (xm.m.Keys > oldmks)
+    |                                     ^
+
+X2.dfy(714,46): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+714 |     invariant oldmok ==> ((m'.oHeap - oldmks) > (xm.oHeap - xm.m.Keys))
+    |                                               ^
+
+X2.dfy(717,40): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+717 |     invariant checkClownershipAllObjects(xm)
+    |                                         ^
+
+X2.dfy(726,0): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+726 | assert (
+    | ^^^^^^
+
+X2.dfy(735,35): Error: Verification of 'Xlone_All_Owners' timed out after 22 seconds. (the limit can be increased using --verification-time-limit)
+    |
+735 |   assert checkClownershipAllObjects(xm);
+    |                                    ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(737,27): Error: Verification of 'Xlone_All_Owners' timed out after 22 seconds. (the limit can be increased using --verification-time-limit)
+    |
+737 |     rr, rm := Xlone_Via_Map(xo, xm);
+    |                            ^
+
+X2.dfy(739,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+739 |   assert checkClownershipAllObjects(rm);
+    |                                    ^
+
+X2.dfy(739,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+739 |   assert checkClownershipAllObjects(rm);
+    |                                    ^
+
+X2.dfy(739,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+739 |   assert checkClownershipAllObjects(rm);
+    |                                    ^
+
+X2.dfy(739,35): Error: Verification of 'Xlone_All_Owners' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+739 |   assert checkClownershipAllObjects(rm);
+    |                                    ^
+
+X2.dfy(739,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+739 |   assert checkClownershipAllObjects(rm);
+    |                                    ^
+
+X2.dfy(752,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+752 |   assert checkClownershipAllObjects(m);
+    |                                    ^
+
+X2.dfy(752,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+752 |   assert checkClownershipAllObjects(m);
+    |                                    ^
+
+X2.dfy(752,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+752 |   assert checkClownershipAllObjects(m);
+    |                                    ^
+
+X2.dfy(752,35): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+752 |   assert checkClownershipAllObjects(m);
+    |                                    ^
+
+X2.dfy(763,37): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+763 |     assert checkClownershipAllObjects(rm);
+    |                                      ^
+
+X2.dfy(763,37): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+763 |     assert checkClownershipAllObjects(rm);
+    |                                      ^
+
+X2.dfy(763,37): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+763 |     assert checkClownershipAllObjects(rm);
+    |                                      ^
+
+X2.dfy(763,37): Error: Verification of 'Xlone_All_Owners' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+763 |     assert checkClownershipAllObjects(rm);
+    |                                      ^
+
+X2.dfy(765,37): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+765 |     assert checkClownershipAllObjects(xm);
+    |                                      ^
+
+X2.dfy(765,37): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+765 |     assert checkClownershipAllObjects(xm);
+    |                                      ^
+
+X2.dfy(765,37): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+765 |     assert checkClownershipAllObjects(xm);
+    |                                      ^
+
+X2.dfy(765,37): Error: Verification of 'Xlone_All_Owners' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+765 |     assert checkClownershipAllObjects(xm);
+    |                                      ^
+
+X2.dfy(778,25): Error: Verification of 'Xlone_All_Owners' timed out after 24 seconds. (the limit can be increased using --verification-time-limit)
+    |
+778 |   assert  m.ownersInKlown(a);
+    |                          ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(805,37): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+805 |   requires checkClownershipAllObjects(m')
+    |                                      ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(842,33): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+842 | assert checkClownershipAllObjects(m);
+    |                                  ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(845,18): Error: Verification of 'Xlone_All_Fields' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+    |
+845 |   assert klonCanKV(m',a,a);
+    |                   ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 21 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+X2.dfy(1005,37): Error: Verification of 'Xlone_Field_Map' timed out after 20 seconds. (the limit can be increased using --verification-time-limit)
+     |
+1005 |   requires checkClownershipAllObjects(m')
+     |                                      ^
+
+
+Dafny program verifier finished with 4064 verified, 62 errors, 269 time outs
