@@ -4,8 +4,12 @@
 method printobject(o : Object)
 {
       printobj(o);
-      print "\n  ";
-      printset(o.allExternalOwners());
+      print "\n  owner:";
+      printset(o.owner);
+      print "\n   AMFO:";
+      printset(o.AMFO);
+      print "\n   AMFB:";
+      printset(o.AMFB);
       print "\n";
       printobjfields(o);
 }
@@ -112,14 +116,30 @@ method printobjfields(o : Object)
     print " ";
     print y,":=";
     printobj(t[y]);
+    print " ",
+      if (refOK(o,t[y])) then "refOK" else "***NOT REFOK***";
     t := t - {y};
     print "\n";
   }
 }
 
-method printmapping(m: vmap<Object,Object>)
+
+method printklon(m :  Klon)
+  modifies {}
+  ensures  unchanged(m.m.Keys,m.m.Values, m.o)
+  ensures  forall k <- m.m.Keys   :: unchanged(k)
+  ensures  forall v <- m.m.Values :: unchanged(v)
+  ensures  old(m.calid()) == m.calid()
+  {
+    printmapping(m.m);
+
+  }
+
+method printmapping(m : vmap<Object,Object>)
   modifies {}
   ensures unchanged(m.Keys,m.Values)
+  ensures forall k <- m.Keys   :: unchanged(k)
+  ensures forall v <- m.Values :: unchanged(v)
 {
   var t := m;
   while t != map[]
@@ -167,7 +187,15 @@ method jeSuisClone(src : Object, m : Klon, context : set<Object>) returns (rv : 
 
 
 //iterative clone-checker, most likely only dynamic at this point
-method istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : bool)
+method {:verify false}  istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : bool)
+ //probably needs CallOK(context)  for a start!
+    requires m.o.Ready()
+    requires m.alternateObjectInKlown(m.o)
+  requires src.Ready()
+    requires m.alternateObjectInKlown(src)
+
+  requires m.calid()
+
   requires src in m.m.Keys
   requires src in context
   requires m.m.Keys   <= context
@@ -190,6 +218,9 @@ method istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : b
 
     print "   checking ",fmtobj(o)," cloned as ",fmtobj(k), " ";
 
+    assert (o.bound <= m.m.Keys) by  {assert m.alternateObjectInKlown(o);}
+    assert (o.owner <= m.m.Keys) by  {assert m.alternateObjectInKlown(o);}
+
     rv :=
          && istKlonnyKlon(o.bound, k.bound, m)
          && istKlonnyKlon(o.owner, k.owner, m)
@@ -200,14 +231,18 @@ method istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : b
   }
 }
 
-predicate istKlonnyKlon(os : set<Object>, ks : set<Object>, m : Klon)
+predicate istKlonnyKlon(os : Owner, ks : set<Object>, m : Klon)
+    requires m.o.Ready()
+    requires m.alternateObjectInKlown(m.o)
+    requires os <=  m.m.Keys
+
   reads m.oHeap`fields, m.oHeap`fieldModes
   reads m.ns`fields, m.ns`fieldModes
   decreases os, 50
-
 {
   && (forall o <- os :: o in m.m.Keys)
-  && (mapThruKlon(os, m) == ks)
+  && (m.o in os)
+  && (calculateClownership(os, m) == ks)
 }
 
 predicate istKlonAlleFelder(o : Object, k : Object, m : Klon)

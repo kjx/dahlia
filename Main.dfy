@@ -33,15 +33,18 @@ method {:verify false} Main(s : seq<string>)
 
 
 //{:verify false} //{:only}
-method makeDemo() returns (t : Object, a : Object, os : set<Object>)
+method makeDemo() returns (t : Object, a : Object, b : Object, os : set<Object>)
   ensures t in os
   ensures a in os
+  ensures b in os
   ensures forall o <- os :: o.Ready()
   ensures forall o <- os :: o.AllOwnersAreWithinThisHeap(os)
   ensures forall o <- os :: o.AllOutgoingReferencesWithinThisHeap(os)
   ensures forall o <- os :: o.fieldModes == protoTypes
   ensures COK(a, os)
   ensures CallOK(os)
+  ensures {"eye","kye"} <=  a.fields.Keys
+  ensures {"lat", "dat", "cat", "rat"} <= a.fields["eye"].fields.Keys
 {
 
 assert CallOK({}, {}) by { NothingShallComeOfNothing({}, {}); }
@@ -49,7 +52,7 @@ assert CallOK({}, {}) by { NothingShallComeOfNothing({}, {}); }
 t := new Object.make(protoTypes, {}, {}, "t");
 //   t
 //   a      b c
-//   d
+//   d        cc
 //   e f g h
 
 assert t.Ready();
@@ -65,9 +68,14 @@ assert CallOK({t},{t}) by { reveal COK(), CallOK(); }
 
 a := new Object.make(protoTypes, {t}, {t}, "a");
 
-var b := new Object.make(protoTypes, {t}, {t}, "b");
+b := new Object.make(protoTypes, {t}, {t}, "b");
 
 var c := new Object.make(protoTypes, {t}, {t}, "c");
+
+reveal CallOK(), COK();
+assert CallOK({c}, {t,c});
+var cc := new Object.make(protoTypes, {c}, {t,c}, "cc");
+
 
 reveal CallOK(), COK();
 assert CallOK({a}, {t,a});
@@ -110,9 +118,10 @@ assert j.Ready();
 assert k.Ready();
 assert l.Ready();
 
-os := {t,   a, b, c, d, e, f, g, h, i, j, k, l};
+os := {t,   a, b, c, cc, d, e, f, g, h, i, j, k, l};
 
-a.fields := map["eye":=d];
+a.fields := map["eye":=d]["kye":=c];
+c.fields := map["eye":=cc];
 d.fields := map["lat":= e]["dat":=f]["cat":=g]["rat":= h];
 
 assert COK(a,os);
@@ -120,6 +129,12 @@ assert COK(a,os);
 assert d.AllFieldsAreDeclared();
 assert d.AllFieldsContentsConsistentWithTheirDeclaration();
 assert d.AllOutgoingReferencesAreOwnership(os);
+
+print "REALLY REALLY DAVE? ", d.AllOutgoingReferencesAreOwnership(os),"\n";
+printobjfields(d);
+
+assert d.AllOutgoingReferencesAreOwnership(os);
+
 assert d.AllOutgoingReferencesWithinThisHeap(os);
 assert COK(d,os);
 
@@ -164,7 +179,9 @@ method {:verify false} Main0() {
 
   print "Main Test for loopback\n";
 
-var t, a, os := makeDemo();
+var t, a, b, os := makeDemo();
+
+var oq := set2seq(os);
 
 assert forall o <- os :: (o.Ready());
 assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
@@ -213,14 +230,37 @@ assert CallOK(os);
 assert COK(a, os);
 assert CallOK(a.owner,os) by { reveal COK(), CallOK(); }
 
-
 assert forall o <- os :: (o.Ready());
 assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
 
 assert forall x <- os ::  x.AllOutgoingReferencesWithinThisHeap(os);
 
+assert "kye" in a.fields.Keys;
+var c := a.fields["kye"];
+assert "eye" in a.fields.Keys;
+var d := a.fields["eye"];
+assert {"lat", "dat", "cat", "rat"} <= d.fields.Keys;
+var e := d.fields["lat"];
 
-var m : Klon := seed(a, a.owner, os);
+var m : Klon := seed(c, {e}, os);
+//
+// print "\n$$$$$$$$$$$$$$$$$$\n";
+// HeyHoLetsGo(m);
+//
+//       for i := 0 to |oq|
+//        {
+//          printobj(oq[i]);
+//          print " AMFO=:";
+//          printown(oq[i].AMFO);
+//
+//
+//          print "\n";
+//
+//        }
+//
+//
+//
+// print "\n$$$$$$$$$$$$$$$$$$\n";
 
 // var m := Klon(map[],    //m clonemap
 //                a,       // o - object to be cloned / pivot / top object
@@ -237,7 +277,7 @@ var m : Klon := seed(a, a.owner, os);
   assert COK(a, m.oHeap);
   assert klonCanKV(m,a,a);
 
- var ra, rm := Xlone_Via_Map(a, m);
+ var ra, rm := Xlone_Via_Map(c, m);
 
 assert a in rm.m.Keys;
 assert rm.from(m);
@@ -259,21 +299,67 @@ print "\n\n\n\nwaiting...\\n\n";
 
 var context : set<Object> := rm.oHeap + rm.ns;
 assert os <= context;
+assert rm.m.Values <= context;
+
+var oz := set2seq(context);
 
 
-// assume a in rm.m.Keys;
-// assume a in context;
-// assume m.m.Keys   <= context;
-// assume m.m.Values <= context;
 
 // var result : bool :=  jeSuisClone(a, rm, context);
 
-var result : bool :=  istEinKlon(a, rm, context);
-
+var result : bool :=  istEinKlon(c, rm, context);
 
 print "istEinKlon = ", result;
 
 print "\n\n";
+
+print "\n$$$$$$$$$$$$$$$$$$\n";
+HeyHoLetsGo(rm);
+
+
+      for i := 0 to |oz|
+       {
+         printobj(oz[i]);
+         print "  AMFO==";
+         printown(oz[i].AMFO);
+
+        var oo := oz[i].AMFO;
+        if (oo >= rm.o.AMFO) { print "  (inside)\n"; } else { print "  (outside)\n";}
+
+        if (oz[i] in rm.m.Keys)  {
+            print "  mapsto ";
+            printobj(rm.m[oz[i]]);
+
+            if (oz[i].AMFO <= rm.m.Keys)
+              {
+                print "\n mapThruKlon ==";
+                printown( mapThruKlon(oo, rm));
+                print "\n   calc      ==";
+                printown( calculateClownership(oo, rm));
+                print "\n   mTKlown   ==";
+                printown( mapThruKlown(oo, rm));
+                print "\n   mTKlownII ==";
+                printown( mapThruKlownIfInside(oo, rm));
+                print "\n   OLDmapTKl ==";
+                printown( OLDmapThruKlown(oo, rm));
+              }
+             else
+             {
+              print "  but AMFO not in Keys??? extra bits:";
+              printown( oz[i].AMFO - rm.m.Keys );
+             }
+            print "\n";
+        }
+        else {
+          print "  NOT IN rm.m\n";
+        }
+
+       }
+
+
+
+print "\n$$$$$$$$$$$$$$$$$$\n";
+
 
 print "\nDone\n";
 }
@@ -286,7 +372,7 @@ method {:verify false} Main1() {
   print "Main Test for loopback\n";
 
 
-var t, a, os := makeDemo();
+var t, a, b, os := makeDemo();
 
 print "|os| == ", |os|, "\n";
 

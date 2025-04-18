@@ -1,8 +1,4 @@
 includes = ["*.dfy"]
-# excludes = ["dahlia-remainder.dfy", "Main.dfy", "Klon.dfy", "Printing.dfy"]
-# excludes = ["dahlia-remainder.dfy", "K2.dfy"] ##doesn't verify Klon verifies 21Feb2025
-# excludes = ["dahlia-remainder.dfy", "K2.dfy", "Klon.dfy", "SuperKlon.dfy", "ScratchMonkey.dfy", "Printing.dfy", "Main.dfy"]  ##verifies 21Feb2025 3m13s
-
 excludes = ["dahlia-remainder.dfy", "K2.dfy", "MIN.dfy"]
 
 [options]

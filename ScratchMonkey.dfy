@@ -61,7 +61,7 @@ assert
     //&& (a.AMFB <= context) //sgould be derivable, AMFB <= AMFO
     && (a.AMFB <= a.AMFO <= context)
     && (forall oo <- a.AMFO :: oo.Ready())
-    && (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO)
+    && (forall o <- a.AMFO, ooo <- o.AMFO :: a.AMFO >= o.AMFO >= ooo.AMFO)
   //  && (a.TRUMP()||(a.Ready() && a.Valid()))
     && (a.Ready())
     && (a.Valid())

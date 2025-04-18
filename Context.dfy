@@ -17,6 +17,15 @@ lemma COKAMFO(oo : Owner, context : set<Object>)
 {
   reveal COK();
   reveal CallOK();
+
+forall x <- oo ensures ( CallOK(flattenAMFOs({x}), context) ) //by
+  {
+    assert COK(x, context);
+//    COKownerAMFOs(x, context);
+    assert CallOK(x.AMFO, context);
+    assert CallOK(flattenAMFOs({x}), context);
+  }
+ assert CallOK(flattenAMFOs(oo), context);
 }
 
 
@@ -24,7 +33,6 @@ lemma COKowner(a : Object, context : set<Object>)
   decreases a.AMFO
   requires COK(a, context)
   requires CallOK(context)
-
   ensures  CallOK(a.owner, context)
   // ensures  AllTheseOwnersAreFlatOK(a.AMFO - {a})
   // ensures  AllTheseOwnersAreFlatOK(a.allExternalOwners())
@@ -32,10 +40,51 @@ lemma COKowner(a : Object, context : set<Object>)
 {
   reveal COK();
   reveal CallOK();
+
+//COKAMFO(a.owner, context);
+
+  forall  oo <- a.owner ensures COK(oo,context) {
+    assert oo in context;
+    assert oo.Ready();
+    assert oo.Valid();
+    assert oo.AllOutgoingReferencesAreOwnership(context);
+    assert oo.AllOwnersAreWithinThisHeap(context);
+
+  }
+  assert forall  oo <- a.owner :: COK(oo,context);
+  assert CallOK(a.owner, context);
+
 }
 
 
+lemma COKownerAMFOs(a : Object, context : set<Object>)
+  decreases a.AMFO
+  requires COK(a, context)
+  requires CallOK(context)
+  ensures  CallOK(a.AMFO, context)
+  // ensures  AllTheseOwnersAreFlatOK(a.AMFO - {a})
+  // ensures  AllTheseOwnersAreFlatOK(a.allExternalOwners())
+  // ensures  a.OwnersValid()
+{
+  reveal COK();
+  reveal CallOK();
 
+  assert a.AllOwnersAreWithinThisHeap(context);
+  assert a.AMFO <= context;
+  assert (forall oo <- a.AMFO :: oo.Ready());
+
+forall  oo <- a.AMFO ensures COK(oo,context) {
+  assert oo in context;
+  assert oo.Ready();
+  assert oo.Valid();
+  assert oo.AllOutgoingReferencesAreOwnership(context);
+  assert oo.AllOwnersAreWithinThisHeap(context);
+
+}
+assert forall  oo <- a.AMFO :: COK(oo,context);
+assert CallOK(a.AMFO, context);
+
+}
 
 lemma CallOKAMFO(aa : Owner, context : set<Object>)
   requires CallOK(aa, context)
@@ -43,8 +92,9 @@ lemma CallOKAMFO(aa : Owner, context : set<Object>)
   ensures  forall a <- aa :: CallOK(a.AMFO, context)
   ensures  forall a <- aa :: a.AMFO <= context
 {
-  reveal COK();
   reveal CallOK();
+  reveal COK();
+
 }
 
 
@@ -80,11 +130,11 @@ assert a.allExternalBounds() <= less by {
 assert COK(a,less);
 reveal COK();
 
-assert TRIBBLE: (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO)
+assert TRIBBLE: (forall o <- a.AMFO, ooo <- o.AMFO :: a.AMFO >= o.AMFO >= ooo.AMFO)
   by {
     assert COK(a,less);    reveal COK();
     assert a.Ready();
-    assert (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO);
+    assert (forall o <- a.AMFO, ooo <- o.AMFO :: a.AMFO >= o.AMFO >= ooo.AMFO);
   }
 
 SML(a.allExternalOwners(), less, more);
@@ -98,7 +148,7 @@ assert
     //&& (a.AMFB <= context) //sgould be derivable, AMFB <= AMFO
     && (a.AMFB <= a.AMFO <= context)
     && (forall oo <- a.AMFO :: oo.Ready())
-    && (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO)
+    && (forall o <- a.AMFO, ooo <- o.AMFO :: a.AMFO >= o.AMFO >= ooo.AMFO)
   //  && (a.TRUMP()||(a.Ready() && a.Valid()))
     && (a.Ready())
     && (a.Valid())
@@ -213,19 +263,24 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
     && (a in context)
     //&& (a.AMFO <= context)
     //&& (a.AMFB <= context) //sgould be derivable, AMFB <= AMFO
-    && (a.AMFB <= a.AMFO <= context)
-    && (forall oo <- a.AMFO :: oo.Ready())
-    && (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO)
+    //
+    /// atuff below moved to Readdy()..
+    // && (a.AMFB <= a.AMFO <= context)
+    // && (forall oo <- a.AMFX :: oo.Ready())
+    // && (forall o <- (a.AMFX), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO)
+    //
+    //
   //  && (a.TRUMP()||(a.Ready() && a.Valid()))
     && (a.Ready())
     && (a.Valid())
     && (a.AllOutgoingReferencesAreOwnership(context))
-//    && (a.AllOutgoingReferencesWithinThisHeap(context))
+//    && (a.AllOutgoingReferencesWithinThisHeap(context))   ///should this be here??
     && (a.AllOwnersAreWithinThisHeap(context))
 
-    && AllTheseOwnersAreFlatOK(a.AMFO - {a})   //point here is we don't want a loop  in the definitoin of the COK predicate I think()
+//    && AllTheseOwnersAreFlatOK(a.AMFX)   //point here is we don't want a loop  in the definitoin of the COK predicate I think()
 //KJX redo to be a.AllExternalOwners() (or AMXO?)
 //now surfaced by COKowner :-)
+//also check BoundsNeating, BoundsNeswtingFromReady, and AMFOsisAMFOs5
 //should it be within the context?? (or owners are within this heap doe sthat!)
  }
 

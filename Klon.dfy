@@ -45,15 +45,15 @@ function klonKV(c' : Klon, k : Object, v : Object) : (c : Klon)
               if (x == k) then (v) else (c'.m[x]))
 
   ensures  klonLEQ(c',c)
-  ensures  mapLEQ(c'.m,c.m)
   ensures  c.o == c'.o
   ensures  c.o_amfx  == c'.o_amfx
   ensures  c.c_owner == c'.c_owner
   ensures  c.c_amfx  == c'.c_amfx
   ensures  mapLEQ(c'.m,c.m)
   ensures  c.ns == c'.ns + nu(k,v)
-
+  ensures  c.oHeap == c'.oHeap
   ensures  c.from(c')
+  ensures  c.ns !! c'.ns
 
 
 //  ensures  c'.calid() ==> c.calid() //presenvation of calidity
@@ -162,7 +162,7 @@ reads c'.m.Keys`fieldModes
   && (k.fieldModes == v.fieldModes)
 
 //&& (v.AMFO >= v.AMFB >= k.AMFB)
-  && (v.AMFX >= v.AMFB >= k.AMFB)
+  && (v.AMFX >= v.AMFB >= k.AMFB) //is this right?   really?
 
 
 //END DOOUBLE BOWIE
@@ -277,9 +277,11 @@ lemma KlonKVVMapOK(m0 : Klon, k : Object, v : Object, m1 : Klon)
 
 lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
   requires m0.readyAll()
-  requires m0.readyOK(k)
-  requires forall o <- m0.m.Keys :: m0.readyOK(o) //more or less m0.readyAll()
-  requires allMapOwnersThruKlownOK(m0)  //akq "allMapOwnersThruKlownOK"
+//  requires m0.readyOK(k)
+//  requires forall o <- m0.m.Keys :: m0.readyOK(o) //more or less m0.readyAll()
+//  requires allMapOwnersThruKlownOK(m0)  //akq "allMapOwnersThruKlownOK"
+  requires m0.readyAll()
+  requires checkClownershipAllObjects(m0)
   requires klonAllOwnersAreCompatible(m0)
   requires m0.calid()
   requires MFUCKING: m0.calid()
@@ -301,13 +303,13 @@ lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
 
   requires (v==k) == (outside(k, m0.o))
   requires (v!=k) ==> (v.fields == map[]) //KJX FRI20DEC - new objects being added need to be empty?
-
   requires mappingOwnersThruKlownOK(k,m1) //THIS iS A BIT WEIRD as a "requires".. but
-
   requires forall o <- m0.m.Keys :: m0.readyOK(o)
+
   ensures klonVMapOK(m1.m)
   ensures m1.readyAll()
   ensures allMapOwnersThruKlownOK(m1)
+  ensures checkClownershipAllObjects(m1)
   ensures m1.calid()
   {
     calidKV(m0,k,v,m1);
@@ -331,164 +333,164 @@ lemma klonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
 
 
 
-
-
-lemma {:verify false} OLDklonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
-  requires m0.readyAll()
-  requires forall o <- m0.m.Keys :: m0.readyOK(o)
-  requires allMapOwnersThruKlownOK(m0)  //akq "allMapOwnersThruKlownOK"
-  requires klonAllOwnersAreCompatible(m0)
-  requires m0.calid()
-  requires MFUCKING: m0.calid()
-  requires klonVMapOK(m0.m)
-  requires klonCanKV(m0, k, v)
-
-  requires k in m0.oHeap
-  requires COK(k, m0.oHeap)
-  requires (v==k) ==> (v in m0.oHeap)
-  requires (v==k) ==> (COK(v,m0.oHeap))
-  requires (v!=k) ==> (COK(v,m0.oHeap+m0.ns+{v}))
-  requires (v!=k) ==> v in m1.ns
-  requires (v!=k) ==> COK(v,m1.ns)
-
-  requires k.Ready()
-  requires m1 == klonKV(m0, k, v)
-  requires mapGEQ(m1.m, m0.m)
-  requires klonLEQ(m0, m1)
-
-  requires (v==k) == (outside(k, m0.o))
-  requires (v!=k) ==> (v.fields == map[]) //KJX FRI20DEC - new objects being added need to be empty?
-
-  requires mappingOwnersThruKlownOK(k,m1) //THIS iS A BIT WEIRD as a "requires".. but
-
-  requires forall o <- m0.m.Keys :: m0.readyOK(o)
-  ensures klonVMapOK(m1.m)
-  ensures m1.readyAll()
-//  ensures allMapOwnersThruKlownOK(m1)
-//   ensures m1.calid()
-  {
-  assert k !in m0.m.Keys;
-  assert v !in m0.m.Values;
-  assert k  in m0.oHeap;
-  assert m0.ownersInKlown(k);
-  assert klonCanKV(m0,k,v);
-  assert m1 == klonKV(m0,k,v);
-  assert m1.from(m0);
-  assert m0.readyAll();
-  assert m0.o_amfx <= m0.m.Keys ;
-  assert forall o <- m0.m.Keys :: m0.readyOK(o);
-  assert forall o <- m0.m.Keys :: m0.ownersInKlown(o);
-  assert allMapOwnersThruKlownOK(m0);
-  assert k.Ready();
-  assert m1.m.Keys >= k.bound;
-  assert m1.m.Keys >= k.ntrnl > k.owner >= k.bound;
-  assert m1.m.Keys >= k.AMFO  > k.AMFX  >= k.AMFB;
-  assert k.owner <= m1.m.Keys;
-  assert k.AMFO  <= m1.m.Keys;
-
-  assert mappingOwnersThruKlownOK(k,m1);
-
-
-  //  allMapOwnersThruKlownKV(m0,k,v,m1);
-
-
-assert m1.readyAll() by {
-  assert m0.readyAll();
-  assert m0.o_amfx <= m0.m.Keys;
-  assert klonLEQ(m0, m1);
-  assert m1.o_amfx <= m1.m.Keys;
-  assert m1.readyOK(k);
-
-  forall kk <- m1.m.Keys ensures m1.readyOK(kk) //by
-    {
-      if (kk == k)   {assert m1.readyOK(k);}
-        else {
-          assert allMapOwnersThruKlownOK(m0);
-          assert kk in m0.m.Keys;
-          mapThruKlownMapsOK3(kk, m0);
-          assert mappingOwnersThruKlownOK(kk,m0);
-          assert klonLEQ(m0, m1);
-          mapThruKlownMapsOK2(kk,m0,m1);
-          assert mappingOwnersThruKlownOK(kk,m1);
-
-          assert m1.readyOK(kk) by {
-            assert m0.readyAll();
-            assert kk in m0.m.Keys;
-            assert m0.readyOK(kk);
-            mapThruKlownMapsOK4(kk,m0);
-            assert kk.Ready();
-            assert kk in m1.m.Keys;
-            assert m1.ownersInKlown(kk);
-          }
-        } //end kk = k, i.e. kk in m0.m.Keys
-
-    } // end for
-  assert m1.readyAll();
-  } // end assert m1.readyAll(); //KJX !!!
-
-
-
-assert m1.calidObjects() by {
-  var c := m0;
-  var d := m1;
-
-  assert klonVMapOK(c.m);
-  assert klonCanKV(c, k, v);
-  assert d == klonKV(c, k, v);
-  assert c.calidObjects() || c.calid();
-  assert c.o in c.oHeap by {
-      assert m0.calid() by { reveal MFUCKING; }
-      reveal m0.calid();
-      assert m0.calidObjects(); reveal m0.calidObjects();
-      assert m0.o in m0.oHeap;
-      assert c.o in c.oHeap;
-      } //end   assert c.o in c.oHeap
-
-c.calidObjectsFromCalid();
-  assert c.m.Keys <= c.oHeap;
-
-  if (v==k) {
-     assert nu(k,v) == {};
-     assert c.ns + nu(k,v) == d.ns;
-     assert c.ns !! c.oHeap by { c.calidObjectsFromCalid();  assert c.ns !! c.oHeap; }
-     assert  (c.ns + nu(k,v)) !! c.oHeap;
-  } else {
-     assert v!=k;
-     assert k!=v;
-     assert NUK2(k!=v, v) == {v};
-     //   NUKV(k,v,{v});
-     assert nu(k,v) == {v};
-     assert c.ns + nu(k,v) == c.ns + {v} == d.ns;
-     assert v !in c.oHeap;
-
-     assert v in  d.ns;
-     assert v !in d.oHeap;
-     assert d.ns !! c.oHeap;
-     assert c.ns !! c.oHeap by { c.calidObjectsFromCalid();  assert c.ns !! c.oHeap; }
-
-     assert  (c.ns + nu(k,v)) !! c.oHeap;
-  }
-
-
-
-  assert  (c.ns + nu(k,v)) !! c.oHeap;
-  assert c.m.Values <= c.ns + c.oHeap by { c.calidObjectsFromCalid(); assert c.m.Values <= c.ns + c.oHeap; }
-  assert c.ns <= c.m.Values by {reveal MFUCKING; reveal m0.calid();  }
-  m1.KlonExtendsCalidObjects(m0, k, v, m1);
-  assert d.calidObjects();
-}
- assert m1.calidObjects();
-
-    reveal m1.calidOK();
-    reveal m1.calidMap();
-    reveal m1.calidSheep();
-
-    assert m1.calidOK();
-    assert m1.calidMap();
-    assert m1.calidSheep();
-
-    assert m1.calid() by { reveal m1.calid(); }
-  }//emd KlonKCalidKVCalid
+//
+//
+// lemma {:verify false} OLDklonCalidKVCalid(m0 : Klon, k : Object, v : Object, m1 : Klon)
+//   requires m0.readyAll()
+//   requires forall o <- m0.m.Keys :: m0.readyOK(o)
+//   requires allMapOwnersThruKlownOK(m0)  //akq "allMapOwnersThruKlownOK"
+//   requires klonAllOwnersAreCompatible(m0)
+//   requires m0.calid()
+//   requires MFUCKING: m0.calid()
+//   requires klonVMapOK(m0.m)
+//   requires klonCanKV(m0, k, v)
+//
+//   requires k in m0.oHeap
+//   requires COK(k, m0.oHeap)
+//   requires (v==k) ==> (v in m0.oHeap)
+//   requires (v==k) ==> (COK(v,m0.oHeap))
+//   requires (v!=k) ==> (COK(v,m0.oHeap+m0.ns+{v}))
+//   requires (v!=k) ==> v in m1.ns
+//   requires (v!=k) ==> COK(v,m1.ns)
+//
+//   requires k.Ready()
+//   requires m1 == klonKV(m0, k, v)
+//   requires mapGEQ(m1.m, m0.m)
+//   requires klonLEQ(m0, m1)
+//
+//   requires (v==k) == (outside(k, m0.o))
+//   requires (v!=k) ==> (v.fields == map[]) //KJX FRI20DEC - new objects being added need to be empty?
+//
+//   requires mappingOwnersThruKlownOK(k,m1) //THIS iS A BIT WEIRD as a "requires".. but
+//
+//   requires forall o <- m0.m.Keys :: m0.readyOK(o)
+//   ensures klonVMapOK(m1.m)
+//   ensures m1.readyAll()
+// //  ensures allMapOwnersThruKlownOK(m1)
+// //   ensures m1.calid()
+//   {
+//   assert k !in m0.m.Keys;
+//   assert v !in m0.m.Values;
+//   assert k  in m0.oHeap;
+//   assert m0.ownersInKlown(k);
+//   assert klonCanKV(m0,k,v);
+//   assert m1 == klonKV(m0,k,v);
+//   assert m1.from(m0);
+//   assert m0.readyAll();
+//   assert m0.o_amfx <= m0.m.Keys ;
+//   assert forall o <- m0.m.Keys :: m0.readyOK(o);
+//   assert forall o <- m0.m.Keys :: m0.ownersInKlown(o);
+//   assert allMapOwnersThruKlownOK(m0);
+//   assert k.Ready();
+//   assert m1.m.Keys >= k.bound;
+//   assert m1.m.Keys >= k.ntrnl > k.owner >= k.bound;
+//   assert m1.m.Keys >= k.AMFO  > k.AMFX  >= k.AMFB;
+//   assert k.owner <= m1.m.Keys;
+//   assert k.AMFO  <= m1.m.Keys;
+//
+//   assert mappingOwnersThruKlownOK(k,m1);
+//
+//
+//   //  allMapOwnersThruKlownKV(m0,k,v,m1);
+//
+//
+// assert m1.readyAll() by {
+//   assert m0.readyAll();
+//   assert m0.o_amfx <= m0.m.Keys;
+//   assert klonLEQ(m0, m1);
+//   assert m1.o_amfx <= m1.m.Keys;
+//   assert m1.readyOK(k);
+//
+//   forall kk <- m1.m.Keys ensures m1.readyOK(kk) //by
+//     {
+//       if (kk == k)   {assert m1.readyOK(k);}
+//         else {
+//           assert allMapOwnersThruKlownOK(m0);
+//           assert kk in m0.m.Keys;
+//           mapThruKlownMapsOK3(kk, m0);
+//           assert mappingOwnersThruKlownOK(kk,m0);
+//           assert klonLEQ(m0, m1);
+//           mapThruKlownMapsOK2(kk,m0,m1);
+//           assert mappingOwnersThruKlownOK(kk,m1);
+//
+//           assert m1.readyOK(kk) by {
+//             assert m0.readyAll();
+//             assert kk in m0.m.Keys;
+//             assert m0.readyOK(kk);
+//             mapThruKlownMapsOK4(kk,m0);
+//             assert kk.Ready();
+//             assert kk in m1.m.Keys;
+//             assert m1.ownersInKlown(kk);
+//           }
+//         } //end kk = k, i.e. kk in m0.m.Keys
+//
+//     } // end for
+//   assert m1.readyAll();
+//   } // end assert m1.readyAll(); //KJX !!!
+//
+//
+//
+// assert m1.calidObjects() by {
+//   var c := m0;
+//   var d := m1;
+//
+//   assert klonVMapOK(c.m);
+//   assert klonCanKV(c, k, v);
+//   assert d == klonKV(c, k, v);
+//   assert c.calidObjects() || c.calid();
+//   assert c.o in c.oHeap by {
+//       assert m0.calid() by { reveal MFUCKING; }
+//       reveal m0.calid();
+//       assert m0.calidObjects(); reveal m0.calidObjects();
+//       assert m0.o in m0.oHeap;
+//       assert c.o in c.oHeap;
+//       } //end   assert c.o in c.oHeap
+//
+// c.calidObjectsFromCalid();
+//   assert c.m.Keys <= c.oHeap;
+//
+//   if (v==k) {
+//      assert nu(k,v) == {};
+//      assert c.ns + nu(k,v) == d.ns;
+//      assert c.ns !! c.oHeap by { c.calidObjectsFromCalid();  assert c.ns !! c.oHeap; }
+//      assert  (c.ns + nu(k,v)) !! c.oHeap;
+//   } else {
+//      assert v!=k;
+//      assert k!=v;
+//      assert NUK2(k!=v, v) == {v};
+//      //   NUKV(k,v,{v});
+//      assert nu(k,v) == {v};
+//      assert c.ns + nu(k,v) == c.ns + {v} == d.ns;
+//      assert v !in c.oHeap;
+//
+//      assert v in  d.ns;
+//      assert v !in d.oHeap;
+//      assert d.ns !! c.oHeap;
+//      assert c.ns !! c.oHeap by { c.calidObjectsFromCalid();  assert c.ns !! c.oHeap; }
+//
+//      assert  (c.ns + nu(k,v)) !! c.oHeap;
+//   }
+//
+//
+//
+//   assert  (c.ns + nu(k,v)) !! c.oHeap;
+//   assert c.m.Values <= c.ns + c.oHeap by { c.calidObjectsFromCalid(); assert c.m.Values <= c.ns + c.oHeap; }
+//   assert c.ns <= c.m.Values by {reveal MFUCKING; reveal m0.calid();  }
+//   m1.KlonExtendsCalidObjects(m0, k, v, m1);
+//   assert d.calidObjects();
+// }
+//  assert m1.calidObjects();
+//
+//     reveal m1.calidOK();
+//     reveal m1.calidMap();
+//     reveal m1.calidSheep();
+//
+//     assert m1.calidOK();
+//     assert m1.calidMap();
+//     assert m1.calidSheep();
+//
+//     assert m1.calid() by { reveal m1.calid(); }
+//   }//emd KlonKCalidKVCalid
 
 //
 
@@ -924,7 +926,7 @@ datatype Klon = Klon
   m : vmap<Object,Object>, // maps from Original to Clone (or non-clone)
 //  m.Keys : set<Object>, //m.Keys - set, keys of the mapping   (must be m.Keys, subset of oHeap)
 //  m.Values : set<Object>, //m.Values - set, values or the mapping (must be m.Values, subset of oHeap + ns)
-  o : Object,  //o - Owner within which the clone is being performaed, in oHeap  // "pivot"
+  o : Object,  //o -  within which the clone is being performaed, in oHeap  // "pivot"
       // or rather is the fucking OBJECT to be CLONED???
   //    p : Object,  // Owner of the new (target) clone.  needs to be inside the source object's movement
 
@@ -977,6 +979,10 @@ datatype Klon = Klon
     && c_amfx  == prev.c_amfx
     && oHeap   == prev.oHeap
     && ns      >= prev.ns
+
+  && (oxtra   == prev.oxtra)
+  && (cxtra   == prev.cxtra)
+
     //&& calid()         //should these be requirements?
     //&& prev.calid()   //currently NO because??? the underlyign thing will require calid and reutnr calid
   }
@@ -1020,8 +1026,10 @@ lemma ReadyOKDUCKED(o : Object)
 
 
   predicate objectInKlown(o : Object)
-  //note no o.Ready() or such thing...
-  //probably be a good idea
+   //o and all its owners etc are the Klown m
+   //(doesn't extend to fields)
+   //note no o.Ready() or such thing...
+   //probably be a good idea
 {
     && (o.AMFB <= m.Keys)
     && (o.AMFX <= m.Keys)
@@ -1030,6 +1038,30 @@ lemma ReadyOKDUCKED(o : Object)
     && (o.bound <= m.Keys)
     && (o.owner <= m.Keys)
     && (o.ntrnl <= m.Keys)    //WEESA DONT WANTA REQUIRE this MASSA
+}
+
+
+  predicate alternateObjectInKlown(o : Object) : (rv : bool)
+   //o and all its owners etc are the Klown m
+   //(doesn't extend to fields)
+   //note no o.Ready() or such thing...
+   //probably be a good idea
+    requires o.Ready()
+
+    ensures o.AMFO  > o.AMFX  >= o.AMFB
+    ensures o.ntrnl > o.owner >= o.bound
+    ensures rv ==> (o in m.Keys)
+    ensures rv ==> (o.AMFB <= m.Keys)
+    ensures rv ==> (o.AMFX <= m.Keys)
+    ensures rv ==> (o.AMFO <= m.Keys)    //WEESA DONT WANTA REQUIRE this MASSA
+    ensures rv ==> (o.bound <= m.Keys)
+    ensures rv ==> (o.owner <= m.Keys)
+    ensures rv ==> (o.ntrnl <= m.Keys)    //WEESA DONT WANTA REQUIRE this MASSA
+{
+    assert o.AMFO  > o.AMFX  >= o.AMFB;
+    assert o.ntrnl > o.owner >= o.bound;
+
+    (o.AMFO <= m.Keys)
 }
 
   predicate ownersInKlown(o : Object)
@@ -2336,7 +2368,9 @@ klonCalidKVCalid(this, k, k, r);
   // }
 
   static lemma AintNoSunshine(x : Object, rv : Klon)
-    //
+    //if x is outsite rv.o"  (why RV??)
+    //ad x isn't in m.m.Keys
+    //then it's not in values either.
     requires not(inside(x,rv.o))
     requires x !in rv.m.Keys
 
@@ -2402,7 +2436,15 @@ klonCalidKVCalid(this, k, k, r);
     old( calid() )
   }
 
-  opaque predicate calid() : (r : bool)
+  predicate superCalid() : (r : bool)
+    reads oHeap`fields, oHeap`fieldModes
+    reads ns`fields, ns`fieldModes
+{
+    && objectInKlown(o)
+    && calid()
+}
+
+  opaque predicate  calid() : (r : bool)
     reads oHeap`fields, oHeap`fieldModes
     reads ns`fields, ns`fieldModes
   {
@@ -2692,6 +2734,7 @@ predicate fieldMappingsOK(k : Object, v : Object, context : set<Object>)
 
 //should be renamed - refactored...
 //really DOES NOT need to be inide Klon!!
+//in fact it's mostly inside Ready()! - don[t[ need OwnersVAlid()
 predicate boundsNestingOK(o : Object, context : set<Object>)
   reads oHeap`fields, oHeap`fieldModes
   reads ns`fields, ns`fieldModes
@@ -2777,6 +2820,43 @@ lemma BoundsNestingFromCOK(o : Object, context : set<Object>)
     // assert  ownerInsideOwner(o.allExternalOwners(),o.allExternalBounds());
     // assert  ownerInsideOwner(o.AMFO,o.allExternalOwners());
     // assert  ownerInsideOwner(o.AMFB,o.allExternalBounds());
+
+    assert boundsNestingOK(o, context);
+  }
+
+
+
+lemma BoundsNestingFromReady(o : Object, context : set<Object>)
+  requires o.Ready()
+  requires o.AllOwnersAreWithinThisHeap(context)
+
+// additional requs to acquire COK(o, context)
+// cos bounsNesting itself ncludes COK(o, context)
+/// WHICH IT SHOULDNT,,
+  requires o.Valid()
+  requires o in context
+  requires o.AllOutgoingReferencesAreOwnership(context)
+
+  ensures  COK(o, context)
+  ensures  boundsNestingOK(o, context)
+  {
+    reveal COK();
+
+    assert  ownerInsideOwner(o.owner, o.bound);
+    assert  ownerInsideOwner(o.AMFO, o.AMFB);
+    assert  ownerInsideOwner(o.AMFB, o.bound);
+    assert  ownerInsideOwner(o.AMFO, o.bound);
+    assert  ownerInsideOwnerInsideOwner(context, o.owner, o.bound);
+    assert  ownerInsideOwnerInsideOwner(context, o.AMFO, o.AMFB);
+    assert  ownerInsideOwner(o.allExternalOwners(),o.allExternalBounds());
+    assert  ownerInsideOwner(o.AMFO,o.allExternalOwners());
+    assert  ownerInsideOwner(o.AMFB,o.allExternalBounds());
+
+    assert (forall oo <- o.AMFX :: oo.Ready());
+    assert (o.AMFB <= o.AMFO <= context);
+    assert (forall oo <- (o.AMFX), ooo <- oo.AMFO :: o.AMFO >= oo.AMFO > ooo.AMFO);
+
+    assert COK(o, context);
 
     assert boundsNestingOK(o, context);
   }

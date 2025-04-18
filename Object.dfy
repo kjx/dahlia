@@ -75,7 +75,6 @@ lemma EVILisCompatibleWithAnything(o : Object, v : Object)
 //  OBJECTS
 //
 //I know it's perverse, but titlecase "Object" (and "Class") aren't reserved in dafny
-//
 class Object {
 
   const bound : Owner //movement bound - stands in for explcit owner parameters
@@ -159,19 +158,20 @@ class Object {
 
 
 
-
-  constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
+constructor make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
     requires forall o <- oo :: o.Ready()  //hmmm
     requires oo >= mb
 //for OvenReady()
     requires forall o <- mb :: o.Ready()
     requires forall o <- oo :: o.Ready()
-    requires forall o <- oo, ooo <- o.AMFO :: o.AMFO > ooo.AMFO
+    requires forall o <- oo, ooo <- o.AMFO:: o.AMFO >= ooo.AMFO
     requires forall o <- oo, ooo <- o.AMFO :: ooo.Ready()
 
 //end OverReady()
     requires CallOK(oo, context)
-    requires CallOK(context) //KJX is this redundant Or wouidl it be redundat the other way around???
+//HACK    requires CallOK(context)
+
+    //KJX is this redundant Or wouidl it be redundat the other way around???
     // requires AllTheseOwnersAreFlatOK(oo)  //hmm? what would this mean?
     //requires CallOK({oo}+oo.AMFO, context)
 
@@ -261,8 +261,9 @@ class Object {
     assert nick == name;
 
     assert CallOK(oo, context);
-    assert CallOK(context);
-    CallOKAMFO(oo, context);
+//HACK    assert CallOK(context);
+//    CallOKAMFO(oo, context);
+
     assert  (this in context+{this}) by { reveal COK(), CallOK(); }
     assert  (AMFO <= context+{this}) by { reveal COK(), CallOK(); }
 
@@ -276,35 +277,73 @@ class Object {
     assert COK(this, {this}+context) by
         {
           reveal COK();
+          var thistext :=  {this}+context;
+          var a := this;
+          assert (a in thistext);
+          assert (a.AMFB <= a.AMFO <= thistext);
+          assert (forall oo <- a.AMFX :: oo.Ready());
+          AMFOsisAMFOs5();
+          assert (forall oo <- a.AMFX, ooo <- oo.AMFO :: a.AMFO > oo.AMFO >= ooo.AMFO);
+          assert (forall oo <- a.AMFO, ooo <- oo.AMFX :: a.AMFO >= oo.AMFO > ooo.AMFO);
+          assert (a.Ready());
+          assert (a.Valid());
+          assert (a.AllOutgoingReferencesAreOwnership(thistext));
+          assert (a.AllOutgoingReferencesWithinThisHeap(thistext));
 
-          assert (this in ({this}+context));
-          assert (this.AMFO <= ({this}+context));
-          RVfromCallOK(oo,context);
+          assert (a.AllOwnersAreWithinThisHeap(thistext));
+          assert AllTheseOwnersAreFlatOK(a.AMFX, thistext);
 
-          assert (forall x <- owner, xo <- x.AMFO :: xo in x.AMFO);
+          assert COK(a, thistext);
+        }
 
 
-          assert AMFO == flattenAMFOs(oo) + {this};
-          assert this !in flattenAMFOs(oo);
-          assert (forall a <- oo  :: a.Ready());     //why are these here?
-          assert (forall a <- oo  :: AMFO > a.AMFO);
+////¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢¢
+//
+//           assert (this in ({this}+context));
+//           assert (this.AMFO <= ({this}+context));
+//           RVfromCallOK(oo,context);
+//
+//           assert (forall x <- owner, xo <- x.AMFO :: xo in x.AMFO);
+//
+//
+//           assert AMFO == flattenAMFOs(oo) + {this};
+//           assert this !in flattenAMFOs(oo);
+//           assert (forall a <- oo  :: a.Ready());     //why are these here?
+//           assert (forall a <- oo  :: AMFO > a.AMFO);
+//
+//           // assert (forall oo  <- AMFO  :: AMFO > oo.AMFO);
+//
+//           assert (forall o <- (allExternalOwners()) :: o.Ready());
+//           assert (forall o <- (allExternalOwners()) :: AMFO > o.AMFO);
+//
+//           assert AMFO == (flatten(ntrnl - {this}) + {this});
+//           assert forall b <- AMFO, c <- b.AMFO :: c in AMFO && inside(b,c) && inside(this,c);
+//           assert AMFX == flatten(owner);
+//           assert AMFO == (flatten(owner) + {this});
+//
+//           assert (this.Ready());
+//           assert (this.Valid());
+//           assert (this.AllOutgoingReferencesAreOwnership(({this}+context)));
+// // 1       assert (this.AllOutgoingReferencesWithinThisHeap(( //>>>
+//           assert (this.AllOwnersAreWithinThisHeap(({this}+context)));
+//
+//           reveal AllTheseOwnersAreFlatOK();
+//
+//           assert AllTheseOwnersAreFlatOK(AMFX);
+//
+//           reveal COK();
 
-          // assert (forall oo  <- AMFO  :: AMFO > oo.AMFO);
+          // // assume COK(a, thistext);  ///FUCKER
+          // assert COK(this, {this}+context) by {
+          //       assume (forall oo <- a.AMFO :: oo.Ready());
+          //       assume (forall o <- (a.AMFO - {a}), ooo <- o.AMFO :: a.AMFO >= o.AMFO > ooo.AMFO);
+          //       assume (a.AllOwnersAreWithinThisHeap(thistext));
+          //       assume AllTheseOwnersAreFlatOK(a.AMFX);
+          //       reveal COK(), AllTheseOwnersAreFlatOK();
+          //       assert COK(a, thistext);
+          // }
 
-          assert (forall o <- (allExternalOwners()) :: o.Ready());
-          assert (forall o <- (allExternalOwners()) :: AMFO > o.AMFO);
-          assert (this.Ready());
-          assert (this.Valid());
-          assert (this.AllOutgoingReferencesAreOwnership(({this}+context)))  ;
-          assert (this.AllOutgoingReferencesWithinThisHeap(({this}+context)));
-          assert (this.AllOwnersAreWithinThisHeap(({this}+context)));
 
-          reveal AllTheseOwnersAreFlatOK();
-
-          assert AllTheseOwnersAreFlatOK(allExternalOwners());
-
-          assert COK(this, {this}+context);
-         }
 
 
 
@@ -365,7 +404,7 @@ assert
   }
 
 
-assert forall o <- owner, ooo <- o.AMFO :: o.AMFO > ooo.AMFO;
+assert forall o <- owner, ooo <- o.AMFO :: o.AMFO >= ooo.AMFO;
 assert forall o <- AMFO :: AMFO >= o.AMFO;
 
 
@@ -395,6 +434,7 @@ assert forall oo <- (AMFO - {this}),  ooo <- oo.AMFO :: AMFO >= oo.AMFO >= ooo.A
    assert OwnersValid();
    assert Ready();
   }//end make()j
+
 
 lemma fucked(o : Object)
   requires o.Ready()
@@ -465,6 +505,8 @@ lemma anoyingExternalOwners()
 
 
 predicate Ready()
+  // invariants on static features of this - notably between the variosu owner / AMFO fields
+  // see alsos COK, BoundNessting, BoubndsNetingFrom and AMFOsisAMFOs5
    reads {}
    decreases AMFO, 20
   {
@@ -486,7 +528,6 @@ predicate Ready()
 
     && ntrnl > owner >= bound  //IN-KLON    //or sgiould this have some contexts somnewhere?
     && AMFO  > AMFX  >= AMFB   //IN-KLON
-
 
     && (forall oo <- owner :: AMFO > oo.AMFO)
     && (forall oo <- bound :: AMFO > oo.AMFO)
@@ -556,7 +597,7 @@ predicate Valid()
     //    &&
     //  (forall o <- AMFO :: recInside(this, o))     //recInside needs valid, OOPS.
   //  //  &&
-    // AllOutgoingReferencesAreVenice()
+    // 3eReferencesAreVenice()
   }
 
   predicate AllFieldsAreDeclared()
@@ -600,8 +641,10 @@ lemma NoFieldsAreGoodFields(context : set<Object>)
     requires Ready() //requires forall n <- fields :: ownersOK(fields[n],os)
     {
     //   (allExternalOwners() + allExternalBounds()) <= os
-    &&  (allExternalOwners() <= os)
-    &&  (allExternalBounds() <= os)
+    // &&  (allExternalOwners() <= os)
+    // &&  (allExternalBounds() <= os)
+      && (AMFO <= os)
+      && (AMFB <= os)
     }
 
   function outgoing() : set<Object> reads this`fields { fields.Values }
@@ -628,7 +671,7 @@ assert OwnersValid();
 
 
 
-predicate OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec2024}
+predicate  OwnersValid() : (rv : bool) //newe version with Ready {}Mon18Dec2024}
   decreases AMFO, 10
   reads {}
   {
@@ -705,6 +748,22 @@ ensures
 {}
 
 
+lemma AMFOsisAMFOs5()
+   requires Ready()
+   requires OwnersValid()
+   ensures (forall oo <- AMFX, ooo <- oo.AMFO :: AMFO >  oo.AMFO >= ooo.AMFO)
+   ensures (forall oo <- AMFX, ooo <- oo.AMFO :: AMFO >= oo.AMFO >= ooo.AMFO)
+   ensures (forall oo <- AMFX, ooo <- oo.AMFX :: AMFO >  oo.AMFO >  ooo.AMFO)
+   ensures (forall oo <- AMFX, ooo <- oo.AMFX :: AMFO >= oo.AMFO >= ooo.AMFO)
+{
+   assert  (forall oo <- AMFX :: AMFO > oo.AMFO);
+   assert  (forall oo <- AMFX :: oo.Ready());
+   assert  (forall oo <- AMFX, ooo <- oo.AMFO :: ooo.Ready());
+   assert  (forall oo <- AMFX, ooo <- oo.AMFX :: oo.AMFO > ooo.AMFO);
+   assert  (forall oo <- AMFX, ooo <- oo.AMFO :: oo.AMFO >= ooo.AMFO);
+   assert  (forall oo <- AMFX, ooo <- oo.AMFX :: AMFO > oo.AMFO > ooo.AMFO);
+   assert  (forall oo <- AMFO, ooo <- oo.AMFO :: AMFO >= oo.AMFO >= ooo.AMFO);
+}
 
 
 lemma CallMyOwnersWillWitherAway(a : Object, context : set<Object>)
@@ -845,7 +904,7 @@ assert true;
 // thisi  kind of SHITTY.
 // given one arg, yes they are all flat,
 // given TWO args, checks all owners flattenAMFOs witin context!!!
-opaque predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
+/*opaque*/ predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
 // true iff all os's AMFOS are inside os
 // probalby need to do - {a} if these are for {a} or else it gets circular...?  //INDEED
 {
@@ -908,7 +967,7 @@ lemma MaybeOrMaybeNot(o : Object, os : set<Object>)
 function flattenAMFOs(os : set<Object>) : (of : set<Object>)
    //flattened set of os.AMFO
    //earlier version required o in all objects AMFS, that's gone now
-   //could put it back, require os to be Ready, or remove the os+ below
+   //could put it back, require os Ready, or remove the os+ below
    //currently going with the version with fewer requirements...
    //requires forall o <- os :: o in o.AMFO  //not needed adding
    ensures os <= of

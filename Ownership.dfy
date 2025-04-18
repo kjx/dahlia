@@ -456,8 +456,34 @@ lemma AMFXabreOK(a : Object, m : Klon)
   ensures   forall oo <- a.AMFX :: m.ownersInKlown(oo)
 {}
 
+lemma {:verify false} AMFOSareOK(a : Object, context : set<Object>)
+//this DOES NOT WORK - owner are READY but not necessarily VALID
+  decreases a.AMFO
 
+  requires COK(a,context)
+  ensures  forall oo <- a.AMFO :: oo.AMFO <= context
+  ensures  forall oo <- a.AMFO :: COK(oo, context)
+  ensures  forall oo <- a.AMFO :: CallOK(oo.AMFO, context)
+  //CallOK(a.AMFO, context)
+{
+  reveal COK(), CallOK();
 
+  assert a.Ready();
+  forall oo <- a.AMFO ensures  COK(oo, context) //by
+  {
+   assert oo.Ready();
+   assert oo in context;
+   assert oo.Valid() by {
+     assert oo.OwnersValid();
+     assert oo.AllFieldsAreDeclared();   //doesnt work
+     assert oo.AllFieldsContentsConsistentWithTheirDeclaration(); //doesnto work
+   }
+   assert (a.AllOutgoingReferencesAreOwnership(context));
+   assert (a.AllOwnersAreWithinThisHeap(context));
+
+   assert COK(oo, context);
+  }
+}
 
 //////////////////////////////////////////////////////////////////////////////
 /// refOK - in from spike

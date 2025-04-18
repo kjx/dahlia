@@ -8,6 +8,22 @@ method clone(a : Object, context : set<Object>,  into : Owner := a.owner)
   requires CallOK(context)
   requires forall x <- context :: x.Ready() && x.AllOutgoingReferencesWithinThisHeap(context)
 {
+  var m0 : Klon := seed(a, into, context);
+  var m1 : Klon;
+
+  assert m0.readyAll();
+
+  assert m0.calid();
+  assert m0.readyAll();
+  assert checkClownershipAllObjects(m0);
+  assert COK(a, m0.oHeap);
+  assert klonCanKV(m0,a,a);
+
+  b, m1 := Xlone_Via_Map(a, m0); //*
+
+  subtext := m1.ns;
+}
+
 //   var m' : Klon := Klon(map[],    //m clonemap
 //                a,       // o - object to be cloned / pivot / top object
 //                a.AMFO,  // o_amfo AMFO of o
@@ -62,18 +78,10 @@ method clone(a : Object, context : set<Object>,  into : Owner := a.owner)
 //   assert klonCanKV(m',a,a);  //hmm, interesting... technically not right but;
 //         //not, this IS ruight...
 
-  var m0 : Klon := seed(a, into, context);
-  var m1 : Klon;
-
-  assert m0.readyAll();
-
-  b, m1 := Xlone_Via_Map(a, m0); //*
-
-  subtext := m1.ns;
-}
 
 
 function seed(o : Object, clowner : Owner, oHeap : set<Object>) : (m : Klon)
+//seed Klon for cloning object o,  owner of clone being clowner, within heap oHeap...
     requires COK(o, oHeap)
     requires CallOK(oHeap)
     requires forall x <- oHeap :: x.Ready() && x.AllOutgoingReferencesWithinThisHeap(oHeap)
@@ -82,7 +90,7 @@ function seed(o : Object, clowner : Owner, oHeap : set<Object>) : (m : Klon)
     ensures m.calid()
     ensures m.readyAll()
     ensures COK(o, m.oHeap)
-    ensures allMapOwnersThruKlownOK(m)
+    ensures allMapOwnersThruKlownIfInsideOK(m)
 //
 //     ensures m == Klon( (map x <- o.AMFX :: x),
 //         o,
@@ -122,16 +130,16 @@ function seed(o : Object, clowner : Owner, oHeap : set<Object>) : (m : Klon)
     var oxtra := mTKoA - clamfx;
     var cxtra := clamfx - mTKoA;
 
-
-    var m : Klon := Klon(mep,
-        o,
-        o.AMFX,
-        clowner,
-        clamfx,
-        oxtra,
-        cxtra,
-        oHeap,
-        {} );
+    var m : Klon :=
+                       Klon(mep,
+                            o,
+                            o.AMFX,
+                            clowner,
+                            clamfx,
+                            oxtra,
+                            cxtra,
+                            oHeap,
+                            {} );
 
     assert m.ns == {};
     assert m.oHeap == oHeap;
@@ -304,26 +312,28 @@ assert
 
     assert forall o <- m.m.Keys ::  m.m[o] == o;
 
+    assert forall o <- m.m.Keys ::  not(inside(o,m.o));
 
+    assert allMapOwnersThruKlownIfInsideOK(m) by {
 
-    assert allMapOwnersThruKlownOK(m) by {
-
-      assume  forall o <- m.m.Keys ::
-
+      forall o <- m.m.Keys ensures
+           mappingOwnersThruKlownIfInsideOK(o,m) // by
+       {
         var c := m.m[o];
 
-//        MapThruIdentityKlon(o, m);
-
-        && (c == o)
-        && (c.bound == o.bound)
-        && (c.bound == mapThruKlown(o.bound, m))
-        && (c.AMFB  == mapThruKlown(o.AMFB,  m))
-        && (c.owner == mapThruKlown(o.owner, m))
-        && (c.AMFX  == mapThruKlown(o.AMFX , m))
-        && (c.ntrnl == mapThruKlown(o.ntrnl, m))
-        && (c.AMFO  == mapThruKlown(o.AMFO,  m))
+        assert
+            && (c == o)
+            && (c.bound == o.bound)
+            // && (c.bound == mapThruKlownIfInside(o.bound, m))
+            // && (c.AMFB  == mapThruKlownIfInside(o.AMFB,  m))
+            // && (c.owner == mapThruKlownIfInside(o.owner, m))
+            // && (c.AMFX  == mapThruKlownIfInside(o.AMFX , m))
+            // && (c.ntrnl == mapThruKlownIfInside(o.ntrnl, m))
+            // && (c.AMFO  == mapThruKlownIfInside(o.AMFO,  m))
         ;
+      }
     }
 
     m
+
     }

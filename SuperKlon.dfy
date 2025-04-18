@@ -70,9 +70,18 @@ function OLDmapThruKlown(k : set<Object>, m : Klon) : set<Object>
 
 function mapThruKlown(k : set<Object>, m : Klon) : set<Object>
   requires k <= m.m.Keys
-  requires m.readyAll()
+  requires m.readyAll()  ///NEED TO DEAL TO THIS!
     { mapThruKlon(k,m) - m.oxtra + m.cxtra }
 
+
+function mapThruKlownIfInside(k : Owner, m : Klon) : set<Object>
+  requires k <= m.m.Keys
+  requires m.readyAll()
+    {
+      if (k >= m.o.AMFO)
+        then (mapThruKlon(k,m) - m.oxtra + m.cxtra)
+        else (k)
+    }
 
 
 lemma LEMMAmapThruKlown(k : Owner, m : Klon)
@@ -150,7 +159,29 @@ predicate canMapOwnersThruKlown(o : Object, m : Klon)
   && m.ownersInKlown(o)
 }
 
-predicate {:isolate_assertions} mappingOwnersThruKlownOK(o : Object, m : Klon)
+lemma {:verify false} redundantShit_canMapOwnersThruKlown(o : Object, m : Klon)
+  requires o.Ready()
+  requires m.objectInKlown(o)
+  requires m.objectInKlown(m.o)
+  requires m.calid()
+  ensures  canMapOwnersThruKlown(o, m)
+{
+  reveal m.calid(),m.calidOK(),COK(),CallOK();
+
+  assert (m.o_amfx <= m.m.Keys) by {
+    assert m.objectInKlown(m.o);
+    assert m.o_amfx == m.o.AMFX;
+    assert m.o.AMFX <= m.m.Keys;
+    }
+  assert m.m.Keys >= o.ntrnl > o.owner >= o.bound;
+  assert m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB;
+  assert m.readyAll();
+  assert o in m.m.Keys;
+  assert m.ownersInKlown(o);
+}
+
+
+predicate mappingOwnersThruKlownOK(o : Object, m : Klon)
 //do all o's owner attributes map through m?
 //kjx: don't really need that v parameter do we?
 //kjx: see allMapOwnersThruKlownOK for why k & v must be in m already
@@ -189,6 +220,45 @@ predicate {:isolate_assertions} mappingOwnersThruKlownOK(o : Object, m : Klon)
 
 
 
+predicate mappingOwnersThruKlownIfInsideOK(o : Object, m : Klon)
+//do all o's owner attributes map through m?
+//kjx: don't really need that v parameter do we?
+//kjx: see allMapOwnersThruKlownOK for why k & v must be in m already
+
+  // requires m.readyAll()   //KLON-OK
+   requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+   requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+  // requires o in m.m.Keys  //IN-KLON
+
+  requires m.readyAll()   //KLON-OK
+  requires o in m.m.Keys
+  requires m.ownersInKlown(o)
+//   requires m.readyOK(o)
+// //  requires (KLUCKO(o,m); o.Ready())//BUGGY!
+//   requires o.Ready()
+//   requires m.m.Keys >= o.bound
+//   requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+//   requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+//   requires o.owner <= m.m.Keys   //IN-KLONe
+//   requires o.AMFO  <= m.m.Keys   //IN-KLON
+//
+//   reads m.oHeap`fields, m.oHeap`fieldModes
+//   reads m.ns`fields, m.ns`fieldModes
+//   reads m.m.Keys`fields, m.m.Keys`fieldModes
+{
+  var c := m.m[o];
+
+  && (c.bound == mapThruKlownIfInside(o.bound, m))
+  && (c.AMFB  == mapThruKlownIfInside(o.AMFB,  m))
+  && (c.owner == mapThruKlownIfInside(o.owner, m))
+  && (c.AMFX  == mapThruKlownIfInside(o.AMFX , m))
+  && (c.ntrnl == mapThruKlownIfInside(o.ntrnl, m))
+  && (c.AMFO  == mapThruKlownIfInside(o.AMFO,  m))
+}
+
+
+
+
 lemma  mapThruKlownMapsOK1(k : Object, v : Object, m : Klon)
   //again moved from m.o+amfo to m.o_amfx
   requires m.readyAll()   //KLON-OK
@@ -222,73 +292,251 @@ lemma  mapThruKlownMapsOK1(k : Object, v : Object, m : Klon)
 }
 
 
+//
+// lemma  mapThruKlownMapsOK2(o : Object,  m' : Klon, m : Klon)
+//   //given allMapOwnersThruKlownOK(m') and klonLEQ(m',m), establish mappingOwnersThruKlownOK(o,m)
+//
+//
+//   requires m.readyAll()
+//   //reqs from mappingOwnersThruKlownOK()
+//   requires m'.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+//   requires m'.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+//   requires m'.o_amfx <= m'.m.Keys   //KLON-OK
+//   requires o in m'.m.Keys
+//   requires m'.ownersInKlown(o) //or could be objectInKlown...
+//   //end reqs from mappingOwnersThruKlownOK()
+//
+//   requires mappingOwnersThruKlownOK(o,m')
+//   requires klonLEQ(m',m)
+//
+//   ensures   mappingOwnersThruKlownOK(o,m)
+//   {}
 
-lemma  mapThruKlownMapsOK2(o : Object,  m' : Klon, m : Klon)
-  //given allMapOwnersThruKlownOK(m') and klonLEQ(m',m), establish mappingOwnersThruKlownOK(o,m)
 
-  //reqs from mappingOwnersThruKlownOK()
-  requires m'.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
-  requires m'.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
-  requires m'.o_amfx <= m'.m.Keys   //KLON-OK
-  requires o in m'.m.Keys
-  requires m'.ownersInKlown(o) //or could be objectInKlown...
-  //end reqs from mappingOwnersThruKlownOK()
+//
+// lemma  mapThruKlownMapsOK2(o : Object,  m' : Klon, m : Klon)
+//   //given allMapOwnersThruKlownOK(m') and klonLEQ(m',m), establish mappingOwnersThruKlownOK(o,m)
+//
+//
+//   requires o.Ready()
+//   requires m'.alternateObjectInKlown(o)
+//   requires m.alternateObjectInKlown(o)
+//   requires m.o.Ready()
+//   requires m'.alternateObjectInKlown(m.o)
+//   requires m.alternateObjectInKlown(m.o)
+//
+//
+//   requires m'.readyAll()
+//   requires m.readyAll()
+//
+//   requires m'.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+//   requires m'.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+//   requires m'.o_amfx <= m'.m.Keys   //KLON-OK
+//   requires o in m'.m.Keys
+//   //end reqs from mappingOwnersThruKlownOK()
+//
+//   requires checkClownership(o,m')
+//   requires klonLEQ(m',m)
+//
+//   ensures  checkClownership(o,m)
+//   {}
 
-  requires mappingOwnersThruKlownOK(o,m')
-  requires klonLEQ(m',m)
+//
+// lemma mapThruKlownMapsOK3(o : Object, m : Klon)
+//   //given allMapOwnersThruKlownOK(m), and o in m.m.Keys establish mappingOwnersThruKlownOK(o,m)
+//
+//   //reqs from allMapOwnersThruKlownOK
+//   requires m.readyAll()
+//   requires m.readyAll() //KLON-OK
+//   requires forall o <- m.m.Keys :: m.readyOK(o)
+//   requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
+//   //end reqs from allMapOwnersThruKlownOK
+//
+//   requires o in m.m.Keys  //IN-KLON
+//   requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+//   requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+//
+//   requires allMapOwnersThruKlownOK(m)
+//
+//   ensures  mappingOwnersThruKlownOK(o,m)
+// {}
+//
+// lemma mapThruKlownMapsOK4(o : Object, m : Klon)
+//   //given allMapOwnersThruKlownOK(m), and o in m.m.Keys establish o.Ready()
+//
+//   //reqs from allMapOwnersThruKlownOK
+//   requires m.readyAll()
+//   requires m.readyAll() //KLON-OK
+//   requires forall o <- m.m.Keys :: m.readyOK(o)
+//   requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
+//   //end reqs from allMapOwnersThruKlownOK
+//
+//   requires o in m.m.Keys  //IN-KLON
+//   requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+//   requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+//
+//   requires allMapOwnersThruKlownOK(m)
+//
+//   ensures  o.Ready()
+// {
+//     assert allMapOwnersThruKlownOK(m);
+//     assert o in m.m.Keys;
+//     mapThruKlownMapsOK3(o, m);
+//     assert mappingOwnersThruKlownOK(o,m);
+//     m.ReadyOKDUCKED(o);
+//
+//     assert o.Ready();
+// }
+//
+// lemma areWeFUCKEDyet1(p : Object, w : Object)
+//   requires  not(p.AMFO >= w.AMFO)
+//   ensures   outside(p, w)
+//   {}
+//
+// lemma LEMMAAmapThruKlownIfInside(k : Owner, m : Klon)
+//   requires k <= m.m.Keys
+//   requires m.readyAll()
+//   requires not(k >= m.o.AMFO)
+//   {
+//     assert not(k >= m.o.AMFO);
+//
+//     assert (k == (if (k >= m.o.AMFO)
+//         then (mapThruKlon(k,m) - m.oxtra + m.cxtra)
+//         else (k)));
+//
+//     assert k == mapThruKlownIfInside(k,m);
+//
+//   }
 
-  ensures   mappingOwnersThruKlownOK(o,m)
-  {}
+
+function calculateClownership(oo : Owner, m : Klon) : Owner
+    requires m.o.Ready()
+    requires m.alternateObjectInKlown(m.o)
+    requires oo <=  m.m.Keys
+       //original/pivot must have been semi-clonend (up to identity at least)!
+ {
+  if (oo >= m.o.AMFO)
+    then (
+      var inside  := oo - m.o_amfx - {m.o};
+      var clowner := m.c_amfx + {m.m[m.o]} + mapThruKlon(inside,m);
+      clowner
+     )
+    else ( oo )
+ }
 
 
-lemma mapThruKlownMapsOK3(o : Object, m : Klon)
-  //given allMapOwnersThruKlownOK(m), and o in m.m.Keys establish mappingOwnersThruKlownOK(o,m)
-
-  //reqs from allMapOwnersThruKlownOK
-  requires m.readyAll()
-  requires m.readyAll() //KLON-OK
-  requires forall o <- m.m.Keys :: m.readyOK(o)
-  requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
-  //end reqs from allMapOwnersThruKlownOK
-
-  requires o in m.m.Keys  //IN-KLON
-  requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
-  requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
-
-  requires allMapOwnersThruKlownOK(m)
-
-  ensures  mappingOwnersThruKlownOK(o,m)
-{}
-
-lemma mapThruKlownMapsOK4(o : Object, m : Klon)
-  //given allMapOwnersThruKlownOK(m), and o in m.m.Keys establish o.Ready()
-
-  //reqs from allMapOwnersThruKlownOK
-  requires m.readyAll()
-  requires m.readyAll() //KLON-OK
-  requires forall o <- m.m.Keys :: m.readyOK(o)
-  requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
-  //end reqs from allMapOwnersThruKlownOK
-
-  requires o in m.m.Keys  //IN-KLON
-  requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
-  requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
-
-  requires allMapOwnersThruKlownOK(m)
-
-  ensures  o.Ready()
+predicate checkClownership(o : Object, m : Klon)
+  requires o.Ready()
+  requires m.o.Ready()
+  //    requires m.objectInKlown(o)
+  requires m.alternateObjectInKlown(o)
+  requires m.readyAll() //need to deal to this!y
+  //hmm what really should we REQUIRE???
+    requires m.alternateObjectInKlown(m.o)  ///do we? - yeah probalby
 {
-    assert allMapOwnersThruKlownOK(m);
-    assert o in m.m.Keys;
-    mapThruKlownMapsOK3(o, m);
-    assert mappingOwnersThruKlownOK(o,m);
-    m.ReadyOKDUCKED(o);
+    var c := m.m[o];
 
-    assert o.Ready();
+    assert m.alternateObjectInKlown(o);
+    assert (o.AMFB  <= m.m.Keys);
+    assert (o.AMFX  <= m.m.Keys);
+    assert (o.AMFO  <= m.m.Keys);
+    assert (o.bound <= m.m.Keys);
+    assert (o.owner <= m.m.Keys);
+    assert (o.ntrnl <= m.m.Keys);
+
+    if (o == m.o)
+      then (
+        && (o.Ready())
+        && (c.Ready())
+        && (c.owner == m.c_owner)
+        && (c.bound == c.owner) ///FOR NOW, NEED TO FIX
+        && (c.AMFO  == m.c_amfx + {c}) //belt & braces
+    ) else (
+    // if (inside(o,m.o)) then (
+        && (o.Ready())
+        && (c.Ready())
+        && (c.owner == calculateClownership(o.owner, m))
+        && (c.bound == c.owner)
+//     ) else (
+//         assert (not(inside(o,m.o)));
+//
+//         && (c == o)
+    )
 }
 
 
-predicate {:isolate_assertions} allMapOwnersThruKlownOK(m : Klon) : (rv : bool)
+      //  && (c.bound == calculateClownership(o.bound, m))
+      //  && (c.AMFB  == calculateClownership(o.AMFB,  m))
+      //  && (c.owner == calculateClownership(o.owner, m))
+      //  && (c.AMFX  == calculateClownership(o.AMFX , m))
+      //  && (c.ntrnl == calculateClownership(o.ntrnl, m))
+      //  && (c.AMFO  == calculateClownership(o.AMFO,  m))
+
+      //  && (c.bound == mapThruKlown(o.bound, m))
+      //  && (c.AMFB  == mapThruKlown(o.AMFB,  m))
+      //  && (c.owner == mapThruKlown(o.owner, m))
+      //  && (c.AMFX  == mapThruKlown(o.AMFX , m))
+      //  && (c.ntrnl == mapThruKlown(o.ntrnl, m))
+      //  && (c.AMFO  == mapThruKlown(o.AMFO,  m))
+
+
+
+predicate checkClownershipAllObjects(m : Klon) : (rv : bool)
+  // requires m.readyAll() //KLON-OK
+  // requires forall o <- m.m.Keys :: m.readyOK(o)
+  // requires forall o <- m.m.Keys :: m.ownersInKlown(o)
+  requires forall o <- m.m.Keys :: o.Ready()
+  requires forall o <- m.m.Keys :: m.alternateObjectInKlown(o)
+
+  requires m.o.Ready()
+  requires m.alternateObjectInKlown(m.o)
+
+  requires m.readyAll()
+{
+  forall o <- m.m.Keys :: checkClownership(o,m)
+}
+
+
+lemma whereAreTheClowners(oo : Owner, m : Klon, cl : Owner)
+    requires m.o.Ready()
+    requires m.alternateObjectInKlown(m.o)
+    requires oo <=  m.m.Keys
+    requires m.calid()
+    requires cl == calculateClownership(oo, m)
+
+    ensures  cl <= m.oHeap+m.ns
+    {
+      reveal m.calid();           assert m.calid();
+      reveal m.calidObjects();    assert m.calidObjects();
+      reveal m.calidOK();         assert m.calidOK();
+      reveal m.calidMap();        assert m.calidMap();
+      reveal m.calidSheep();      assert m.calidSheep();
+
+  if (oo >= m.o.AMFO)
+    {
+      var inside  := oo - m.o_amfx - {m.o};
+      assert inside  <= m.m.Keys <= m.oHeap;
+      var clowner := m.c_amfx + {m.m[m.o]} + mapThruKlon(inside,m);
+      assert clowner <= m.m.Values;
+      assert clowner <= m.oHeap+m.ns;
+    } else {
+          assert cl == oo;
+          assert cl <= m.m.Keys <= m.oHeap;
+          assert cl <= m.oHeap;
+    }
+    }
+
+
+
+
+
+
+
+
+
+
+
+predicate allMapOwnersThruKlownOK(m : Klon) : (rv : bool)
 
   requires m.readyAll() //KLON-OK
   requires forall o <- m.m.Keys :: m.readyOK(o)
@@ -313,22 +561,104 @@ predicate {:isolate_assertions} allMapOwnersThruKlownOK(m : Klon) : (rv : bool)
   //  forall o <- m.m.Keys :: mappingOwnersThruKlownOK(o,m)
 
   forall o <- m.m.Keys :: mappingOwnersThruKlownOK(o,m)
+}
 
+
+method HeyHoLetsGo(m : Klon)
+  requires m.readyAll() //KLON-OK
+  requires forall o <- m.m.Keys :: m.readyOK(o)
+  requires forall o <- m.m.Keys :: m.ownersInKlown(o)
+  requires forall o <- m.m.Keys :: not(inside(o, m.o))
+  requires m.calid()
+  ensures  forall k <- m.m.Keys :: m.m[k] == k
+  {
+    reveal m.calid(), m.calidObjects(), m.calidOK(), m.calidMap(), m.calidSheep();
+
+    assert forall k <- m.m.Keys :: m.m[k] == k;
+    assert forall k <- m.m.Keys :: outside(k,m.o);
+
+
+  forall o <- m.m.Keys ensures (m.m[o].bound == o.bound)
+     //by
+     {
+          var c := m.m[o];
+
+          assert not(inside(o, m.o));
+          assert not(o.AMFO >= m.o.AMFO);
+          assert c == o;
+          assert c.bound == o.bound;
+          assert c.AMFX == o.AMFX;
+
+          // assert c.bound == calculateClownership(o.bound, m);
+          // assert c.AMFX  == calculateClownership(o.bound, m);
+
+
+  var oo := c.bound;
+
+  var co :=
+    (if (oo >= m.o.AMFO)
+    then (
+      var inside  := oo - m.o_amfx - {m.o};
+      var clowner := m.c_amfx + {m.m[m.o]} + mapThruKlon(inside,m);
+      clowner
+     )
+    else ( oo ) );
+  var do :=
+    (if (oo >= m.o.AMFO)
+    then (
+      var inside  := oo - m.o_amfx - {m.o};
+      var clowner := m.c_amfx + {m.m[m.o]} + mapThruKlon(inside,m);
+      clowner
+     )
+    else ( oo ) );
+
+assert co == do;
+
+// print "oo: ";
+// printown(oo);
+// print "\n";
+// print "co: ";
+// printown(co//    assert oo == co;
+
+//     assert (c.AMFO == (if (o.AMFO >= m.o.AMFO)
+//         then (mapThruKlon(o.AMFO,m) - m.oxtra + m.cxtra)
+//         else (o.AMFO)));
+//
+//           // assert c.bound == mapThruKlownIfInside(o.bound, m);
+//     assert c.AMFO  == mapThruKlownIfInside(o.AMFO, m);
+
+     }
+
+      //     mappingOwnersThruKlownIfInsideOK(o,m) // by
+//        {
 //         var c := m.m[o];
 //
-//         assert m.m.Keys > o.AMFX;
-//
-//        && (c.bound == mapThruKlown(o.bound, m))
-//        && (c.AMFB  == mapThruKlown(o.AMFB,  m))
-//        && (c.owner == mapThruKlown(o.owner, m))
-//        && (c.AMFX  == mapThruKlown(o.AMFX , m))
-//        && (c.ntrnl == mapThruKlown(o.ntrnl, m))
-//        && (c.AMFO  == mapThruKlown(o.AMFO,  m))
-//
+//         assert
+//             && (c == o)
+//             && (c.bound == o.bound)
+            // && (c.bound == mapThruKlownIfInside(o.bound, m))
+      //       // && (c.AMFB  == mapThruKlownIfInside(o.AMFB,  m))
+      //       // && (c.owner == mapThruKlownIfInside(o.owner, m))
+      //       // && (c.AMFX  == mapThruKlownIfInside(o.AMFX , m))
+      //       // && (c.ntrnl == mapThruKlownIfInside(o.ntrnl, m))
+      //       // && (c.AMFO  == mapThruKlownIfInside(o.AMFO,  m))
+      //   ;
+      // }
+
+  }
 
 
 
+
+predicate allMapOwnersThruKlownIfInsideOK(m : Klon) : (rv : bool)
+
+  requires m.readyAll() //KLON-OK
+  requires forall o <- m.m.Keys :: m.readyOK(o)
+  requires forall o <- m.m.Keys :: m.ownersInKlown(o)  //same as objectInKlown
+{
+  forall o <- m.m.Keys :: mappingOwnersThruKlownIfInsideOK(o,m)
 }
+
 
 
 lemma allMapOwnersThruKlownKV(m' : Klon, k : Object, v : Object, m : Klon)
@@ -380,7 +710,7 @@ lemma allMapOwnersThruKlownKV(m' : Klon, k : Object, v : Object, m : Klon)
    forall mm <- m'.m.Keys ensures mappingOwnersThruKlownOK(mm, m) //by
    {
       assert mappingOwnersThruKlownOK(mm, m');
-      mapThruKlownMapsOK2(mm, m', m);
+//      mapThruKlownMapsOK2(mm, m', m);
       assert mappingOwnersThruKlownOK(mm, m);
    }
 
@@ -392,6 +722,8 @@ lemma allMapOwnersThruKlownKV(m' : Klon, k : Object, v : Object, m : Klon)
 
    assert allMapOwnersThruKlownOK(m);
 }
+
+
 
 
 lemma {:isolate_assertions} AllKlownPreservesOwnership(m : Klon)
