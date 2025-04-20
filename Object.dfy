@@ -33,7 +33,7 @@ predicate AssignmentCompatible(o : Object, t : Mode, v : Object)
 {
   match t
     case Evil => true
-    case Rep | Owned(_) | Loaned(_) => inside(v,o) //KJX is this right  hmm?
+    case Rep | Owned(_) | Loaned(_) => directlyInside(v,o) //KJX is this right  hmm?
     case Peer => v.owner == o.owner
 //  case Borrow(p,b,n,f) => v.Owner == b
     case Borrow(p,b,n,f) => refOK(o,v)  //KJX not yet done

@@ -1,0 +1,338 @@
+Dafny program verifier did not attempt verification
+Main()
+xxx'0'xxx
+Main Test for loopback
+REALLY REALLY DAVE? false
+ lat:=Obj(e) refOK
+ dat:=Obj(f) ***NOT REFOK***
+ cat:=Obj(g) ***NOT REFOK***
+ rat:=Obj(h) ***NOT REFOK***
+|os| == 14
++++++++++++++
+original store (os)
++++++++++++++
+Obj(j)
+  owner:Obj(e) 
+   AMFO:Obj(j) Obj(d) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(b)
+  owner:Obj(t) 
+   AMFO:Obj(b) Obj(t) 
+   AMFB:Obj(t) 
+- - - - - - - -
+Obj(g)
+  owner:Obj(f) 
+   AMFO:Obj(g) Obj(f) Obj(d) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(f) Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(f)
+  owner:Obj(e) 
+   AMFO:Obj(f) Obj(d) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(c)
+  owner:Obj(t) 
+   AMFO:Obj(c) Obj(t) 
+   AMFB:Obj(t) 
+ eye:=Obj(cc) refOK
+- - - - - - - -
+Obj(cc)
+  owner:Obj(c) 
+   AMFO:Obj(c) Obj(cc) Obj(t) 
+   AMFB:Obj(c) Obj(t) 
+- - - - - - - -
+Obj(h)
+  owner:Obj(g) 
+   AMFO:Obj(g) Obj(f) Obj(h) Obj(d) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(g) Obj(f) Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(d)
+  owner:Obj(a) 
+   AMFO:Obj(d) Obj(a) Obj(t) 
+   AMFB:Obj(a) Obj(t) 
+ lat:=Obj(e) refOK
+ dat:=Obj(f) ***NOT REFOK***
+ cat:=Obj(g) ***NOT REFOK***
+ rat:=Obj(h) ***NOT REFOK***
+- - - - - - - -
+Obj(k)
+  owner:Obj(e) 
+   AMFO:Obj(d) Obj(k) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(i)
+  owner:Obj(g) 
+   AMFO:Obj(g) Obj(f) Obj(d) Obj(i) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(g) Obj(f) Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(e)
+  owner:Obj(d) 
+   AMFO:Obj(d) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(d) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(a)
+  owner:Obj(t) 
+   AMFO:Obj(a) Obj(t) 
+   AMFB:Obj(t) 
+ eye:=Obj(d) refOK
+ kye:=Obj(c) refOK
+- - - - - - - -
+Obj(l)
+  owner:Obj(e) 
+   AMFO:Obj(d) Obj(e) Obj(a) Obj(l) Obj(t) 
+   AMFB:Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(t)
+  owner:
+   AMFO:Obj(t) 
+   AMFB:
+- - - - - - - -
++++++++++++++
+done setup
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+about to Xlone a
+CALL Clone_Via_Map Obj(c) m':Klon.Klon(map[_module.Object := _module.Object], _module.Object, {_module.Object}, {_module.Object}, {_module.Object, _module.Object, _module.Object, _module.Object}, {}, {_module.Object, _module.Object, _module.Object}, {_module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object}, {})
+VARIANT CVM 12 2 1 20
+CALL Clone_All_Owner of:Obj(c) owned by Own(t )
+VARIANT CAO 12 2 1 12
+ENTRY   CAO {} a in Keys true
+PRELOOP 0 a in Keys true
+RETN - Clone All Onwers - done Done DONE
+Clone_Clone_CLone Obj(c) have rowner Own(t ) self not yet cloned
+Clone_Clone_Clone Obj(c) boodle boodle boodle
+CALLING MAKE...BACK FROM MAKE with Obj(clone of c)
+go4s: 2 ns: 1
+Clone_Clone_Clone map updated Obj(c):=Obj(clone of c)
+CALL Clone_All_Fields: Obj(c) pivot:Obj(c)
+VARIANT CAF 12 2 1 10
+<<<<<<<<<<<
+just cloned Obj(c) as Obj(clone of c)
+<<<<<<<<<<<
+<<<<<<<<<<<
+ Obj(c):=Obj(clone of c)
+ Obj(t):=Obj(t)
+<<<<<<<<<<<
+Clone_All_Fields fields:Obj(c) fields=eye 
+BLOOP BLOOP BLOOP
+  TLOOP  Obj(c).eye :=Obj(cc)
+  TLOOP  (recurse on field eye)
+  TLOOP m:12 m':12
+  TLOOP b.fieldsKeys=={}
+  TINV                []
+  TLOOPINV            {}
+VARIANT*CAF 12 2 1 10
+v_caf ({_module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object}, {_module.Object, _module.Object}, {['e', 'y', 'e']}, 10)
+v_cfm ({_module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object}, {_module.Object, _module.Object}, {['e', 'y', 'e']}, 5)
+okaoka false
+okaoka true
+WHOOPS-> 13 2 1 10
+->WHOOPS 13 2 1 5 
+CALL Clone_Field_Map Obj(c) «eye»
+VARIANT CFM 12 2 1 5
+CALL Clone_Via_Map Obj(cc) m':Klon.Klon(map[_module.Object := _module.Object, _module.Object := _module.Object], _module.Object, {_module.Object}, {_module.Object}, {_module.Object, _module.Object, _module.Object, _module.Object}, {}, {_module.Object, _module.Object, _module.Object}, {_module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object, _module.Object}, {_module.Object})
+VARIANT CVM 11 3 0 20
+CALL Clone_All_Owner of:Obj(cc) owned by Own(c )
+VARIANT CAO 11 3 0 12
+ENTRY   CAO {} a in Keys true
+PRELOOP 0 a in Keys true
+RETN - Clone All Onwers - done Done DONE
+Clone_Clone_CLone Obj(cc) have rowner Own(c ) self not yet cloned
+Clone_Clone_Clone Obj(cc) boodle boodle boodle
+CALLING MAKE...BACK FROM MAKE with Obj(clone of cc)
+go4s: 3 ns: 2
+Clone_Clone_Clone map updated Obj(cc):=Obj(clone of cc)
+CALL Clone_All_Fields: Obj(cc) pivot:Obj(c)
+VARIANT CAF 11 3 0 10
+<<<<<<<<<<<
+just cloned Obj(cc) as Obj(clone of cc)
+<<<<<<<<<<<
+<<<<<<<<<<<
+ Obj(c):=Obj(clone of c)
+ Obj(cc):=Obj(clone of cc)
+ Obj(t):=Obj(t)
+<<<<<<<<<<<
+Clone_All_Fields fields:Obj(cc) fields=
+BLOOP BLOOP BLOOP
+RETN Clone_All_Fields done Obj(cc)
+RETN Clone_Clone_CLone of Obj(cc) retuning Obj(clone of cc)
+RETN Clone_Via_Map: Obj(cc) pivot:Obj(c)
+RETN Clone_Field_Map: Obj(c) pivot:Obj(c)
+RETN Clone_All_Fields done Obj(c)
+RETN Clone_Clone_CLone of Obj(c) retuning Obj(clone of c)
+RETN Clone_Via_Map: Obj(c) pivot:Obj(c)
++++++++++++++
+original store (os)
++++++++++++++
+Obj(j)
+  owner:Obj(e) 
+   AMFO:Obj(j) Obj(d) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(b)
+  owner:Obj(t) 
+   AMFO:Obj(b) Obj(t) 
+   AMFB:Obj(t) 
+- - - - - - - -
+Obj(g)
+  owner:Obj(f) 
+   AMFO:Obj(g) Obj(f) Obj(d) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(f) Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(f)
+  owner:Obj(e) 
+   AMFO:Obj(f) Obj(d) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(c)
+  owner:Obj(t) 
+   AMFO:Obj(c) Obj(t) 
+   AMFB:Obj(t) 
+ eye:=Obj(cc) refOK
+- - - - - - - -
+Obj(cc)
+  owner:Obj(c) 
+   AMFO:Obj(c) Obj(cc) Obj(t) 
+   AMFB:Obj(c) Obj(t) 
+- - - - - - - -
+Obj(h)
+  owner:Obj(g) 
+   AMFO:Obj(g) Obj(f) Obj(h) Obj(d) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(g) Obj(f) Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(d)
+  owner:Obj(a) 
+   AMFO:Obj(d) Obj(a) Obj(t) 
+   AMFB:Obj(a) Obj(t) 
+ lat:=Obj(e) refOK
+ dat:=Obj(f) ***NOT REFOK***
+ cat:=Obj(g) ***NOT REFOK***
+ rat:=Obj(h) ***NOT REFOK***
+- - - - - - - -
+Obj(k)
+  owner:Obj(e) 
+   AMFO:Obj(d) Obj(k) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(i)
+  owner:Obj(g) 
+   AMFO:Obj(g) Obj(f) Obj(d) Obj(i) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(g) Obj(f) Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(e)
+  owner:Obj(d) 
+   AMFO:Obj(d) Obj(e) Obj(a) Obj(t) 
+   AMFB:Obj(d) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(a)
+  owner:Obj(t) 
+   AMFO:Obj(a) Obj(t) 
+   AMFB:Obj(t) 
+ eye:=Obj(d) refOK
+ kye:=Obj(c) refOK
+- - - - - - - -
+Obj(l)
+  owner:Obj(e) 
+   AMFO:Obj(d) Obj(e) Obj(a) Obj(l) Obj(t) 
+   AMFB:Obj(d) Obj(e) Obj(a) Obj(t) 
+- - - - - - - -
+Obj(t)
+  owner:
+   AMFO:Obj(t) 
+   AMFB:
+- - - - - - - -
++++++++++++++
+clones rm.Values - os
++++++++++++++
+Obj(clone of cc)
+  owner:Obj(c) 
+   AMFO:Obj(clone of cc) Obj(c) Obj(t) 
+   AMFB:Obj(c) Obj(t) 
+- - - - - - - -
+Obj(clone of c)
+  owner:Obj(t) 
+   AMFO:Obj(clone of c) Obj(t) 
+   AMFB:Obj(t) 
+ eye:=Obj(clone of cc) ***NOT REFOK***
+- - - - - - - -
++++++++++++++
+ Obj(c):=Obj(clone of c)
+ Obj(cc):=Obj(clone of cc)
+ Obj(t):=Obj(t)
+
+
+
+
+waiting...\n
+   skipping Obj(j) outside src
+   skipping Obj(b) outside src
+   skipping Obj(g) outside src
+   skipping Obj(f) outside src
+   skipping Obj(clone of cc) outside Klon 
+   skipping Obj(clone of c) outside src
+   checking Obj(c) cloned as Obj(clone of c) false
+   checking Obj(cc) cloned as Obj(clone of cc) true
+   skipping Obj(h) outside src
+   skipping Obj(d) outside src
+   skipping Obj(k) outside src
+   skipping Obj(i) outside src
+   skipping Obj(e) outside src
+   skipping Obj(a) outside src
+   skipping Obj(l) outside src
+   skipping Obj(t) outside src
+istEinKlon = true
+
+
+$$$$$$$$$$$$$$$$$$
+Obj(j)  AMFO==Own(a d e j t )  (outside)
+  NOT IN rm.m
+Obj(b)  AMFO==Own(b t )  (outside)
+  NOT IN rm.m
+Obj(g)  AMFO==Own(a d e f g t )  (outside)
+  NOT IN rm.m
+Obj(f)  AMFO==Own(a d e f t )  (outside)
+  NOT IN rm.m
+Obj(clone of cc)  AMFO==Own(c clone of cc t )  (inside)
+  NOT IN rm.m
+Obj(clone of c)  AMFO==Own(clone of c t )  (outside)
+  NOT IN rm.m
+Obj(c)  AMFO==Own(c t )  (inside)
+  mapsto Obj(clone of c)
+ mapThruKlon ==Own(clone of c t )
+   calc      ==Own(a clone of c d e t )
+   mTKlown   ==Own(a clone of c d e t )
+   mTKlownII ==Own(a clone of c d e t )
+   OLDmapTKl ==Own(a clone of c d e t )
+Obj(cc)  AMFO==Own(c cc t )  (inside)
+  mapsto Obj(clone of cc)
+ mapThruKlon ==Own(clone of c clone of cc t )
+   calc      ==Own(a clone of c clone of cc d e t )
+   mTKlown   ==Own(a clone of c clone of cc d e t )
+   mTKlownII ==Own(a clone of c clone of cc d e t )
+   OLDmapTKl ==Own(a clone of c clone of cc d e t )
+Obj(h)  AMFO==Own(a d e f g h t )  (outside)
+  NOT IN rm.m
+Obj(d)  AMFO==Own(a d t )  (outside)
+  NOT IN rm.m
+Obj(k)  AMFO==Own(a d e k t )  (outside)
+  NOT IN rm.m
+Obj(i)  AMFO==Own(a d e f g i t )  (outside)
+  NOT IN rm.m
+Obj(e)  AMFO==Own(a d e t )  (outside)
+  NOT IN rm.m
+Obj(a)  AMFO==Own(a t )  (outside)
+  NOT IN rm.m
+Obj(l)  AMFO==Own(a d e l t )  (outside)
+  NOT IN rm.m
+Obj(t)  AMFO==Own(t )  (outside)
+  mapsto Obj(t)
+ mapThruKlon ==Own(t )
+   calc      ==Own(t )
+   mTKlown   ==Own(a d e t )
+   mTKlownII ==Own(t )
+   OLDmapTKl ==Own(a d e t )
+
+$$$$$$$$$$$$$$$$$$
+
+Done
+Exit, pursued by a bear

@@ -2444,7 +2444,7 @@ klonCalidKVCalid(this, k, k, r);
     && calid()
 }
 
-  opaque predicate  calid() : (r : bool)
+  opaque predicate calid() : (r : bool)
     reads oHeap`fields, oHeap`fieldModes
     reads ns`fields, ns`fieldModes
   {
