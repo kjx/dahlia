@@ -238,7 +238,7 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
 // - corresponds to the target
 //structure of this needs TO MATCH THE CALIDs and
 //object invairants ready, valid, calid, etc
-//
+//klonca
 // IDEALLY the "mapThru" features shouldn't be part of
 // the invariuant itself (klonOK) NOR the extension test (klonCanKV)
 // no the extension (klonKV)
