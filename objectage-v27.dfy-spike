@@ -1,0 +1,1133 @@
+//adding in Calid!
+
+
+type Owner = set<Object>
+
+//these types are declared mostly so "printing" can be linked in (or not)
+datatype Edge = Edge(f : Object, n : string, m : Mode, t : Object)
+type Incoming = map<Object,set<Edge>>
+
+
+class Object {
+
+  const bound : Owner //movement bound - stands in for explcit owner parameters
+  const AMFB  : Owner //flattened bound
+
+  const owner : Owner//actual "dynamic" Owner owner of this object --- *XTERNAL*
+  const AMFX :  Owner//flattened owner  /// aka all externeal owners
+
+  const ntrnl : Owner //internal owners - i.e. Self-ownership - i.e. includers THIS
+  const AMFO  : Owner //All MY FUCKING Owner  (aka All My Flat Owner:-)
+
+  var   fields     : map<string,Object>//field values. uninit fields have no entries
+  var   fieldModes : map<string,Mode>//Mode of each field name -  note, static! - would be statically known by any methods
+  //probably also has to go to var to get to typestate. GRRR.
+  //which should be a ghost var?gg
+
+  var   nick : string //nickname
+
+
+
+
+  constructor {:isolate_assertions} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
+
+    requires context >= oo >= mb
+    requires forall o <- oo :: o.Ready()
+    requires forall o <- oo, ooo <- o.AMFO :: context >= o.AMFO > ooo.AMFO
+
+    ensures mb == bound
+    ensures oo == owner
+    ensures Ready()
+
+    ensures fieldModes == ks
+    ensures fields == map[]
+    ensures Valid()
+
+    ensures Context(context+{this})
+
+    ensures nick == name
+    ensures unchanged( context )
+    ensures fresh(this)
+    modifies {}
+  {
+    bound := mb;
+    owner := oo;
+    ntrnl := oo + {this};
+
+    AMFB  := flatten(mb);
+    AMFX  := flatten(oo);
+    AMFO  := flatten(oo) + {this};
+
+    fieldModes := ks;
+    fields := map[];
+    nick  := name;
+
+    new;
+  }
+
+
+  predicate Ready()
+    //Object's ownership (owner/bound/ntrln) and flat (AMFO/AMFB/AMFX) is consistent
+    reads {}
+    decreases AMFO, 20
+  {
+    && (forall oo <- owner :: oo.AMFO < AMFO)
+    && (forall oo <- bound :: oo.AMFO < AMFO)
+    && (forall o <- AMFO,  ooo <- o.AMFO :: AMFO >= o.AMFO >= ooo.AMFO)
+
+    && (ntrnl == owner + {this})
+
+    && (ntrnl > owner >= bound)
+
+    && (AMFB == flatten(bound))
+    && (AMFX == flatten(owner))
+    && (AMFO == flatten(ntrnl))
+    && (AMFO == AMFX + {this})
+
+    && (AMFO > AMFX >= AMFB)
+
+    &&  (forall oo <- AMFX:: oo.Ready())
+  }
+
+
+  predicate Valid()
+    //Object's fields are declared / correct to that object
+    requires Ready()
+    reads this`fields, this`fieldModes
+    decreases AMFO
+  {
+    && (fields.Keys <= fieldModes.Keys)
+    //aka AllFieldsAreDeclared()
+    && (forall n <- fields :: refOK(this, fields[n]))
+    //sortof AllOutgoingReferencesAreOwnership(…)
+    && (forall n <- fields :: modeOK(this, fieldModes[n], fields[n]))
+    //aka AllFieldsContentsConsistentWithTheirDeclaration()
+  }
+
+
+  predicate Context(context : set<Object>) : (rv : bool)
+    //Object's owners and fields are within this context
+    requires Ready()
+    //requires Valid()
+    reads this`fields, this`fieldModes
+    decreases AMFO
+    // ensures (rv ==> (context >= AMFO))
+    // ensures (context >= fields.Values)
+  {
+    && (context >= AMFO)
+    && (context >= fields.Values)
+    //  && (context >= (set m <- fieldModes.Values :: ownerOfMode{m))
+  }
+
+
+///aux methods / fns
+
+  function ownerOfMode(m : Mode) : set<Object>
+    //owners buried with in Modes?
+  {
+    match m
+    case Evil => {}
+    case Rep | Owned(_) | Loaned(_) => {}
+    case Peer => {}
+    case Borrow(p, o, f, n) => o+{f}
+  }
+
+
+
+}//end class Object
+
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//
+//  core geometry
+//
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//owners
+
+function flatten(os : Owner) : Owner {(set o <- os, oo <- o.AMFO :: oo) + os}
+
+// definitions of inside
+
+predicate inside(part : Object, whole : Object) : (rv : bool)  { part.AMFO >= whole.AMFO }
+
+predicate directlyInside(part : Object, whole : Object) : (rv : bool) { part.AMFX == whole.AMFO }
+
+predicate outside(part : Object, whole : Object) : (rv : bool) { not(inside(part,whole)) }
+
+
+//interobehl jct references
+
+predicate refBI(f : Object, t : Object) {f.AMFB >= t.AMFX}
+predicate refDI(f : Object, t : Object) {f.AMFO == t.AMFX}
+predicate refOK(f : Object, t : Object) {(f==t) || refBI(f,t) || refDI(f,t)}
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+datatype Mode =
+  | Rep // owned by me
+  | Peer // owned by my owner
+    //For all the Owner & Read "Modes" sholdn't the owner always be "self" i.e; the object containing the reernce.
+  | Owned(perm : Perm) //unrestricted, Rust-style owning reference - with no borrows!
+  | Loaned(perm : Perm) //owning reference, but currently there are "borrowed" references to it
+  | Borrow(perm: Perm, owner: Owner, from : Object, name : string) //borrowed reference, borrowe from that object!
+    //when one does a "stack-pop-return" into the obejct that this was borrowed from
+    //then the Mode of the owning refernece goes from Loaned -> Owned
+  | Evil //type dyanmic.  So I don't hace to do the full checks right now --- kjx 7 May 2024
+
+
+datatype Perm = Read | Write | Local   ///or should these be object kinds???>  ARGH!!
+
+
+predicate modeOK(f : Object, m : Mode, t : Object)
+  //can object o point to object v
+  //can object v be assigned to a field of Mode t within object o?
+  //NOTE EVIL cutrently ignor4s OWNERSHIP in this definition!!!!!
+{
+  match m
+  case Evil => true
+  case Rep | Owned(_) | Loaned(_) => refDI(f,t)
+  case Peer => (f.owner == t.owner)
+  case Borrow => refOK(f,t)
+}
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//
+//  Klon - clone mapping!
+//
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+
+datatype Klon = Klon
+(
+  m : vmap<Object,Object>,    //the  klon map
+  o : Object,                 //object being copied
+  oHeap : set<Object>,
+  o_amfx : Owner,             //was o. so the AMFO of o
+  c_amfx : Owner              //epected ownershio of the clone..
+)
+{
+  predicate from(prev : Klon)
+  {
+    && mapGEQ(m, prev.m)
+    && o      == prev.o
+    && o_amfx == prev.o_amfx
+    && c_amfx == prev.c_amfx
+  }
+
+  predicate HeapContextReady()
+    reads oHeap`fields, oHeap`fieldModes
+  {
+    (forall x <- oHeap :: (x.Ready() && x.Valid() && x.Context(oHeap)))
+  }
+
+  predicate ValuesContextReady()
+    reads m.Values, oHeap
+  {
+    (forall x <- m.Values :: (x.Ready() && x.Valid() && x.Context(oHeap+m.Values)))
+  }
+
+  lemma ValueContextExtra(m : Klon, less : set<Object>, extra : set<Object>)
+    //given ValueContextExtra(m,c), get ValueContextExtra(m,c+extra),
+    requires (forall x <- m.m.Values :: (x.Ready() && x.Valid() && x.Context(oHeap+m.m.Values)))
+    ensures  (forall x <- m.m.Values :: (x.Ready() && x.Valid() && x.Context(oHeap+m.m.Values+extra)))
+  {}
+
+
+  predicate {:isolate_assertions} Calid() : (r : bool)
+    //Klon mapping is consitent & valid.
+    //Calid just seened like a good name
+    reads oHeap`fields, oHeap`fieldModes
+    reads m.Values`fields, m.Values`fieldModes
+    reads o`fields, o`fieldModes
+    reads m.Values, oHeap
+
+    requires HeapContextReady()
+    requires ValuesContextReady()
+  {
+    //calidObjects - mostly about oHeap and ns and stuff
+    && (m.Keys <= oHeap)
+
+    //this recapitulates ValuesContextReady() but putting it here lets things work
+    && (forall v <- m.Values :: (v.Ready() && v.Valid()))
+
+    //the pivot object "o" being cloned
+    && (o.Ready() && o.Valid() && o.Context(oHeap) && objectInKlown(o))
+
+    && (forall k <- m.Keys   :: m[k].AMFO >= m[k].AMFB >= k.AMFB)
+    && (forall k <- m.Keys   :: (not(inside(k,o)) ==> (m[k] == k)))
+    && (forall k <- m.Keys   :: (   (inside(k,o)) ==> (m[k] !in oHeap)))
+    //
+    //calidSheep - subsumed?
+    && (forall k <- m.Keys :: k.fieldModes == m[k].fieldModes)
+
+    //KlonVMqpOK(k, context)
+    && (forall k <- m.Keys :: k.AMFO <= m.Keys)
+    && (forall k <- m.Keys :: k.AMFB <= m.Keys)
+    && (forall k <- m.Keys :: k.bound <= k.owner <= m.Keys)
+
+    && (forall k <- m.Keys :: (objectInKlown(k)) )
+    && (forall k <- m.Keys :: (checkClownership(k, m[k], this)) )
+  }
+
+  // I think I'd prefer this version but either Diagonal or Function would have to working
+  //   diagonal is in objctage-v27d.dfy or thereabouts
+  //
+  //     && (forall k <- m.Keys :: (
+  //                                 && (m[k].AMFO >= m[k].AMFB >= k.AMFB)
+  //                                 && (not(inside(k,o)) ==> (m[k] == k))
+  //                                 && (   (inside(k,o)) ==> (m[k] !in oHeap))
+  //                                 //calidSheep - subsumed?
+  //                                 && (k.fieldModes == m[k].fieldModes)
+  //                                 //KlonVMqpOK(k, context)
+  //                                 && (k.AMFO <= m.Keys)
+  //                                 && (k.AMFB <= m.Keys)
+  //                                 && (k.bound <= k.owner <= m.Keys)
+  //                                 //clownership
+  //                                 && (objectInKlown(k))
+  //                                 && (checkClownership(k, m[k], this))
+  //                                 ))
+  // }
+
+
+  predicate AllLinesCalid()
+    //all pairs (aka lines) in the overall Klon map are Calid
+    requires forall k <- m.Keys   :: k.Ready() && k.Valid() && objectInKlown(k)
+    requires forall v <- m.Values :: v.Ready() && v.Valid()
+
+    requires o.Ready() && o.Valid() && objectInKlown(o)
+    reads m.Keys`fieldModes, m.Keys`fields, m.Values`fieldModes, m.Values`fields, o
+  { forall k <- m.Keys :: CalidLine(k) }
+
+
+  predicate CalidLine(k : Object)
+    //conditions for individual mappings (pairs aka lines) in the overall Klon map
+    requires k.Ready() && k.Valid() // should context go in here too? probasbly?
+    requires objectInKlown(k)
+    requires m[k].Ready()
+    requires o.Ready() && o.Valid()
+    requires objectInKlown(o)
+
+    reads k`fieldModes, k`fields, m.Values`fieldModes, m.Values`fields, o
+  {
+    && (m[k].AMFO >= m[k].AMFB >= k.AMFB)
+    && (not(inside(k,o)) ==> (m[k] == k))
+    && (   (inside(k,o)) ==> (m[k] !in oHeap))
+    //calidSheep - subsumed?
+    && (k.fieldModes == m[k].fieldModes)
+    //KlonVMqpOK(k, context)
+    && (k.AMFO <= m.Keys)
+    && (k.AMFB <= m.Keys)
+    && (k.bound <= k.owner <= m.Keys)
+    //clownership
+    && (objectInKlown(k))
+    && (checkClownership(k, m[k], this))
+  }
+
+  predicate CalidCanKey(k : Object)
+    //conditions an object to be added as a Key into the Klon map
+    //  note this doesn't seem to deal with ougoing field values, but that will get
+    //  caught eventually via  HeapContextReady() &  ValueContextReady()
+    //doesn't seem to require Calid????
+    requires k.Ready() && k.Valid() // should context go in here too? probasbly?
+    requires ownersInKlown(k)
+    requires o.Ready() && o.Valid()
+    requires objectInKlown(o)
+
+    reads k`fieldModes, k`fields, m.Values`fieldModes, m.Values`fields, o
+  {
+    var calcAMFX := calculateClownership(k.AMFX, this);
+    var calcAMFB := calculateClownership(k.bound, this);
+
+    && (calcAMFX >= calcAMFB >= k.AMFB)
+    // && (not(inside(k,o)) ==> (m[k] == k))
+    // && (   (inside(k,o)) ==> (m[k] !in oHeap))
+    //calidSheep - subsumed?
+    // && (k.fieldModes == m[k].fieldModes)
+    //KlonVMqpOK(k, context)
+    && (k.AMFO <= m.Keys)
+    && (k.AMFB <= m.Keys)
+    && (k.bound <= k.owner <= m.Keys)
+    //clownership
+
+    && (ownersInKlown(k))
+  //  && (ClawnershipK(k, this))
+  }
+
+
+  predicate CalidCanValue(k : Object, v : Object)
+    //conditions an object to be added as a Value into the Klon map
+    // dunno if I really need this but wrote it anyway as an extenion of CanCalidKey above
+    //  note this doesn't seem to deal with ougoing field values, but that will get
+    //  caught eventually via  HeapContextReady() &  ValueContextReady()
+    //doesn't seem to require Calid????
+    requires k.Ready() && k.Valid() // should context go in here too? probasbly?
+    requires v.Ready() && v.Valid()
+    requires ownersInKlown(k)
+    requires o.Ready() && o.Valid()
+    requires objectInKlown(o)
+
+    requires CalidCanKey(k)
+
+    reads k`fieldModes, k`fields, m.Values`fieldModes, m.Values`fields, o
+    reads v`fieldModes, v`fields
+  {
+    var calcAMFX := calculateClownership(k.AMFX, this);
+    var calcAMFB := calculateClownership(k.bound, this);
+
+    && (calcAMFX == v.AMFX)
+    && (calcAMFB == v.AMFB)
+    && (calcAMFX >= calcAMFB >= k.AMFB)
+    && (not(inside(k,o)) ==> (v == k))
+    && (   (inside(k,o)) ==> (v !in oHeap)) //i.e. v is new(ish)
+    //calidSheep - subsumed?
+    && (k.fieldModes == v.fieldModes)
+    //clownership
+
+    && (ownersInKlown(k))
+    && (checkClownership(k, v, this))
+  }
+
+
+
+  predicate objectInKlown(o : Object) : (rv : bool)
+    //o and all its owners etc are the Klown m
+    //(doesn't extend to fields)
+
+    requires o.Ready()
+
+    ensures rv ==> (o in m.Keys)
+    ensures rv ==> (o.AMFB <= m.Keys)
+    ensures rv ==> (o.AMFX <= m.Keys)
+    ensures rv ==> (o.AMFO <= m.Keys)    //WEESA DONT WANTA REQUIRE this MASSA
+    ensures rv ==> (o.bound <= m.Keys)
+    ensures rv ==> (o.owner <= m.Keys)
+    ensures rv ==> (o.ntrnl <= m.Keys)    //WEESA DONT WANTA REQUIRE this MASSA
+  { o.AMFO <= m.Keys }
+
+
+  predicate ownersInKlown(o : Object) : (rv : bool)
+    //o's owners but not o itself is in the Klon
+    //(doesn't extend to fields)
+
+    requires o.Ready()
+
+    ensures rv ==> (o.AMFB <= m.Keys)
+    ensures rv ==> (o.bound <= m.Keys)
+    ensures rv ==> (o.owner <= m.Keys)
+  { o.AMFX <= m.Keys }
+
+
+
+  predicate  {:isolate_assertions}  klownCanKV(k : Object, v : Object) : (rv : bool)
+    //can k v be added to a Calid Klon and guarantee the resulting Klon is Calid?
+    //this version is implicit / hypothetical: it just builds the resuting Klon and
+    //asks if it is Calid, rather than givng explicit / actual constraints on k & v
+    //that are guaranteed to result in a valid Klon.
+    requires k !in m.Keys
+    requires v !in m.Values
+
+    requires (v.Ready() && v.Valid() && v.Context(oHeap+m.Values+{v}))
+
+    requires HeapContextReady()
+    requires ValuesContextReady()
+
+    requires Calid()
+
+    reads k`fields, k`fieldModes
+    reads v`fields, v`fieldModes
+    reads oHeap`fields, oHeap`fieldModes
+    reads m.Values`fields, m.Values`fieldModes
+    reads o`fields, o`fieldModes
+    reads k
+    reads v
+    reads klonKV(this,k,v).m.Values`fields, klonKV(this,k,v).m.Values`fieldModes
+    reads m.Values, oHeap
+
+  {
+    && k !in m.Keys
+    && v !in m.Values
+    && (var nextKlon := klonKV(this,k,v);
+        //
+        //         assert nextKlon.HeapContextReady();
+        //         assert ValuesContextReady();
+        //
+        //         assert  (forall x <- m.Values :: (x.Ready() && x.Valid() && x.Context(oHeap+m.Values)));
+        //         ValueContextExtra(this, this.oHeap+this.m.Values, {v});
+        //         assert  (forall x <- m.Values :: (x.Ready() && x.Valid() && x.Context(oHeap+m.Values+{v})));
+        //
+        //         assert  (v.Ready() && v.Valid() && v.Context(oHeap+m.Values+{v}));
+        //         assert nextKlon.m.Values == m.Values + {v};
+        // //        assert  (forall x <- nextKlon.m.Values :: (x.Ready() && x.Valid() && x.Context(nextKlon.oHeap+nextKlon.m.Values+{v})));
+        // //        assert nextKlon.ValuesContextReady();
+        //
+        && nextKlon.HeapContextReady()
+        && nextKlon.ValuesContextReady()
+        && nextKlon.Calid())
+  }
+
+
+
+
+  function  {:isolate_assertions} CalidKV(k : Object, v : Object) : (mK : Klon)
+    //givne a Calid Klon, add in k:=v to the mapping and geg a  Calid result.
+    requires k !in m.Keys
+    requires v !in m.Values
+    requires NOV: v !in m.Values
+
+    requires HeapContextReady()
+    requires ValuesContextReady()
+    requires Calid()
+
+    requires k in oHeap
+    requires v in (oHeap+this.m.Values+{v})
+    requires (v.Ready() && v.Valid() && v.Context(oHeap+m.Values+{v}))
+
+    requires this.m.Keys <= this.oHeap
+    requires ownersInKlown(k)
+    requires CalidCanKey(k)
+
+    reads k`fields, k`fieldModes
+    reads v`fields, v`fieldModes
+    reads oHeap`fields, oHeap`fieldModes
+    reads m.Values`fields, m.Values`fieldModes
+    reads o`fields, o`fieldModes
+    reads k
+    reads v
+    reads klonKV(this,k,v).m.Values`fields, klonKV(this,k,v).m.Values`fieldModes
+    reads m.Values, oHeap
+    reads k
+
+    ensures  mK == klonKV(this, k, v)
+    ensures  mK.from(this)
+    ensures  mK.HeapContextReady()
+    ensures  mK.ValuesContextReady()
+    ensures  (mK.m.Keys <= mK.oHeap)
+
+    ensures  mK.Calid()
+  {
+    (var mK := klonKV(this, k, v);
+
+     assert mK.m.Keys   == m.Keys+{k};
+     assert mKmVmVv: mK.m.Values == m.Values+{v};
+     assert          mK.m.Values == m.Values+{v};
+
+     forall x <- mK.m.Keys ensures  {:contradiction} (mK.m.Keys <= oHeap) //by
+     {
+       if (x == k) { assert {:contradiction} k in oHeap; }
+       if (x != k) { assert {:contradiction} x in oHeap; }
+       assert {:contradiction} x in oHeap;
+     }
+
+     forall y <- mK.m.Values ensures (y.Ready() && y.Valid() ) //by
+     {
+       if (y == v) { assert (v.Ready() && v.Valid()); }
+       if (y != v) {
+         assert  {:contradiction} y in mK.m.Values;
+         assert  {:contradiction}  (y.Ready() && y.Valid()); }
+
+       assert  {:contradiction} (y.Ready() && y.Valid());
+     }
+
+
+     assert {:contradiction} mK.HeapContextReady();
+     assert ValuesContextReady();
+
+     OneLittleCommie(this,k,v,mK);
+
+     assert{:contradiction}  mK.ValuesContextReady();
+
+     assert objectInKlown(o);
+     assert mK.objectInKlown(o);
+
+     assert CalidCanKey(k); //pro you're like to want to walk.
+                            // ^-- no idea what that comment means but…
+
+     TwoLittleCommie(this,k,v,mK);
+
+     assert mK.Calid();
+
+     mK)
+
+  }
+
+
+
+}//end datatype Klon
+
+
+
+
+lemma OneLittleCommie(m' : Klon, k : Object, v : Object, m : Klon )
+  requires k !in m'.m.Keys
+  requires v !in m'.m.Values
+
+  requires m == klonKV(m',k,v)
+
+  requires m'.ValuesContextReady()
+  requires v.Ready() && v.Valid()
+  requires v.Context(m'.oHeap+m'.m.Values+{v})
+
+  ensures  m.oHeap == m'.oHeap
+  ensures  v !in m'.m.Values
+  ensures  v  in m.m.Values
+  ensures  m.m.Keys   == m'.m.Keys   + {k}
+  ensures  m.m.Values == m'.m.Values + {v}
+
+
+  ensures  m.ValuesContextReady()
+{}
+
+
+
+lemma {:isolate_assertions} TwoLittleCommie(m' : Klon, k : Object, v : Object, m : Klon )
+
+  requires k.Ready() && k.Valid() // should context go in here too? probasbly?
+  requires m'.ownersInKlown(k)
+
+  requires m'.o.Ready() && m'.o.Valid()
+  requires m'.objectInKlown(m'.o)
+
+  requires k !in m'.m.Keys
+  requires v !in m'.m.Values
+
+  requires m'.CalidCanKey(k) // should this be
+
+  requires m'.HeapContextReady()
+  requires m'.ValuesContextReady()
+  requires m'.Calid()
+  requires m == klonKV(m',k,v)
+
+  requires v.Ready() && v.Valid()
+  requires v.Context(m'.oHeap+m'.m.Values+{v})
+
+  requires m.HeapContextReady()
+  requires m.ValuesContextReady()
+  requires m.oHeap == m'.oHeap
+  requires v !in m'.m.Values
+  requires v  in m.m.Values
+  requires m.m.Keys   == m'.m.Keys   + {k}
+  requires m.m.Values == m'.m.Values + {v}
+
+  requires m'.AllLinesCalid()
+  ensures   m.AllLinesCalid()
+
+{
+  //   assert forall k <- m'.m.Keys :: m'.CalidLine(k);
+  //   assert m.m.Keys == m'.m.Keys + {k};
+  //   assert forall k <- m.m.Keys :: m.CalidLine(k);
+  //   assert m.AllLinesCalid();
+}
+
+
+
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+function calculateClownership(oo : Owner, m : Klon) : Owner
+  //given some (flattened) Owner oo, calculate the mapped / cloned version
+  requires m.o.Ready()
+  requires m.objectInKlown(m.o)
+  requires oo <=  m.m.Keys
+  //original/pivot must have been semi-clonend (up to identity at least)!
+{
+  if (oo >= m.o.AMFO)
+  then (
+            var inside  := oo - m.o_amfx - {m.o};
+            var clowner := m.c_amfx + {m.m[m.o]} + mapThruKlon(inside,m);
+            clowner
+          )
+  else ( oo )
+}
+
+
+
+predicate checkClownership(k : Object, v : Object, m : Klon)
+  requires k.Ready()
+  requires m.ownersInKlown(k)
+  requires v.Ready()
+  requires m.o.Ready()
+  //hmm what really should we REQUIRE???h
+  requires m.objectInKlown(m.o)  ///do we? - yeah probalby
+{
+  assert (k.AMFB  <= m.m.Keys);
+  assert (k.AMFX  <= m.m.Keys);
+//  assert (k.AMFO  <= m.m.Keys);
+  assert (k.bound <= m.m.Keys);
+  assert (k.owner <= m.m.Keys);
+//  assert (k.ntrnl <= m.m.Keys);
+
+  if (k == m.o)
+  then (
+            && (v.owner == m.m[m.o].owner) //BLAH VLAH VLAH
+            && (v.bound == v.owner) ///FOR NOW, NEED TO FIX BOUNDS  or v.bound == c calculatrClonker(who the fuck knows)
+            && (v.AMFO  == m.c_amfx + {v}) //belt & braces
+          ) else (
+                   && (v.owner == calculateClownership(k.owner, m))
+                   && (v.bound == v.owner) //NEED TO FIX BOUNDS
+                 )
+}
+
+
+
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+function klonKV(m' : Klon, k : Object, v : Object) : (m : Klon)
+  requires k !in m'.m.Keys
+  requires v !in m'.m.Values
+
+  ensures m ==   m'.(m:=m'.m[k:=v])
+  ensures m.from(m')
+  ensures m.m.Keys   == m'.m.Keys+{k}
+  ensures m.m.Values == m'.m.Values+{v}
+  ensures m.o        == m'.o
+  ensures m.oHeap    == m'.oHeap
+  ensures m.o_amfx   == m'.o_amfx
+  ensures m.c_amfx   == m'.c_amfx
+{
+  m'.(m:=m'.m[k:=v])
+}
+
+function mapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
+  //image of os under klon mapping m
+  // reads m.m.Keys`fields, m.m.Keys`fieldModes
+  // reads m.m.Values`fields, m.m.Values`fieldModes
+  requires os <= m.m.Keys
+{ set o <- os :: m.m[o] }
+
+
+//
+// predicate klownersInsideOK(of : Object, ot : Object, cf : Object, ct: Object, m : Klon) : ( rv : bool )
+//   requires {of, ot} <= m.m.Keys
+//   requires m.m[of] == cf
+//   requires m.m[ot] == ct
+// {
+//   (inside(of,ot) ==> inside(cf,ct))
+// }
+//
+//
+//
+// predicate klownersMapOK(k : Object, v : Object, m : Klon) : ( rv : bool )
+//   //see allKlownersMapOK for why k & v must be in m already
+//   requires k in m.m.Keys
+//   requires v in m.m.Values
+//   requires m.m[k] == v
+//   requires m.o_amfx <= m.m.Keys   //IN-KLON
+//   requires k.owner <= m.m.Keys   //IN-KLON
+//   requires k.AMFO  <= m.m.Keys   //IN-KLON
+// {
+//   var CXTRA := m.c_amfx - mapThruKlon(m.o_amfx, m);
+//   var OXTRA := mapThruKlon(m.o_amfx, m) - m.c_amfx;
+//
+//
+//   assert  mapThruKlon(m.o_amfx, m) - OXTRA + CXTRA == m.c_amfx;
+//
+// ///KJX continue from here - needs to be done in parallel for owner & AMFO!
+// ///KJX continue from here - needs to be done in parallel for owner & AMFO!
+// ///KJX continue from here - needs to be done in parallel for owner & AMFO!
+//
+//   && (v.AMFO == (mapThruKlon(k.AMFO, m) - OXTRA + CXTRA )) //and this one???
+// }
+//
+//
+// function  mapThruKlowners(k : Object, m : Klon) : Owner
+//   requires k in m.m.Keys
+//   // requires v in m.m.Values
+//   // requires m.m[k] == v
+//   requires m.o_amfx <= m.m.Keys   //IN-KLON
+//   requires k.owner <= m.m.Keys   //IN-KLON
+//   requires k.AMFO  <= m.m.Keys   //IN-KLON
+//
+// {
+//   var CXTRA := m.c_amfx - mapThruKlon(m.o_amfx, m);
+//   var OXTRA := mapThruKlon(m.o_amfx, m) - m.c_amfx;
+//
+//   assert  (mapThruKlon(m.o_amfx, m) - OXTRA + CXTRA) == m.c_amfx;
+//
+//   (mapThruKlon(k.AMFO, m) - OXTRA + CXTRA ) //and this one??
+// }
+//
+//
+// function mapKlowners(k : Owner, m : Klon) : Owner
+//   requires m.o_amfx <= m.m.Keys   //IN-KLON
+//   requires k <= m.m.Keys
+// {
+//   var CXTRA := m.c_amfx - mapThruKlon(m.o_amfx, m);
+//   var OXTRA := mapThruKlon(m.o_amfx, m) - m.c_amfx;
+//
+//   (mapThruKlon(k,m) - OXTRA + CXTRA )
+// }
+//
+// lemma MapKlownersThruKlowners(k : Object, m : Klon)
+//   requires k in m.m.Keys         //IN-KLON
+//   requires m.o_amfx <= m.m.Keys   //IN-KLON
+//   requires k.owner <= m.m.Keys   //IN-KLON
+//   requires k.AMFO  <= m.m.Keys   //IN-KLON
+//   ensures  mapThruKlowners(k,m) == mapKlowners(k.AMFO, m)
+// {}
+//
+//
+// predicate objectOwnerAttributesMapOK(o : Object, m : Klon)
+//   //do all o's owner attribute map to m.m[o]'s attributes
+//   //not currently needed?
+//   requires m.o_amfx <= m.m.Keys   //IN-KLON
+//   requires m.m.Keys >= o.ntrnl > o.owner >= o.bound  //IN-KLON
+//   requires m.m.Keys >= o.AMFO  > o.AMFX  >= o.AMFB   //IN-KLON
+//   requires o in m.m.Keys  //IN-KLON
+// {
+//   var c := m.m[o];
+//
+//   && (c.bound == mapKlowners(o.bound, m))
+//   && (c.AMFB  == mapKlowners(o.AMFB,  m))
+//   && (c.owner == mapKlowners(o.owner, m))
+//   && (c.AMFX  == mapKlowners(o.AMFX , m))
+//   && (c.ntrnl == mapKlowners(o.ntrnl, m))
+//   && (c.AMFO  == mapKlowners(o.AMFO,  m))
+// }
+//
+//
+//
+//
+// lemma  MapKlownersMapsOK1(k : Object, v : Object, m : Klon)
+//   requires k in m.m.Keys
+//   requires v in m.m.Values
+//   requires m.m[k] == v
+//   requires m.o_amfx <= m.m.Keys   //IN-KLON
+//   requires k.owner <= m.m.Keys   //IN-KLON
+//   requires k.AMFO  <= m.m.Keys   //IN-KLON
+//   requires klownersMapOK(k,v,m)
+//   ensures (
+//             var mTKoA := mapThruKlon(m.o_amfx, m);
+//             var CXTRA := m.c_amfx - mTKoA;
+//             var OXTRA := mTKoA - m.c_amfx;
+//             && ((mTKoA - OXTRA + CXTRA) == m.c_amfx)
+//             && (v.AMFO == mapThruKlowners(k,m))
+//           )
+// {
+//   var mTKoA := mapThruKlon(m.o_amfx, m);
+//   var CXTRA := m.c_amfx - mTKoA;
+//   var OXTRA := mTKoA - m.c_amfx;
+//   assert
+//     && ((mTKoA - OXTRA + CXTRA) == m.c_amfx)
+//     && (v.AMFO == mapThruKlowners(k,m))
+//     ;
+// }
+//
+// lemma MapKlownersMapsOK2(m : Klon, o : Object, c : Object)
+//   requires o.AMFO == m.o_amfx
+//   requires c.AMFO == m.c_amfx
+//   requires o in m.m.Keys
+//   requires c in m.m.Values
+//   requires m.m[o] == c
+//   //see allKlownersMapOK for why k & v must be in m already
+//   requires forall k <- m.m.Keys :: k.owner <= m.m.Keys   //IN-KLON
+//   requires forall k <- m.m.Keys :: k.AMFO  <= m.m.Keys   //IN-KLON
+//   requires allKlownersMapOK(m)
+//   requires m.o_amfx <= m.m.Keys
+//   requires m.c_amfx == m.m[o].AMFO
+//   ensures  klownersMapOK(o, c, m)
+// {}
+//
+//
+// predicate allKlownersMapOK(m : Klon)
+//   requires forall k <- m.m.Keys :: k.owner <= m.m.Keys   //IN-KLON
+//   requires forall k <- m.m.Keys :: k.AMFO  <= m.m.Keys   //IN-KLON
+//   requires m.o_amfx <= m.m.Keys   //IN-KLON
+// {
+//
+//   forall x <- m.m.Keys :: klownersMapOK(x,m.m[x],m)
+// }
+//
+// lemma AllKlownersMapKVRestored(m' : Klon, k : Object, v : Object, m : Klon)
+//   //ensures m'[k := v] == m
+//   //are these *MOT* going to leave Australia to teach someewhwere else?
+//   requires k !in m'.m.Keys
+//   requires v !in m'.m.Values
+//   requires forall k <- m'.m.Keys :: k.owner <= m'.m.Keys   //IN-KLON
+//   requires forall k <- m'.m.Keys :: k.AMFO  <= m'.m.Keys   //IN-KLON
+//   requires m'.o_amfx <= m'.m.Keys   //IN-KLON
+//   requires allKlownersMapOK(m')
+//   requires m == klonKV(m',k,v)
+//
+//   requires k.owner <= m.m.Keys   //IN-KLON
+//   requires k.AMFO  <= m.m.Keys   //IN-KLON
+//   requires klownersMapOK(k,v,m)
+//
+//   ensures  allKlownersMapOK(m)
+// {
+//   assert v == m.m[k];
+//   assert forall mm <- m'.m.Keys :: m'.m[mm]  == m.m[mm];
+//   assert forall mm <- m.m.Keys :: ((mm in m'.m.Keys) ==> (m'.m[mm] == m.m[mm]));
+//   assert m.m.Keys == m'.m.Keys + {k};
+//
+//   assert allKlownersMapOK(m');
+//   assert forall mm <- m'.m.Keys       :: klownersMapOK(mm, m.m[mm], m);
+//   assert klownersMapOK(k,v,m);
+//   assert forall mm <- {k}             :: klownersMapOK(mm, m.m[mm], m);
+//   assert forall mm <- m'.m.Keys + {k} :: klownersMapOK(mm, m.m[mm], m);
+//   assert forall mm <- m.m.Keys        :: klownersMapOK(mm, m.m[mm], m);
+//   assert allKlownersMapOK(m);
+// }
+//
+//
+// lemma AllKlownersPreservesOwnership(m : Klon)
+//   requires forall k <- m.m.Keys :: k.owner <= m.m.Keys   //IN-KLON
+//   requires forall k <- m.m.Keys :: k.AMFO  <= m.m.Keys   //IN-KLON
+//   requires m.o_amfx <= m.m.Keys
+//   requires allKlownersMapOK(m)
+//   ensures forall i <- m.m.Keys, j <- m.m.Keys ::  (klownersInsideOK(i,j,m.m[i],m.m[j],m))
+// {
+//   assert forall i <- m.m.Keys :: klownersMapOK(i,m.m[i],m);
+//
+//   forall i <- m.m.Keys, j <- m.m.Keys
+//     ensures (klownersInsideOK(i,j,m.m[i],m.m[j],m))
+//   {
+//     if (i == j) { return; }
+//     if (inside(i,j)) {
+//       assert i.AMFO >= j.AMFO;
+//       assert klownersMapOK(i,m.m[i], m);
+//       assert klownersMapOK(j,m.m[j], m);
+//     }
+//     assert (klownersInsideOK(i,j,m.m[i],m.m[j],m));
+//   }
+// }
+//
+//
+//
+//
+// predicate objectOwnersWithinKlonOK(o : Object, m : Klon)
+//   //is o Ready, and all its *owners* in m.Keys?
+//   //(not the lot, just the owners)
+// {
+//   && o.Ready()
+//   && (o in m.m.Keys)
+//   && (o.AMFO <= m.m.Keys)
+//   && (o.bound <= m.m.Keys)
+//   && (o.owner <= m.m.Keys)
+//   && (o.ntrnl <= m.m.Keys)
+// }
+//
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+
+
+
+//
+// derived lemmas equality etc
+//
+
+lemma AXIOMAMFOS(a : Object, b : Object)
+  // equal AMFOs iff same objects
+  // I am honestly delight4d that this one comes striaght outta dafny!
+  requires a.Ready()
+  requires b.Ready()
+  ensures  (a == b)  ==> (a.AMFO == b.AMFO)
+  ensures  (a == b) <==  (a.AMFO == b.AMFO)
+  ensures  (a == b) <==> (a.AMFO == b.AMFO)
+{
+
+}
+
+
+lemma AXIOMAMFO(part : Object, whole : Object)
+  // o in AMFO ==> o.AMFO <= AMFO
+  requires  part.Ready()
+  requires  {whole}    <= part.AMFO
+  ensures   inside(part,whole)
+{
+  AMFOsisAMFOs(part);
+}
+
+lemma AXIOMAMFOREVERSE(part : Object, whole : Object)
+  // inside(part,whole) ==> whole in part.AMFO
+  requires   part.Ready()
+  requires   whole.Ready()
+
+  requires   inside(part,whole)
+  ensures    whole in part.AMFO
+{
+  assert whole in whole.AMFO;
+  AMFOsisAMFOs(part);
+}
+
+
+
+lemma AMFOsisAMFOs(o : Object)
+  requires o.Ready()
+  ensures forall oo <- o.AMFO | oo != o :: (o.AMFO > oo.AMFO)
+{}
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////
+//////////////
+//////////////  TRandom Ready Shit - Bounds Nesting
+//////////////
+//////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+lemma InsideToOwners(part : Object, whole : Object)
+  requires part.Ready()
+  requires whole.Ready()
+  ensures inside(part,whole) == ownerInsideOwner(part.AMFO, whole.AMFO)
+  ensures insideOwner(part,whole) == ownerInsideOwner(part.AMFO,whole.AMFX)
+  ensures inside(part,whole) ==> insideOwner(part,whole)
+{}
+
+
+predicate ownerInsideOwner(partO : Owner, wholeO : Owner)
+{ partO >= wholeO }
+
+
+predicate ownerInsideOwnerInsideOwner(partO : Owner, midO : Owner, wholeO : Owner)
+{ partO >= midO >= wholeO }
+
+predicate insideOwner(part : Object, whole : Object) : (rv : bool)
+  // is part inside whole's *Owners*, i.e. a peer or inside a peer?
+  // reads part, whole
+  ensures rv <==> (part.AMFO >= whole.AMFX)
+  ensures rv <==> (whole.AMFX <= part.AMFO)
+  ensures rv <==> (ownerInsideOwner(part.AMFO, whole.AMFX))
+{ part.AMFO >= whole.AMFX }
+
+
+
+
+
+
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+// misc potential stupid lemata that aren't (yet) in the Library
+//
+
+
+lemma Set2Eq2<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>)
+  requires a == c
+  requires b == d
+  ensures  (a+b) == (c+d)
+{}
+
+lemma Set2Eq3<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>, e : set<T>)
+  requires a == c
+  requires b == (d+e)
+  ensures  (a+b) == (c+d+e)
+{}
+
+
+
+lemma EitherOr<T>(t : T, p : set<T>, q : set<T>)
+  requires p !! q
+  requires t in (p+q)
+  ensures (t in p) != (t in q)
+{}
+
+
+lemma NukeXMusk<T>(t : T, p : set<T>)
+  requires t !in p
+{
+  forall x <- ({t}+p) ensures ((x in {t}) != (x in p))
+  {
+    if (x == t) { assert x !in p; }
+    if (x in p) { assert x != t;  }
+    assert ((x in {t}) != (x in p));
+  }
+}
+
+lemma Nukem<T>(t : T, p : set<T>, z : T)
+  requires t !in p
+  requires z in ({t}+p)
+  ensures  ((z in {t}) != (z in p))
+{
+  // forall x <- ({t}+p) ensures ((x in {t}) != (x in p))
+  //   {
+  //     if (x == t) { assert x !in p; }
+  //     if (x in p) { assert x != t;  }
+  //     assert ((x in {t}) != (x in p));
+  //   }
+}
+
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+// copied from Library
+//
+type vmap<K,V> = u : map<K,V> | AllMapEntriesAreUnique(u)
+
+
+predicate AllMapEntriesAreUnique<K,V(==)>(m : map<K,V>)
+{
+  forall i <- m.Keys, j <- m.Keys :: (m[i] == m[j]) ==> (i == j)
+}
+
+predicate not(x : bool) { !x }
+
+lemma skip() {}
+
+predicate mapLEQ<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
+{
+  (forall k <- left.Keys :: k in right && (left[k] == right[k]))
+}
+
+predicate mapGEQ<K(==),V(==)>(left : map<K,V>, right : map<K,V>)
+{
+  (forall k <- right.Keys :: k in left && (left[k] == right[k]))
+}
